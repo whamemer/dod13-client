@@ -79,11 +79,8 @@ set(CLDLL_SOURCES
 	geiger.cpp
 	health.cpp
 	hud.cpp
-	hud_bench.cpp
-	hud_benchtrace.cpp
 	hud_msg.cpp
 	hud_redraw.cpp
-	hud_servers.cpp
 	hud_spectator.cpp
 	hud_update.cpp
 	in_camera.cpp
@@ -91,10 +88,9 @@ set(CLDLL_SOURCES
 	input_goldsource.cpp
 	input_mouse.cpp
 	input_xash3d.cpp
-	interpolation.cpp
 	menu.cpp
 	message.cpp
-	../common/parsemsg.cpp
+#	../common/parsemsg.cpp
 	../pm_shared/pm_debug.c
 	../pm_shared/pm_math.c
 	../pm_shared/pm_shared.c
@@ -107,28 +103,8 @@ set(CLDLL_SOURCES
 	train.cpp
 	tri.cpp
 	util.cpp
-	view.cpp
-	../game_shared/vgui_checkbutton2.cpp
-	../game_shared/vgui_grid.cpp
-	../game_shared/vgui_helpers.cpp
-	../game_shared/vgui_listbox.cpp
-	../game_shared/vgui_loadtga.cpp
-	../game_shared/vgui_scrollbar2.cpp
-	../game_shared/vgui_slider2.cpp
-	../game_shared/voice_banmgr.cpp
-	vgui_ClassMenu.cpp
-	vgui_ConsolePanel.cpp
-	vgui_ControlConfigPanel.cpp
-	vgui_CustomObjects.cpp
-	vgui_int.cpp
-	vgui_MOTDWindow.cpp
-	vgui_SchemeManager.cpp
-	vgui_ScorePanel.cpp
-	vgui_ServerBrowser.cpp
-	vgui_SpectatorPanel.cpp
-	vgui_TeamFortressViewport.cpp
-	vgui_teammenu.cpp
-	../game_shared/voice_status.cpp)
+	view.cpp)
+#	../game_shared/voice_status.cpp)
 
 include_directories(. hl/ ../dlls ../dlls/wpn_shared ../common ../engine ../pm_shared ../game_shared ../public ../vgui_dll/include)
 
