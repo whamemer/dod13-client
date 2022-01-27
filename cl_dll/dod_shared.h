@@ -1,3 +1,6 @@
+#ifndef _DOD_SHARED_H
+#define _DOD_SHARED_H
+
 enum VOICECOMSLOTS_e
 {
     SLOT_VOICECOMMAND = 0,
@@ -6,6 +9,12 @@ enum VOICECOMSLOTS_e
     SLOT_BRIT_ALLTEXT = 3
 };
 
+//melee weapon
+#define KNIFE_BODYHIT_VOLUME    128
+#define KNIFE_WALLHIT_VOLUME    512
+#define KNIFE_MAX_SPEED         250
+#define KNIFE_MAX_SPEED_SHIELD  180
+
 enum KNIFE_e
 {
     KNIFE_IDLE = 0,
@@ -13,6 +22,7 @@ enum KNIFE_e
     KNIFE_SLASH2 = 2,
     KNIFE_DRAW = 3
 };
+
 enum GREASEGUN_e
 {
     GREASEGUN_IDLE = 0,
@@ -233,6 +243,7 @@ enum MG34_e
     MG34_RELOAD = 12
 };
 
+//mg42
 enum MG42_e
 {
     MG42_UPIDLE = 0,
@@ -270,7 +281,7 @@ enum MG42_e
     MG42_UPTODOWN6 = 32,
     MG42_UPTODOWN5 = 33,
     MG42_UPTODOWN4 = 34,
-    MG42_UPTODOWN = 35,
+    MG42_UPTODOWN3 = 35,
     MG42_UPTODOWN2 = 36,
     MG42_UPTODOWN1 = 37,
     MG42_UPTODOWNEMPTY = 38,
@@ -417,3 +428,5 @@ enum Mortar_e
     MORTAR_UNDEPLOY = 7,
     MORTAR_DRAW = 8
 };
+
+#endif

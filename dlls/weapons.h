@@ -453,13 +453,13 @@ bool bIsMultiplayer ( void );
 void LoadVModel ( const char *szViewModel, CBasePlayer *m_pPlayer );
 #endif
 
-enum KNIFE_e
+/*enum KNIFE_e
 {
 	KNIFE_IDLE = 0,
 	KNIFE_SLASH1 = 1,
 	KNIFE_SLASH2 = 2,
 	KNIFE_DRAW = 3
-};
+};*/
 
 class CMeleeWeapon : public CBasePlayerWeapon
 {
@@ -477,6 +477,7 @@ public:
 	void WeaponIdle( void );
 
 	TraceResult m_trHit;
+	int m_iSwing;
 
 	virtual BOOL UseDecrement( void )
 	{ 
