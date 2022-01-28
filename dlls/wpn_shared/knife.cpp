@@ -539,7 +539,7 @@ int CSpade::GetIdleAnim( void )
     return KNIFE_IDLE;
 }
 
-LINK_ENTITY_TO_CLASS( weapon_amerkinfe, CGerKnife );
+LINK_ENTITY_TO_CLASS( weapon_gerkinfe, CGerKnife );
 
 void CGerKnife::Spawn( void )
 {

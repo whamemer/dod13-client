@@ -1,5 +1,49 @@
-#ifndef _DOD_SHARED_H
-#define _DOD_SHARED_H
+#pragma once
+#if !defined(DOD_SHARED_H)
+#define DOD_SHARED_H
+
+// DOD weapon id
+#define WEAPON_NONE				0
+#define WEAPON_AMER_KNIFE		1
+#define	WEAPON_SPADE			19
+#define WEAPON_GER_KNIFE		2
+
+// DOD weapon weight factors (for auto-switching)   (-1 = noswitch)
+#define AMERKNIFE_WEIGHT	0
+#define SPADE_WEIGHT		0
+#define GERKNIFE_WEIGHT		0
+
+// the maximum amount of ammo each weapon's clip can hold
+#define WEAPON_NOCLIP			-1
+
+#define AMERKNIFE_MAX_CLIP		WEAPON_NOCLIP
+#define SPADE_MAXCLIP			WEAPON_NOCLIP
+#define GERKNIFE_MAXCLIP		WEAPON_NOCLIP
+
+typedef enum
+{
+	BULLET_PLAYER_COLT,
+	BULLET_PLAYER_LUGER,
+	BULLET_PLAYER_GARAND,
+	BULLET_PLAYER_SCOPEDKAR,
+	BULLET_PLAYER_THOMPSON,
+	BULLET_PLAYER_MP44,
+	BULLET_PLAYER_SPRING,
+	BULLET_PLAYER_KAR,
+	BULLET_PLAYER_BAR,
+	BULLET_PLAYER_MP40,
+	BULLET_PLAYER_MG42,
+	BULLET_PLAYER_MG34,
+	BULLET_PLAYER_30CAL,
+	BULLET_PLAYER_M1CARBINE,
+	BULLET_PLAYER_GREASEGUN,
+	BULLET_PLAYER_FG42,
+	BULLET_PLAYER_K43,
+	BULLET_PLAYER_ENFIELD,
+	BULLET_PLAYER_STEN,
+	BULLET_PLAYER_BREN,
+	BULLET_PLAYER_WEBLEY
+} Bullet;
 
 enum VOICECOMSLOTS_e
 {
@@ -21,6 +65,97 @@ enum KNIFE_e
     KNIFE_SLASH1 = 1,
     KNIFE_SLASH2 = 2,
     KNIFE_DRAW = 3
+};
+
+class CMeleeWeapon : public CBasePlayerWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int AddToplayer( CBasePlayer *pPlayer );
+	BOOL Deploy( void );
+	void Holster( int skiplocal );
+	void PrimaryAttack( void );
+	void Smack( void );
+	void SwingAgain( void );
+	int Swing( int fFirst );
+	int Stab( int fFirst );
+	void WeaponIdle( void );
+
+	TraceResult m_trHit;
+	int m_iSwing;
+
+	virtual BOOL UseDecrement( void )
+	{ 
+#if CLIENT_WEAPONS
+		return TRUE;
+#else
+		return FALSE;
+#endif
+	}
+
+private:
+	unsigned short m_usKnifeFireEvent;
+};
+
+class CAmerKnife : public CMeleeWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+
+	virtual BOOL UseDecrement( void )
+	{ 
+#if CLIENT_WEAPONS
+		return TRUE;
+#else
+		return FALSE;
+#endif
+	}
+};
+
+class CSpade : public CMeleeWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+
+	virtual BOOL UseDecrement( void )
+	{ 
+#if CLIENT_WEAPONS
+		return TRUE;
+#else
+		return FALSE;
+#endif
+	}
+};
+
+class CGerKnife : public CMeleeWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+
+	virtual BOOL UseDecrement( void )
+	{ 
+#if CLIENT_WEAPONS
+		return TRUE;
+#else
+		return FALSE;
+#endif
+	}
 };
 
 enum GREASEGUN_e
@@ -429,4 +564,4 @@ enum Mortar_e
     MORTAR_DRAW = 8
 };
 
-#endif
+#endif // DOD_SHARED_H
