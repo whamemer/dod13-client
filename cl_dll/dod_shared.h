@@ -10,15 +10,15 @@
 
 // DOD weapon weight factors (for auto-switching)   (-1 = noswitch)
 #define AMERKNIFE_WEIGHT	0
-#define SPADE_WEIGHT		0
 #define GERKNIFE_WEIGHT		0
+#define SPADE_WEIGHT		0
 
 // the maximum amount of ammo each weapon's clip can hold
 #define WEAPON_NOCLIP			-1
 
 #define AMERKNIFE_MAX_CLIP		WEAPON_NOCLIP
-#define SPADE_MAXCLIP			WEAPON_NOCLIP
 #define GERKNIFE_MAXCLIP		WEAPON_NOCLIP
+#define SPADE_MAXCLIP			WEAPON_NOCLIP
 
 typedef enum
 {
@@ -87,18 +87,10 @@ public:
 	int GetIdleAnim( void );
     void SecondaryAttack( void ) { ; }
     int ItemSlot( void ) { return 0; }
+    BOOL UseDecrement( void ) { return TRUE; }
 
 	TraceResult m_trHit;
 	int m_iSwing;
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
 
 private:
 	unsigned short m_usKnifeFireEvent;
@@ -114,15 +106,7 @@ public:
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
     BOOL Deploy( void );
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
+	BOOL UseDecrement( void ) { return TRUE; }
 };
 
 class CSpade : public CMeleeWeapon
@@ -135,15 +119,7 @@ public:
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
     BOOL Deploy( void );
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
+    BOOL UseDecrement( void ) { return TRUE; }
 };
 
 class CGerKnife : public CMeleeWeapon
@@ -156,15 +132,7 @@ public:
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
     BOOL Deploy( void );
-
-	virtual BOOL UseDecrement( void )
-	{ 
-#if CLIENT_WEAPONS
-		return TRUE;
-#else
-		return FALSE;
-#endif
-	}
+    BOOL UseDecrement( void ) { return TRUE; }
 };
 
 enum GREASEGUN_e
@@ -279,6 +247,62 @@ enum COLT_e
     COLT_IDLE_EMPTY = 7
 };
 
+class CPistol : public CBasePlayerWeapon
+{
+public:
+    void Spawn( void );
+    void PrimaryAttack( void );
+    //BOOL Deploy( void );
+    void Reload( void );
+    void WeaponIdle( void );
+    int GetIdleAnim( void );
+    int GetDrawAnim( void );
+    int GetReloadAnim( void );
+    
+    void SecondaryAttack( void ) { ; }
+    BOOL CanHolster( void ) { return TRUE; }
+    int iItemSlot( void ) { return 1; }
+    BOOL UseDecrement( void ) { return TRUE; }
+    int Classify( void ) { return 8; }
+    BOOL CanDrop( void ) { return FALSE; }
+};
+
+class CColt : public CPistol
+{
+
+};
+
+enum LUGER_e
+{
+    LUGER_IDLE = 0,
+    LUGER_IDLE2 = 1,
+    LUGER_IDLE3 = 2,
+    LUGER_SHOOT = 3,
+    LUGER_SHOOT_EMPTY = 4,
+    LUGER_RELOAD_EMPTY = 5,
+    LUGER_RELOAD = 6,
+    LUGER_DRAW = 7,
+    LUGER_IDLE_EMPTY = 8
+};
+
+class CLuger : public CPistol
+{
+    
+};
+
+enum WEBLEY_e
+{
+    WEBLEY_IDLE = 0,
+    WEBLEY_SHOOT = 1,
+    WEBLEY_RELOAD = 2,
+    WEBLEY_DRAW = 3
+};
+
+class CWEBLEY : public CPistol
+{
+
+};
+
 enum ENFIELD_e
 {
     ENFIELD_IDLE = 0,
@@ -348,19 +372,6 @@ enum KAR_e
     KAR_SLASH = 5
 };
 
-enum LUGER_e
-{
-    LUGER_IDLE = 0,
-    LUGER_IDLE2 = 1,
-    LUGER_IDLE3 = 2,
-    LUGER_SHOOT = 3,
-    LUGER_SHOOT_EMPTY = 4,
-    LUGER_RELOAD_EMPTY = 5,
-    LUGER_RELOAD = 6,
-    LUGER_DRAW = 7,
-    LUGER_IDLE_EMPTY = 8
-};
-
 enum M1CARBINE_e
 {
     M1CARBINE_IDLE = 0,
@@ -387,7 +398,6 @@ enum MG34_e
     MG34_RELOAD = 12
 };
 
-//mg42
 enum MG42_e
 {
     MG42_UPIDLE = 0,
@@ -509,14 +519,6 @@ enum THOMPSON_e
     THOMPSON_PRONE_BACK = 6,
     THOMPSON_PRONE_FORWARD = 7,
     THOMPSON_PRONE_STILL = 8
-};
-
-enum WEBLEY_e
-{
-    WEBLEY_IDLE = 0,
-    WEBLEY_SHOOT = 1,
-    WEBLEY_RELOAD = 2,
-    WEBLEY_DRAW = 3
 };
 
 enum BAZOOKA_e
