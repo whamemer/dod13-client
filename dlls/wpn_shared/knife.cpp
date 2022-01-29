@@ -42,10 +42,10 @@ int CMeleeWeapon::AddToplayer( CBasePlayer *pPlayer )
     return FALSE;
 }
 
-BOOL CMeleeWeapon::Deploy( void )
+/*BOOL CMeleeWeapon::Deploy( void )
 {
-    return DefaultDeploy( 0, 0, KNIFE_DRAW, "knife", 1 ); //TODO
-}
+    return DefaultDeploy( 0, 0, KNIFE_DRAW, "melee", 1 );
+}*/
 
 void CMeleeWeapon::Holster( int skiplocal )
 {
@@ -447,6 +447,11 @@ void CAmerKnife::Precache( void )
     CMeleeWeapon::Precache();
 }
 
+BOOL CAmerKnife::Deploy( void )
+{
+    return DefaultDeploy( "models/v_amerk.mdl", "models/p_amerk.mdl", KNIFE_DRAW, "Amerknife", 1 );
+}
+
 int CAmerKnife::GetItemInfo( ItemInfo *p )
 {
 	p->pszAmmo1 = NULL;
@@ -503,6 +508,11 @@ void CSpade::Precache( void )
     CMeleeWeapon::Precache();
 }
 
+BOOL CSpade::Deploy( void )
+{
+    return DefaultDeploy( "models/v_spade.mdl", "models/p_spade.mdl", KNIFE_DRAW, "Spade", 1 );
+}
+
 int CSpade::GetItemInfo( ItemInfo *p )
 {
 	p->pszAmmo1 = NULL;
@@ -556,7 +566,12 @@ void CGerKnife::Precache( void )
     PRECACHE_MODEL( "models/w_fairbairn.mdl" );
     PRECACHE_MODEL( "models/p_fairbairn.mdl" );
 
-    CGerKnife::Precache();
+    CMeleeWeapon::Precache();
+}
+
+BOOL CGerKnife::Deploy( void )
+{
+    return DefaultDeploy( "models/v_fairbairn.mdl", "models/p_fairbairn.mdl", KNIFE_DRAW, "Gerknife", 1 );
 }
 
 int CGerKnife::GetItemInfo( ItemInfo *p )

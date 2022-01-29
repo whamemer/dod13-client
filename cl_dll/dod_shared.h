@@ -5,8 +5,8 @@
 // DOD weapon id
 #define WEAPON_NONE				0
 #define WEAPON_AMER_KNIFE		1
-#define	WEAPON_SPADE			19
 #define WEAPON_GER_KNIFE		2
+#define	WEAPON_SPADE			19
 
 // DOD weapon weight factors (for auto-switching)   (-1 = noswitch)
 #define AMERKNIFE_WEIGHT	0
@@ -43,7 +43,7 @@ typedef enum
 	BULLET_PLAYER_STEN,
 	BULLET_PLAYER_BREN,
 	BULLET_PLAYER_WEBLEY
-} Bullet;
+} Bullet_dod;
 
 enum VOICECOMSLOTS_e
 {
@@ -56,8 +56,6 @@ enum VOICECOMSLOTS_e
 //melee weapon
 #define KNIFE_BODYHIT_VOLUME    128
 #define KNIFE_WALLHIT_VOLUME    512
-#define KNIFE_MAX_SPEED         250
-#define KNIFE_MAX_SPEED_SHIELD  180
 
 enum KNIFE_e
 {
@@ -73,7 +71,7 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	int AddToplayer( CBasePlayer *pPlayer );
-	BOOL Deploy( void );
+	//BOOL Deploy( void );
 	void Holster( int skiplocal );
 	void PrimaryAttack( void );
 	void Smack( void );
@@ -81,6 +79,14 @@ public:
 	int Swing( int fFirst );
 	int Stab( int fFirst );
 	void WeaponIdle( void );
+
+    BOOL CanDrop( void ) { return FALSE; }
+    int Classify( void ) { return 1; }
+    int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+    void SecondaryAttack( void ) { ; }
+    int ItemSlot( void ) { return 0; }
 
 	TraceResult m_trHit;
 	int m_iSwing;
@@ -107,6 +113,7 @@ public:
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
+    BOOL Deploy( void );
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -127,6 +134,7 @@ public:
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
+    BOOL Deploy( void );
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -147,6 +155,7 @@ public:
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
+    BOOL Deploy( void );
 
 	virtual BOOL UseDecrement( void )
 	{ 
