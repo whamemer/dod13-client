@@ -1,12 +1,24 @@
+#include "hud.h"
 
-CHudDoDCrossHair::Init( void )
+int CHudDoDCrossHair::Init( void )
 {
+    int iWidth, m_iXPos, m_iYPos, m_iFlags;
+    float m_fMoveTime;
 
+    gEngfuncs.pfnHookUserMsg( "ClanTimer", __MsgFunc_ClanTimer );
+    CHud::AddHudElem( &gHUD );
+    iWidth = gHUD.m_scrinfo.iWidth;
+    m_iYPos = gHUD.m_scrinfo.iHeight / 2;
+    m_iXPos = iWidth / 2;
+    m_iFlags |= 1u;
+    m_fMoveTime = 0.0f;
+
+    return 1;
 }
 
 int CHudDoDCrossHair::VidInit( void )
 {
-
+    
 }
 
 void CHudDoDCrossHair::Reset( void )
