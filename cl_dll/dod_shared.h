@@ -20,6 +20,9 @@
 #define GERKNIFE_MAXCLIP		WEAPON_NOCLIP
 #define SPADE_MAXCLIP			WEAPON_NOCLIP
 
+// the default amount of ammo that comes with each gun when it spawns
+#define MELEE_DEFAULT_GIVE     0
+
 typedef enum
 {
 	BULLET_PLAYER_COLT,
@@ -68,10 +71,10 @@ enum KNIFE_e
 class CMeleeWeapon : public CBasePlayerWeapon
 {
 public:
-	void Spawn( void );
+	void Spawn( int weapon_id );
 	void Precache( void );
 	int AddToplayer( CBasePlayer *pPlayer );
-	//BOOL Deploy( void );
+	BOOL Deploy( void );
 	void Holster( int skiplocal );
 	void PrimaryAttack( void );
 	void Smack( void );
@@ -93,7 +96,7 @@ public:
 	int m_iSwing;
 
 private:
-	unsigned short m_usKnifeFireEvent;
+	unsigned short m_iFireEvent;
 };
 
 class CAmerKnife : public CMeleeWeapon
@@ -105,7 +108,6 @@ public:
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
-    BOOL Deploy( void );
 	BOOL UseDecrement( void ) { return TRUE; }
 };
 
@@ -118,7 +120,6 @@ public:
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
-    BOOL Deploy( void );
     BOOL UseDecrement( void ) { return TRUE; }
 };
 
@@ -131,7 +132,6 @@ public:
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
-    BOOL Deploy( void );
     BOOL UseDecrement( void ) { return TRUE; }
 };
 

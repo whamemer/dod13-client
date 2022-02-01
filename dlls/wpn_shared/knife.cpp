@@ -10,15 +10,16 @@
 #include "gamerules.h"
 #include "dod_shared.h"
 
-typedef float float_precision;
-
 LINK_ENTITY_TO_CLASS( weapon_melee, CMeleeWeapon );
 
-void CMeleeWeapon::Spawn( void )
-{
-    CMeleeWeapon::Precache();
+void CMeleeWeapon::Spawn( int weapon_id )
+{	
+	m_iId = weapon_id;
+	SET_MODEL( ENT( pev ), "models/w_fairbairn.mdl" );
+	m_iDefaultAmmo = MELEE_DEFAULT_GIVE;
 
-    FallInit();
+	FallInit();
+    Precache();
 }
 
 void CMeleeWeapon::Precache( void )
@@ -34,29 +35,33 @@ void CMeleeWeapon::Precache( void )
     PRECACHE_SOUND( "weapons/knifeswing.wav" );
     PRECACHE_SOUND( "weapons/knifeswing2.wav" );
 
-    m_usKnifeFireEvent = PRECACHE_EVENT( 1, "events/weapons/melee.sc" );
+    m_iFireEvent = PRECACHE_EVENT( 1, "events/weapons/melee.sc" );
 }
 
 int CMeleeWeapon::AddToplayer( CBasePlayer *pPlayer )
 {
-    return FALSE;
+    return 0;
 }
 
-/*BOOL CMeleeWeapon::Deploy( void )
+BOOL CMeleeWeapon::Deploy( void )
 {
-    return DefaultDeploy( 0, 0, KNIFE_DRAW, "melee", 1 );
-}*/
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.75f;
+
+    return DefaultDeploy( "models/v_fairbairn.mdl", "models/p_fairbairn.mdl", KNIFE_DRAW, "melee", 0 );
+}
 
 void CMeleeWeapon::Holster( int skiplocal )
 {
     m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5f;
 }
 
+// function from regamedll
 void FindHullIntersection( const Vector &vecSrc, TraceResult &tr, float *mins, float *maxs, edict_t *pEntity )
 {
 	int i, j, k;
 	float distance;
 	float *minmaxs[2] = { mins, maxs };
+	typedef float float_precision;
 	TraceResult tmpTrace;
 	Vector vecHullEnd = tr.vecEndPos;
 	Vector vecEnd;
@@ -101,17 +106,17 @@ void FindHullIntersection( const Vector &vecSrc, TraceResult &tr, float *mins, f
 
 void CMeleeWeapon::PrimaryAttack( void )
 {
-    CMeleeWeapon::Swing( TRUE );
+    CMeleeWeapon::Swing( 1 );
 }
 
 void CMeleeWeapon::Smack( void )
 {
-    DecalGunshot( &m_trHit, BULLET_NONE );
+    DecalGunshot( &m_trHit, BULLET_PLAYER_CROWBAR );
 }
 
 void CMeleeWeapon::SwingAgain( void )
 {
-    CMeleeWeapon::Swing( FALSE );
+    CMeleeWeapon::Swing( 0 );
 }
 
 int CMeleeWeapon::Swing( int fFirst )
@@ -415,14 +420,18 @@ int CMeleeWeapon::Stab( int fFirst )
 void CMeleeWeapon::WeaponIdle( void )
 {
     int iAnim;
-    float flRand = UTIL_SharedRandomFloat( m_pPlayer->random_seed, 0.0f, 1.0f );
 
-    if( m_flTimeWeaponIdle < UTIL_WeaponTimeBase() )
+    if( m_flTimeWeaponIdle <= UTIL_WeaponTimeBase() )
     {
-        if( flRand > 0.0f )
+        if( m_flNextPrimaryAttack <= UTIL_WeaponTimeBase() )
         {
-            iAnim = KNIFE_IDLE;
-            m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 2.5f;
+			if( m_flNextSecondaryAttack <= UTIL_WeaponTimeBase() )
+			{
+				if( GetIdleAnim() >= 0 )
+					iAnim = KNIFE_IDLE;
+				
+				m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 2.5f;
+			}
         }
     }
 }
@@ -430,12 +439,8 @@ void CMeleeWeapon::WeaponIdle( void )
 LINK_ENTITY_TO_CLASS( weapon_amerkinfe, CAmerKnife );
 
 void CAmerKnife::Spawn( void )
-{
-    CAmerKnife::Precache();
-    m_iId = WEAPON_AMER_KNIFE;
-    SET_MODEL( ENT( pev ), "models/w_amerk.mdl" );
-
-    FallInit();
+{	
+	CMeleeWeapon::Spawn( WEAPON_AMER_KNIFE );
 }
 
 void CAmerKnife::Precache( void )
@@ -445,11 +450,6 @@ void CAmerKnife::Precache( void )
     PRECACHE_MODEL( "models/p_amerk.mdl" );
 
     CMeleeWeapon::Precache();
-}
-
-BOOL CAmerKnife::Deploy( void )
-{
-    return DefaultDeploy( "models/v_amerk.mdl", "models/p_amerk.mdl", KNIFE_DRAW, "Amerknife", 1 );
 }
 
 int CAmerKnife::GetItemInfo( ItemInfo *p )
@@ -492,11 +492,7 @@ LINK_ENTITY_TO_CLASS( weapon_spade, CSpade );
 
 void CSpade::Spawn( void )
 {
-    CSpade::Precache();
-    m_iId = WEAPON_SPADE;
-    SET_MODEL( ENT( pev ), "models/w_spade.mdl" );
-
-    FallInit();
+	CMeleeWeapon::Spawn( WEAPON_SPADE );
 }
 
 void CSpade::Precache( void )
@@ -506,11 +502,6 @@ void CSpade::Precache( void )
     PRECACHE_MODEL( "models/p_spade.mdl" );
 
     CMeleeWeapon::Precache();
-}
-
-BOOL CSpade::Deploy( void )
-{
-    return DefaultDeploy( "models/v_spade.mdl", "models/p_spade.mdl", KNIFE_DRAW, "Spade", 1 );
 }
 
 int CSpade::GetItemInfo( ItemInfo *p )
@@ -553,25 +544,16 @@ LINK_ENTITY_TO_CLASS( weapon_gerkinfe, CGerKnife );
 
 void CGerKnife::Spawn( void )
 {
-    CGerKnife::Precache();
-    m_iId = WEAPON_AMER_KNIFE;
-    SET_MODEL( ENT( pev ), "models/w_fairbairn.mdl" );
-
-    FallInit();
+	CMeleeWeapon::Spawn( WEAPON_GER_KNIFE );
 }
 
 void CGerKnife::Precache( void )
 {
-    PRECACHE_MODEL( "models/v_fairbairn.mdl" );
-    PRECACHE_MODEL( "models/w_fairbairn.mdl" );
-    PRECACHE_MODEL( "models/p_fairbairn.mdl" );
+    PRECACHE_MODEL( "models/v_paraknife.mdl" );
+    PRECACHE_MODEL( "models/w_paraknife.mdl" );
+    PRECACHE_MODEL( "models/p_paraknife.mdl" );
 
     CMeleeWeapon::Precache();
-}
-
-BOOL CGerKnife::Deploy( void )
-{
-    return DefaultDeploy( "models/v_fairbairn.mdl", "models/p_fairbairn.mdl", KNIFE_DRAW, "Gerknife", 1 );
 }
 
 int CGerKnife::GetItemInfo( ItemInfo *p )
