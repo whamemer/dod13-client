@@ -250,9 +250,9 @@ enum COLT_e
 class CPistol : public CBasePlayerWeapon
 {
 public:
-    void Spawn( void );
+    void Spawn( int weapon_id );
     void PrimaryAttack( void );
-    //BOOL Deploy( void );
+    BOOL Deploy( void );
     void Reload( void );
     void WeaponIdle( void );
     int GetIdleAnim( void );
@@ -267,9 +267,26 @@ public:
     BOOL CanDrop( void ) { return FALSE; }
 };
 
-class CColt : public CPistol
+class CCOLT : public CPistol
 {
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+	BOOL UseDecrement( void ) { return TRUE; }
 
+private:
+    unsigned short m_iFireEvent;
+};
+
+class CColtAmmoClip : public CBasePlayerAmmo
+{
+public:
+    void Spawn( void );
+    BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 enum LUGER_e
@@ -287,7 +304,24 @@ enum LUGER_e
 
 class CLuger : public CPistol
 {
-    
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+	BOOL UseDecrement( void ) { return TRUE; }
+
+private:
+    unsigned short m_iFireEvent;
+};
+
+class CLugerAmmoClip : public CBasePlayerAmmo
+{
+public:
+    void Spawn( void );
+    BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 enum WEBLEY_e
@@ -300,7 +334,24 @@ enum WEBLEY_e
 
 class CWEBLEY : public CPistol
 {
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+	BOOL UseDecrement( void ) { return TRUE; }
 
+private:
+    unsigned short m_iFireEvent;
+};
+
+class CWebleyAmmoClip : public CBasePlayerAmmo
+{
+public:
+    void Spawn( void );
+    BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 enum ENFIELD_e
