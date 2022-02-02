@@ -21,11 +21,9 @@
 #
 
 cmake_minimum_required(VERSION 2.8.12)
-project(client)
+project (CLDLL)
 
-include(FWGSLib)
-
-set(CLDLL_LIBRARY client)
+set (CLDLL_LIBRARY client)
 
 include(CheckIncludeFile)
 check_include_file("tgmath.h" HAVE_TGMATH_H)
@@ -33,7 +31,6 @@ if(HAVE_TGMATH_H)
 	add_definitions(-DHAVE_TGMATH_H)
 endif()
 
-add_definitions(-DDOD13CLIENT_ADDITIONS)
 add_definitions(-DCLIENT_WEAPONS -DCLIENT_DLL)
 
 if(NOT MSVC)
@@ -49,20 +46,41 @@ else()
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
-if(GOLDSOURCE_SUPPORT)
+if (GOLDSOURCE_SUPPORT)
 	add_definitions(-DGOLDSOURCE_SUPPORT)
 endif()
 
-if(GOLDSOURCE_DEFAULT_FLAGS)
-	add_definitions(-DPOSIX -D_POSIX -DGNUC)
-	add_compile_options(-fpermissive -fno-strict-aliasing -fexpensive-optimizations)
-	add_compile_options(-Werror=return-type -w -gdwarf-2 -g2 -march=pentium-m -mfpmath=387)
-	add_link_options(-gdwarf-2 -g2)
+if (USE_VGUI)
+	add_definitions(-DUSE_VGUI)
+	if (USE_NOVGUI_MOTD)
+		add_definitions(-DUSE_NOVGUI_MOTD)
+	endif()
+	if (USE_NOVGUI_SCOREBOARD)
+		add_definitions(-DUSE_NOVGUI_SCOREBOARD)
+	endif()
 endif()
 
-set(CLDLL_SOURCES
-	../dlls/wpn_shared/knife.cpp
-	../public/interface.cpp
+set (CLDLL_SOURCES
+    ../dlls/wpn_shared/knife.cpp
+	../dlls/crossbow.cpp
+	../dlls/crowbar.cpp
+	../dlls/egon.cpp
+	../dlls/gauss.cpp
+	../dlls/handgrenade.cpp
+	../dlls/hornetgun.cpp
+	../dlls/mp5.cpp
+	../dlls/python.cpp
+	../dlls/rpg.cpp
+	../dlls/satchel.cpp
+	../dlls/shotgun.cpp
+	../dlls/squeakgrenade.cpp
+	../dlls/tripmine.cpp
+	../dlls/glock.cpp
+	ev_hldm.cpp
+	hl/hl_baseentity.cpp
+	hl/hl_events.cpp
+	hl/hl_objects.cpp
+	hl/hl_weapons.cpp
 	ammo.cpp
 	ammo_secondary.cpp
 	ammohistory.cpp
@@ -90,7 +108,8 @@ set(CLDLL_SOURCES
 	input_xash3d.cpp
 	menu.cpp
 	message.cpp
-#	../common/parsemsg.cpp
+	overview.cpp
+	parsemsg.cpp
 	../pm_shared/pm_debug.c
 	../pm_shared/pm_math.c
 	../pm_shared/pm_shared.c
@@ -104,27 +123,87 @@ set(CLDLL_SOURCES
 	tri.cpp
 	util.cpp
 	view.cpp)
-#	../game_shared/voice_status.cpp)
 
-include_directories(. hl/ ../dlls ../dlls/wpn_shared ../common ../engine ../pm_shared ../game_shared ../public ../vgui_dll/include)
-
-if(ANDROID)
-	add_library(${CLDLL_LIBRARY} MODULE ${CLDLL_SOURCES} $<TARGET_OBJECTS:vgui_support>)
+if (USE_VGUI)
+	list(APPEND CLDLL_SOURCES
+		vgui_int.cpp
+		vgui_ClassMenu.cpp
+		vgui_ConsolePanel.cpp
+		vgui_ControlConfigPanel.cpp
+		vgui_CustomObjects.cpp
+		vgui_MOTDWindow.cpp
+		vgui_SchemeManager.cpp
+		vgui_ScorePanel.cpp
+		vgui_TeamFortressViewport.cpp
+		vgui_SpectatorPanel.cpp
+		vgui_teammenu.cpp
+		voice_status.cpp
+		../game_shared/vgui_checkbutton2.cpp
+		../game_shared/vgui_grid.cpp
+		../game_shared/vgui_helpers.cpp
+		../game_shared/vgui_listbox.cpp
+		../game_shared/vgui_loadtga.cpp
+		../game_shared/vgui_scrollbar2.cpp
+		../game_shared/vgui_slider2.cpp
+		../game_shared/voice_banmgr.cpp
+		)
+	if (USE_NOVGUI_MOTD)
+		list(APPEND CLDLL_SOURCES MOTD.cpp)
+	endif()
+	if (USE_NOVGUI_SCOREBOARD)
+		list(APPEND CLDLL_SOURCES scoreboard.cpp)
+	endif()
 else()
-	add_library(${CLDLL_LIBRARY} MODULE ${CLDLL_SOURCES})
+	list(APPEND CLDLL_SOURCES
+		MOTD.cpp
+		scoreboard.cpp)
 endif()
 
-if(GOLDSOURCE_SUPPORT)
-	target_link_libraries(${CLDLL_LIBRARY} ${CMAKE_DL_LIBS})
+include_directories (. hl/ ../dlls ../dlls/wpn_shared ../common ../engine ../pm_shared ../game_shared ../public)
+
+if (USE_VGUI)
+	SET(CMAKE_SKIP_RPATH TRUE)
+	link_directories(${CMAKE_SOURCE_DIR}/vgui-dev/lib)
+	include_directories(../vgui-dev/include)
+else()
+	include_directories(../utils/false_vgui/include)
+endif()
+
+if(USE_VOICEMGR)
+	#set(CLDLL_SOURCES
+	#	${CLDLL_SOURCES}
+	#	../game_shared/voice_banmgr.cpp
+	#	../game_shared/voice_status.cpp)
+endif()
+
+add_library (${CLDLL_LIBRARY} SHARED ${CLDLL_SOURCES})
+
+if (GOLDSOURCE_SUPPORT)
+	target_link_libraries( ${CLDLL_LIBRARY} ${CMAKE_DL_LIBS} )
+endif()
+
+if (USE_VGUI)
+	if (WIN32)
+		add_library(vgui SHARED IMPORTED)
+		set_property(TARGET vgui PROPERTY IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/vgui-dev/lib/win32_vc6/vgui.dll")
+		set_property(TARGET vgui PROPERTY IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/vgui-dev/lib/win32_vc6/vgui.lib")
+		target_link_libraries(${CLDLL_LIBRARY} vgui)
+	elseif(APPLE)
+		target_link_libraries(${CLDLL_LIBRARY} "-Wl,--no-undefined -L${CMAKE_SOURCE_DIR}/vgui-dev/lib vgui.dylib")
+	else()
+		target_link_libraries(${CLDLL_LIBRARY} :vgui.so)
+	endif()
 endif()
 
 if(WIN32)
-	target_link_libraries(${CLDLL_LIBRARY} user32.lib winmm.lib ws2_32.lib)
+	target_link_libraries( ${CLDLL_LIBRARY} user32.lib )
+	if (GOLDSOURCE_SUPPORT)
+		target_link_libraries( ${CLDLL_LIBRARY} winmm.lib )
+	endif()
 endif()
 
-if(BUILD_VGUI)
-	target_link_libraries(${CLDLL_LIBRARY} vgui)
-endif()
+set_target_properties (${CLDLL_LIBRARY} PROPERTIES
+	POSITION_INDEPENDENT_CODE 1)
 
 if(APPLE OR WIN32 OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	set(CLDLL_NAME "client")
@@ -133,16 +212,12 @@ if(APPLE OR WIN32 OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 		PREFIX "")
 endif()
 
-fwgs_set_default_properties(${CLDLL_LIBRARY})
+if(MSVC)
+	set_property(TARGET ${CLDLL_LIBRARY} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
-install(TARGETS ${CLDLL_LIBRARY}
+install( TARGETS ${CLDLL_LIBRARY}
 	DESTINATION "${GAMEDIR}/${CLIENT_INSTALL_DIR}/"
 	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
 	    GROUP_READ GROUP_EXECUTE
-		WORLD_READ WORLD_EXECUTE)
-
-# Install PDB file on Windows
-if(WIN32 AND MSVC)
-	install(FILES $<TARGET_PDB_FILE:${CLDLL_LIBRARY}>
-		DESTINATION "${GAMEDIR}/${CLIENT_INSTALL_DIR}/" OPTIONAL)
-endif()
+		WORLD_READ WORLD_EXECUTE )

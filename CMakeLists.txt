@@ -22,37 +22,52 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.15.0")
+	cmake_policy(SET CMP0091 NEW)
+endif()
+
 # Install custom module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 include(VSForceXPToolchain) # Force XP toolchain for Visual Studio
 
-project(dod13-client)
-
-set(CMAKE_CXX_STANDARD 11)
+project (dod13-client)
 
 #--------------
 # USER DEFINES \
 ################\
+option(USE_VGUI "Enable VGUI1." OFF)
+option(USE_VGUI2 "Enable VGUI2. UNDONE" OFF)
+option(USE_NOVGUI_MOTD "Prefer non-VGUI MOTD when USE_VGUI is enabled" OFF)
+option(USE_NOVGUI_SCOREBOARD "Prefer non-VGUI Scoreboard when USE_VGUI is enabled" OFF)
 option(USE_VOICEMGR "Enable VOICE MANAGER." OFF)
 option(BUILD_CLIENT "Build client dll" ON)
 option(BUILD_SERVER "Build server dll" OFF)
-option(BUILD_MENU "Build menu dll" OFF)
-option(BUILD_VGUI "Build vgui" OFF)
-option(BUILD_PMAN "Build particleman" OFF)
 option(GOLDSOURCE_SUPPORT "Build goldsource compatible client library" OFF)
-option(GOLDSOURCE_DEFAULT_FLAGS "Build with default flags from Valve's Makefile" OFF)
+option(64BIT "Disable auto -m32 appending to compiler flags" OFF)
 set(GAMEDIR "dod" CACHE STRING "Gamedir path")
 set(SERVER_INSTALL_DIR "dlls" CACHE STRING "Where put server dll")
 set(CLIENT_INSTALL_DIR "cl_dlls" CACHE STRING "Where put client dll")
-set(MENU_INSTALL_DIR "cl_dlls" CACHE STRING "Where to put menu dll")
 set(SERVER_LIBRARY_NAME "dod" CACHE STRING "Library name for Linux/MacOS/Windows")
 
 #-----------------
 # MAIN BUILD CODE \
 ###################\
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+if(CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT 64BIT)
+	if(MSVC)
+		error("UNDONE: set 32 build flags")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
+	endif()
+	set(CMAKE_SIZEOF_VOID_P 4)
+endif()
+
+if(64BIT AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+	message(FATAL_ERROR "You enabled XASH_64BIT, but compiler can't create 64 bit code!")
+endif()
 
 # Xash3D FWGS Library Naming Scheme compliance
 # see documentation: https://github.com/FWGS/xash3d-fwgs/blob/master/Documentation/library-naming.md
@@ -64,7 +79,7 @@ else()
 	message(STATUS "Building for 32 Bit")
 endif()
 
-if(MINGW)
+if (MINGW)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -static-libgcc")
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--add-stdcall-alias")
 endif()
@@ -83,7 +98,7 @@ if(NOT MSVC)
 	#add_compile_options(-Wempty-body) # GCC/Clang flag
 	add_compile_options(-Wreturn-type) # GCC/Clang flag
 else()
-	add_definitions(-D_CRT_SILENCE_NONCONFORMING_TGMATH_H -D_CRT_SECURE_NO_WARNINGS)
+	add_definitions(-D_CRT_SILENCE_NONCONFORMING_TGMATH_H)
 endif()
 
 
@@ -93,22 +108,6 @@ endif()
 
 if(BUILD_SERVER)
 	add_subdirectory(dlls)
-endif()
-
-# if(BUILD_MENU)
-#	add_subdirectory(mainui)
-# endif()
-
-# if(BUILD_VGUI)
-#	add_subdirectory(vgui_dll)
-#	if(ANDROID)
-#		add_subdirectory(vgui_support)
-#	endif()
-# endif()
-
-if(BUILD_PMAN)
-	add_definitions(-DUSE_PARTICLEMAN)
-	add_subdirectory(particleman)
 endif()
 
 if(NOT BUILD_SERVER AND NOT BUILD_CLIENT)
