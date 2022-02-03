@@ -61,7 +61,7 @@ if (USE_VGUI)
 endif()
 
 set (CLDLL_SOURCES
-    ../dlls/wpn_shared/knife.cpp
+#    ../dlls/wpn_shared/knife.cpp
 	../dlls/crossbow.cpp
 	../dlls/crowbar.cpp
 	../dlls/egon.cpp
