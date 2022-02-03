@@ -145,6 +145,97 @@ void EV_EjectBrass( float *origin, float *velocity, float rotation, int model, i
 
 /*
 =================
+EV_PSchreckSmoke & EV_BazookaSmoke
+
+Need Particleman
+=================
+*/
+void EV_BazookaSmoke( cl_entity_t *ent )
+{
+	int ccw, speeds[8];
+	float rf;
+	Vector temp, p_org, p_normal, forward, right, up;
+	model_s *pSprite;
+	CDoDParticle *pParticle;
+
+	if( ent )
+	{
+		temp.x = ent->angles.x;
+		temp.y = ent->angles.y;
+		temp.z = -ent->angles.x;
+
+		pSprite = (struct model_s *)gEngfuncs.GetSpritePointer( SPR_Load( "sprites/bazookapuff.spr" ) );
+
+		if( pSprite )
+		{
+			ccw = 1;
+
+			for( int i; i != 8; ++i )
+			{
+				if( ( i & 1 ) != 0 )
+				{
+					p_org.x = forward.x * 30.0f + up.x * 16.0f + ent->origin.x;
+					p_org.y = forward.y * 30.0f + up.y * 16.0f + ent->origin.y;
+					p_org.z = forward.z * 30.0f + up.z * 16.0f + ent->origin.z;
+				}
+				else
+				{
+					ccw = 1 - ccw;
+
+					p_org.x = up.x * 16.0f + ent->origin.x - forward.x * 30.0f;
+					p_org.y = up.y * 16.0f + ent->origin.y - forward.y * 30.0f;
+					p_org.z = up.z * 16.0f + ent->origin.z - forward.z * 30.0f;
+				}
+
+				memset( &p_normal, 0, sizeof( p_normal ) );
+				pParticle = CDodParticle::Create( &p_org, &p_normal, pSprite, 90.0f, 80.0f, "dod_particle", 1 );
+
+				if( !pParticle )
+					break;
+				
+				pParticle->m_iCollisionFlags |= iFlag;
+				pParticle->m_iRendermode = 5;
+				pParticle->m_iRenderFlags |= iFlag;
+				pParticle->m_flFadeSpeed = 0.7f;
+				pParticle->m_flScaleSpeed = 1.1f;
+				pParticle->m_flDampingTime = 0.5f;
+				pParticle->m_iFrame = 0;
+				pParticle->m_iFramerate = 2;
+				pParticle->m_vColor.x = 200.0f;
+				pParticle->m_vColor.y = 200.0f;
+				pParticle->m_vColor.z = 200.0f;
+				pParticle->m_vVelocity.x = forward.x * speeds[i] + up.x * gEngfuncs.pfnRandomFloat( -1.0f, 1.0f );
+				pParticle->m_vVelocity.y = forward.y * speeds[i] + up.y * gEngfuncs.pfnRandomFloat( -1.0f, 1.0f );
+				pParticle->m_vVelocity.z = forward.z * speeds[i] + up.z * gEngfuncs.pfnRandomFloat( -1.0f, 1.0f );
+
+				if( !ccw )
+				{
+					rf = -1.0f;
+				}
+				else
+				{
+					rf = 1.0f;
+				}
+
+				rf = pParticle->m_vAVelocity.z;
+				pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 5.0f;
+				CDoDParticle::AddGlobalWind( pParticle );
+			}
+		}
+		else
+		{
+			gEngfuncs.Con_DPrintf( "Couldn't load Sprite: %s\n", "sprites/bazookapuff.spr" );
+		}
+	}
+}
+
+void EV_PSchreckSmoke( cl_entity_t *ent )
+{
+	EV_BazookaSmoke( ent );
+}
+
+/*
+=================
 EV_GetDefaultShellInfo
 
 Determine where to eject shells from
