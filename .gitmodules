@@ -1,0 +1,6 @@
+[submodule "dod13-client"]
+	path = dod13-client
+	url = https://github.com/whamemer/dod13-client
+[submodule "Particleman"]
+	path = Particleman
+	url = https://github.com/whamemer/Particleman
