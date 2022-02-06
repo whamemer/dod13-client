@@ -27,4 +27,5 @@ void EV_CreateTracer( float *start, float *end );
 struct cl_entity_s *GetEntity( int idx );
 struct cl_entity_s *GetViewEntity( void );
 void EV_MuzzleFlash( void );
+void EV_MuzzleFlashDOD( int idx, int guntype );
 #endif // EVENTSCRIPTSH

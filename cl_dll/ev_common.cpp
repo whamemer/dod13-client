@@ -150,7 +150,7 @@ EV_PSchreckSmoke & EV_BazookaSmoke
 Need Particleman
 =================
 */
-void EV_BazookaSmoke( cl_entity_t *ent )
+/*void EV_BazookaSmoke( cl_entity_t *ent )
 {
 	int ccw, speeds[8];
 	float rf;
@@ -232,7 +232,7 @@ void EV_BazookaSmoke( cl_entity_t *ent )
 void EV_PSchreckSmoke( cl_entity_t *ent )
 {
 	EV_BazookaSmoke( ent );
-}
+}*/
 
 /*
 =================
@@ -294,4 +294,63 @@ void EV_MuzzleFlash( void )
 
 	// Or in the muzzle flash
 	ent->curstate.effects |= EF_MUZZLEFLASH;
+}
+
+/*
+=================
+EV_MuzzleFlashDOD
+
+Flag weapon/view model for muzzle flash
+
+Specific MuzzleFlash for Day of Defeat
+=================
+*/
+void EV_MuzzleFlashDOD( int idx, int guntype )
+{
+	cvar_t *cl_dynamiclights;
+	cl_entity_t *ent = GetViewEntity();
+	cl_entity_t *pl = GetEntity( idx );
+	cl_entity_t *player = gEngfuncs.GetLocalPlayer();
+	dlight_t *dl = gEngfuncs.pEfxAPI->CL_AllocDlight( 0 );
+
+	if( g_iUser1 == OBS_IN_EYE )
+		idx = g_iUser2;
+	else
+		idx = gEngfuncs.pEventAPI->EV_IsLocal( idx - 1 ) != 0;
+	
+	if( idx )
+	{
+		if( cl_dynamiclights->value <= 0.0f )
+			return;
+
+		dl->origin.x = ent->attachment[0].x;
+		dl->origin.y = ent->attachment[0].y;
+		dl->origin.z = ent->attachment[0].z;
+		dl->radius = 50 * guntype + 50;
+		dl->color.r = -8;
+		dl->color.g = -1;
+		dl->color.b = 120;
+		dl->decay = 50 * guntype + 600;
+		dl->die = gHUD.m_flTime + 1.0f;
+		return;
+	}
+	if( pl )
+	{
+		if( pl->curstate.messagenum >= player->curstate.messagenum )
+		{
+			if( cl_dynamiclights->value > 0.0f )
+			{
+				dl->origin.x = pl->curstate.origin.x;
+				dl->origin.y = pl->curstate.origin.y;
+				dl->origin.z = pl->curstate.origin.z;
+				dl->radius = 50 * guntype + 50;
+				dl->color.r = -8;
+				dl->color.g = -1;
+				dl->color.b = 120;
+				dl->decay = 50 * guntype + 600;
+				dl->die = gHUD.m_flTime + 1.0f;
+				return;
+			}
+		}
+	}
 }
