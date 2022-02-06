@@ -38,6 +38,7 @@ project (dod13-client)
 ################\
 option(USE_VGUI "Enable VGUI1." OFF)
 option(USE_VGUI2 "Enable VGUI2. UNDONE" OFF)
+option(BUILD_PMAN "Build particleman" OFF)
 option(USE_NOVGUI_MOTD "Prefer non-VGUI MOTD when USE_VGUI is enabled" OFF)
 option(USE_NOVGUI_SCOREBOARD "Prefer non-VGUI Scoreboard when USE_VGUI is enabled" OFF)
 option(USE_VOICEMGR "Enable VOICE MANAGER." OFF)
@@ -108,6 +109,11 @@ endif()
 
 if(BUILD_SERVER)
 	add_subdirectory(dlls)
+endif()
+
+if(BUILD_PMAN)
+	add_definitions(-DUSE_PARTICLEMAN)
+	add_subdirectory(Particleman)
 endif()
 
 if(NOT BUILD_SERVER AND NOT BUILD_CLIENT)
