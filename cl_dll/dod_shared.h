@@ -6,6 +6,7 @@
 #define WEAPON_NONE				0
 #define WEAPON_AMER_KNIFE		1
 #define WEAPON_GER_KNIFE		2
+#define WEAPON_COLT             3
 #define	WEAPON_SPADE			19
 
 // DOD weapon weight factors (for auto-switching)   (-1 = noswitch)

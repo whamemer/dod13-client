@@ -641,11 +641,26 @@ public:
 
 	int m_iNoConsolePrint;
 
+	// DOD
+	bool                       m_bAllieParatrooper;
+	bool                       m_bAllieInfiniteLives;
+	bool                       m_bAxisParatrooper;
+	bool                       m_bAxisInfiniteLives;
+	bool                       m_bParatrooper;
+	bool                       m_bInfiniteLives;
+	bool                       m_bBritish;
+
 	void AddHudElem( CHudBase *p );
 
 	float GetSensitivity();
 
 	void GetAllPlayersInfo( void );
+
+	// DOD
+
+	void GetWeaponRecoilAmount( int weapon_id, const float *flPitchRecoil, const float *flYawRecoil );
+
+	void DoRecoil( int weapon_id );
 };
 
 extern CHud gHUD;

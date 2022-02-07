@@ -806,3 +806,14 @@ void CHud::GetAllPlayersInfo()
 		}
 	}
 }
+
+// WHAMER: TODO
+void CHud::GetWeaponRecoilAmount( int weapon_id, const float *flPitchRecoil, const float *flYawRecoil )
+{
+
+}
+
+void CHud::DoRecoil( int weapon_id )
+{
+
+}
