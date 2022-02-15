@@ -31,6 +31,8 @@
 #include "demo.h"
 #include "demo_api.h"
 
+#include "dod_shared.h"
+
 hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
 team_info_t		g_TeamInfo[MAX_TEAMS + 1];
@@ -807,13 +809,49 @@ void CHud::GetAllPlayersInfo()
 	}
 }
 
-// WHAMER: TODO
-void CHud::GetWeaponRecoilAmount( int weapon_id, const float *flPitchRecoil, const float *flYawRecoil )
+/*void CHud::GetWeaponRecoilAmount( int weapon_id, float *flPitchRecoil, float *flYawRecoil )
 {
+	float flp, fla;
 
-}
+	*flPitchRecoil = 0.0f;
+	*flYawRecoil = 2.0f;
 
+	switch( weapon_id ) // WHAMER: TODO: use weapons id
+	{
+		case WEAPON_COLT:
+		case 4:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+		case 11:
+		case 12:
+		case 17:
+		case 18:
+		case 20:
+		case 22:
+		case 23:
+		case 24:
+		case 25:
+		case 26:
+		case 27:
+		case 28:
+			*flPitchRecoil = 1.4f;
+			flp = 0.35;
+		case 29:
+		case 30:
+		case 31:
+		default:
+	}
+}*/
+
+// WHAMER: TODO
 void CHud::DoRecoil( int weapon_id )
 {
+	float flPitchRecoil, flYawRecoil[4];
 
+	CHud::GetWeaponRecoilAmount( weapon_id, &flPitchRecoil, flYawRecoil );
+
+	
 }

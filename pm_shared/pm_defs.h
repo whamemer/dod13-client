@@ -27,6 +27,14 @@
 #define PM_WORLD_ONLY	0x00000008	// Only trace against the world
 #define PM_CUSTOM_IGNORE	0x00000010	// Ignore entities with SOLID_CUSTOM mode
 
+#define OBS_NONE				0
+#define OBS_CHASE_LOCKED		1
+#define OBS_CHASE_FREE			2
+#define OBS_ROAMING				3
+#define OBS_IN_EYE				4
+#define OBS_MAP_FREE			5
+#define OBS_MAP_CHASE			6	
+
 // Values for flags parameter of PM_TraceLine
 #define PM_TRACELINE_PHYSENTSONLY	0
 #define PM_TRACELINE_ANYVISIBLE	1

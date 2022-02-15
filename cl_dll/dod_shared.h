@@ -2,14 +2,16 @@
 #if !defined(DOD_SHARED_H)
 #define DOD_SHARED_H
 
-// DOD weapon id
+// weapon id
 #define WEAPON_NONE				0
 #define WEAPON_AMER_KNIFE		1
 #define WEAPON_GER_KNIFE		2
 #define WEAPON_COLT             3
+#define WEAPON_LUGER            4
 #define	WEAPON_SPADE			19
+#define WEAPON_WEBLEY           28
 
-// DOD weapon weight factors (for auto-switching)   (-1 = noswitch)
+// weapon weight factors (for auto-switching)   (-1 = noswitch)
 #define AMERKNIFE_WEIGHT	0
 #define GERKNIFE_WEIGHT		0
 #define SPADE_WEIGHT		0
@@ -61,14 +63,6 @@ enum VOICECOMSLOTS_e
 #define KNIFE_BODYHIT_VOLUME    128
 #define KNIFE_WALLHIT_VOLUME    512
 
-enum KNIFE_e
-{
-    KNIFE_IDLE = 0,
-    KNIFE_SLASH1 = 1,
-    KNIFE_SLASH2 = 2,
-    KNIFE_DRAW = 3
-};
-
 class CMeleeWeapon : public CBasePlayerWeapon
 {
 public:
@@ -98,6 +92,14 @@ public:
 
 private:
 	unsigned short m_iFireEvent;
+};
+
+enum KNIFE_e
+{
+    KNIFE_IDLE = 0,
+    KNIFE_SLASH1 = 1,
+    KNIFE_SLASH2 = 2,
+    KNIFE_DRAW = 3
 };
 
 class CAmerKnife : public CMeleeWeapon
@@ -236,18 +238,6 @@ enum BREN_e
     BREN_DOWN_TO_UP = 8
 };
 
-enum COLT_e
-{
-    COLT_IDLE = 0,
-    COLT_SHOOT = 1,
-    COLT_SHOOT2 = 2,
-    COLT_RELOAD_EMPTY = 3,
-    COLT_RELOAD = 4,
-    COLT_DRAW = 5,
-    COLT_SHOOT_EMPTY = 6,
-    COLT_IDLE_EMPTY = 7
-};
-
 class CPistol : public CBasePlayerWeapon
 {
 public:
@@ -266,6 +256,18 @@ public:
     BOOL UseDecrement( void ) { return TRUE; }
     int Classify( void ) { return 8; }
     BOOL CanDrop( void ) { return FALSE; }
+};
+
+enum COLT_e
+{
+    COLT_IDLE = 0,
+    COLT_SHOOT = 1,
+    COLT_SHOOT2 = 2,
+    COLT_RELOAD_EMPTY = 3,
+    COLT_RELOAD = 4,
+    COLT_DRAW = 5,
+    COLT_SHOOT_EMPTY = 6,
+    COLT_IDLE_EMPTY = 7
 };
 
 class CCOLT : public CPistol
