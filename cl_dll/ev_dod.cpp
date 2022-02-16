@@ -158,7 +158,41 @@ void EV_FireMP40( event_args_s *args )
 
 void EV_Knife( event_args_s *args )
 {
+	int idx;
+	int g_iSwing;
 
+	vec3_t origin;
+
+	idx = args->entindex;
+
+	VectorCopy( args->origin, origin );
+
+	if( gEngfuncs.pfnRandomFloat( 0.0f, 1.0f ) == 1.0f )
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knife_slash2.wav", gEngfuncs.pfnRandomFloat( 0.8f, 1.0f ), ATTN_NORM, 0, 94.0f + gEngfuncs.pfnRandomFloat( 0.0f, 15.0f ) );
+	else
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knife_slash1.wav", gEngfuncs.pfnRandomFloat( 0.8f, 1.0f ), ATTN_NORM, 0, 94.0f + gEngfuncs.pfnRandomFloat( 0.0f, 15.0f ) );
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+
+		switch( ( g_iSwing++ ) % 2 )
+		{
+			case 0:
+				if( g_iTeamNumber == 1 )
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( KNIFE_SLASH1, gHUD.m_bBritish );
+				else
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( KNIFE_SLASH1, 2 );
+				break;
+			case 1:
+				if( g_iTeamNumber == 1 )
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( KNIFE_SLASH2, gHUD.m_bBritish );
+				else
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( KNIFE_SLASH2, 2 );
+				break;
+		}
+	}
 }
 
 void EV_FireBAR( event_args_s *args )
@@ -294,6 +328,8 @@ void EV_FireMelee( event_args_s *args )
 	empty = args->bparam1;
 	empty2 = args->bparam2;
 	idx = args->entindex;
+
+	VectorCopy( args->origin, origin );
 
 	if( EV_IsLocal( idx ) )
 	{

@@ -809,7 +809,7 @@ void CHud::GetAllPlayersInfo()
 	}
 }
 
-/*void CHud::GetWeaponRecoilAmount( int weapon_id, float *flPitchRecoil, float *flYawRecoil )
+void CHud::GetWeaponRecoilAmount( int weapon_id, float *flPitchRecoil, float *flYawRecoil )
 {
 	float flp, fla;
 
@@ -844,14 +844,23 @@ void CHud::GetAllPlayersInfo()
 		case 31:
 		default:
 	}
-}*/
+}
 
-// WHAMER: TODO
 void CHud::DoRecoil( int weapon_id )
 {
 	float flPitchRecoil, flYawRecoil[4];
+	float flRecoil;
+
+	flPitchRecoil = m_flPitchRecoilAccumulator;
+
+	flRecoil = gEngfuncs.pfnRandomFloat( 0.8f, 1.1f ) * flYawRecoil[0];
 
 	CHud::GetWeaponRecoilAmount( weapon_id, &flPitchRecoil, flYawRecoil );
 
+	if( gEngfuncs.pfnRandomLong( 0, 1 ) > 0 )
+		flRecoil = -flRecoil;
+
+	flRecoil = VidInit(); // WHAMER: TODO
 	
+	m_flRecoilTimeRemaining = 0.1f;
 }

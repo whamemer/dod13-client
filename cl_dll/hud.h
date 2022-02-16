@@ -558,6 +558,10 @@ public:
 	cvar_t  *m_pCvarStealMouse;
 	cvar_t	*m_pCvarDraw;
 
+	float m_flPitchRecoilAccumulator;
+	float m_flYawRecoilAccumulator;
+	float m_flRecoilTimeRemaining;
+
 	int m_iFontHeight;
 	int DrawHudNumber( int x, int y, int iFlags, int iNumber, int r, int g, int b );
 	int DrawHudString( int x, int y, int iMaxX, const char *szString, int r, int g, int b );
