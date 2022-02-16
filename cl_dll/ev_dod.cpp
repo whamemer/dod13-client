@@ -48,11 +48,12 @@ void EV_FireColt( event_args_s *args )
 	if( EV_IsLocal( idx ) )
 	{
 		if( g_iUser1 == OBS_IN_EYE )
-		{
 			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
-		}
 
-		gEngfuncs.pEventAPI->EV_WeaponAnimation( empty == 0 ? COLT_SHOOT : COLT_SHOOT_EMPTY, 2 );
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( empty == 0 ? COLT_SHOOT : COLT_SHOOT_EMPTY, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( empty == 0 ? COLT_SHOOT : COLT_SHOOT_EMPTY, 2 );
 
 		gHUD.DoRecoil( WEAPON_COLT );
 	}
@@ -95,11 +96,12 @@ void EV_FireLuger( event_args_s *args )
 	if( EV_IsLocal( idx ) )
 	{
 		if( g_iUser1 == OBS_IN_EYE )
-		{
 			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
-		}
 
-		gEngfuncs.pEventAPI->EV_WeaponAnimation( LUGER_SHOOT_EMPTY - ( empty == 0 ), 2 );
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( LUGER_SHOOT_EMPTY - ( empty == 0 ) , gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( LUGER_SHOOT_EMPTY - ( empty == 0 ), 2 );
 
 		gHUD.DoRecoil( WEAPON_LUGER );
 	}
@@ -232,11 +234,12 @@ void EV_FireWebley( event_args_s *args )
 	if( EV_IsLocal( idx ) )
 	{
 		if( g_iUser1 == OBS_IN_EYE )
-		{
 			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
-		}
 
-		gEngfuncs.pEventAPI->EV_WeaponAnimation( WEBLEY_SHOOT, 2 );
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( WEBLEY_SHOOT , gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( WEBLEY_SHOOT , 2 );
 
 		gHUD.DoRecoil( WEAPON_WEBLEY );
 	}
@@ -282,6 +285,141 @@ void EV_FireMortar( event_args_s *args )
 }
 
 void EV_FireMelee( event_args_s *args )
+{
+	int pitch, empty, empty2, idx;
+
+	vec3_t origin;
+
+	pitch = args->iparam1;
+	empty = args->bparam1;
+	empty2 = args->bparam2;
+	idx = args->entindex;
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( pitch , gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( pitch , 2 );
+	}
+
+	if( empty )
+	{
+		gEngfuncs.pfnRandomLong( 0, 1 );
+
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knife_slash1.wav", gEngfuncs.pfnRandomFloat( 0.8f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+	}
+
+	if( empty2 )
+	{
+		gEngfuncs.pfnRandomLong( 0, 2 );
+
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knife_hit1.wav", gEngfuncs.pfnRandomFloat( 0.8f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+	}
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
+}
+
+void EV_Pain( struct event_args_s *args )
+{
+
+}
+
+void EV_Smoke( struct event_args_s *args )
+{
+
+}
+void EV_BloodSprite( struct event_args_s *args )
+{
+
+}
+
+void EV_BloodStream( struct event_args_s *args )
+{
+
+}
+
+void EV_BulletTracers( struct event_args_s *args )
+{
+
+}
+
+void EV_BubbleTrails( struct event_args_s *args )
+{
+
+}
+
+void EV_Bubbles( struct event_args_s *args )
+{
+
+}
+
+void EV_Explosion( struct event_args_s *args )
+{
+
+}
+
+void EV_SparkShower( struct event_args_s *args )
+{
+
+}
+
+void EV_PlayWhizz( struct event_args_s *args )
+{
+
+}
+
+void EV_USVoice( struct event_args_s *args )
+{
+
+}
+
+void EV_GERVoice( struct event_args_s *args )
+{
+
+}
+
+void EV_BodyDamage( struct event_args_s *args )
+{
+
+}
+
+void EV_RoundReleaseSound( struct event_args_s *args )
+{
+
+}
+
+void EV_DoDCamera( struct event_args_s *args )
+{
+
+}
+
+void EV_PopHelmet( struct event_args_s *args )
+{
+
+}
+void EV_RoundReset( struct event_args_s *args )
+{
+
+}
+
+void EV_Overheat( struct event_args_s *args )
+{
+
+}
+
+void EV_RocketTrail( struct event_args_s *args )
+{
+
+}
+
+void EV_MortarShell( struct event_args_s *args )
 {
 
 }
