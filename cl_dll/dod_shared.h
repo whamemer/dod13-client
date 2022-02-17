@@ -8,8 +8,29 @@
 #define WEAPON_GER_KNIFE		2
 #define WEAPON_COLT             3
 #define WEAPON_LUGER            4
+#define WEAPON_GARAND           5
+#define WEAPON_SCOPEDKAR        6
+#define WEAPON_THOMPSON         7
+#define WEAPON_MP44             8
+#define WEAPON_SPRING           9
+#define WEAPON_KAR              10
+#define WEAPON_BAR              11
+#define WEAPON_MP40             12
+#define WEAPON_MG42             17
+#define WEAPON_CAL30            18
 #define	WEAPON_SPADE			19
+#define WEAPON_M1CARBINE        20
+#define WEAPON_MG34             21
+#define WEAPON_GREASEGUN        22
+#define WEAPON_FG42             23
+#define WEAPON_K43              24
+#define WEAPON_ENFIELD          25
+#define WEAPON_STEN             26
+#define WEAPON_BREN             27
 #define WEAPON_WEBLEY           28
+#define WEAPON_BAZOOKA          29
+#define WEAPON_PSCHRECK         30
+#define WEAPON_PIAT             31
 
 // weapon weight factors (for auto-switching)   (-1 = noswitch)
 #define AMERKNIFE_WEIGHT	0

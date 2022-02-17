@@ -646,13 +646,15 @@ public:
 	int m_iNoConsolePrint;
 
 	// DOD
-	bool                       m_bAllieParatrooper;
-	bool                       m_bAllieInfiniteLives;
-	bool                       m_bAxisParatrooper;
-	bool                       m_bAxisInfiniteLives;
-	bool                       m_bParatrooper;
-	bool                       m_bInfiniteLives;
-	bool                       m_bBritish;
+	bool m_bAllieParatrooper;
+	bool m_bAllieInfiniteLives;
+	bool m_bAxisParatrooper;
+	bool m_bAxisInfiniteLives;
+	bool m_bParatrooper;
+	bool m_bInfiniteLives;
+	bool m_bBritish;
+
+	int g_iWeaponFlags;
 
 	void AddHudElem( CHudBase *p );
 
@@ -674,4 +676,6 @@ extern int g_iTeamNumber;
 extern int g_iUser1;
 extern int g_iUser2;
 extern int g_iUser3;
+
+extern int g_iVuser1x;
 #endif

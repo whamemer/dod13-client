@@ -32,6 +32,7 @@
 #include "demo_api.h"
 
 #include "dod_shared.h"
+#include "pm_defs.h"
 
 hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
@@ -811,38 +812,154 @@ void CHud::GetAllPlayersInfo()
 
 void CHud::GetWeaponRecoilAmount( int weapon_id, float *flPitchRecoil, float *flYawRecoil )
 {
-	float flp, fla;
-
 	*flPitchRecoil = 0.0f;
 	*flYawRecoil = 2.0f;
 
-	switch( weapon_id ) // WHAMER: TODO: use weapons id
+	bool b;
+
+	switch( weapon_id )
 	{
 		case WEAPON_COLT:
-		case 4:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-		case 17:
-		case 18:
-		case 20:
-		case 22:
-		case 23:
-		case 24:
-		case 25:
-		case 26:
-		case 27:
-		case 28:
+		case WEAPON_LUGER:
+		case WEAPON_SCOPEDKAR:
+			*flPitchRecoil = 6.0f;
+			m_flPitchRecoilAccumulator = 1.5f;
+
+		case WEAPON_THOMPSON:
+		case WEAPON_MP44:
+			*flPitchRecoil = 5.0f;
+			m_flPitchRecoilAccumulator = 1.25f;
+
+		case WEAPON_SPRING:
+			*flPitchRecoil = 5.6f;
+			m_flPitchRecoilAccumulator = 1.4f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_KAR:
+			*flPitchRecoil = 8.0f;
+			m_flPitchRecoilAccumulator = 2.0f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_BAR:
+		case WEAPON_MP40:
+		case WEAPON_MG42:
+		case WEAPON_CAL30:
+		case WEAPON_M1CARBINE:
+		case WEAPON_MG34:
+			*flPitchRecoil = 20.0f;
+			m_flPitchRecoilAccumulator = 5.0f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_GREASEGUN:
+			*flPitchRecoil = 2.15f;
+			m_flPitchRecoilAccumulator = 0.5f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_FG42:
+			*flPitchRecoil = 5.3f;
+			m_flPitchRecoilAccumulator = 1.325f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_K43:
+			*flPitchRecoil = 7.0f;
+			m_flPitchRecoilAccumulator = 1.75f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_ENFIELD:
+			if( ( g_iWeaponFlags & 1 ) != 0 )
+			{
+				*flPitchRecoil = 6.0f;
+				m_flPitchRecoilAccumulator = 1.5f;
+				b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+			}
+			else
+			{
+				*flPitchRecoil = 8.0f;
+				m_flPitchRecoilAccumulator = 2.0f;
+				b = false;
+			}
+
+			*flYawRecoil = m_flPitchRecoilAccumulator;
+
+			if( ( g_iUser3 == OBS_CHASE_FREE || g_iVuser1x == OBS_CHASE_FREE ) && ( ( weapon_id - WEAPON_MG42 ) <= 1 || weapon_id == WEAPON_FG42 || b || weapon_id == WEAPON_MG34 ) )
+			{
+				*flPitchRecoil = 0.0f;
+				*flYawRecoil = 0.0f;
+			}
+			else
+			{
+				if( ( g_iUser3 - OBS_CHASE_LOCKED ) > 1 || weapon_id == WEAPON_MG42 || weapon_id == WEAPON_CAL30 || weapon_id == WEAPON_MG34 )
+				{
+					if( ( gHUD.m_iKeyBits & 4 ) == 0 )
+						return;
+
+					m_flYawRecoilAccumulator = 0.5f; 
+				}
+				else
+				{
+					m_flYawRecoilAccumulator = 0.25f;
+				}
+				*flPitchRecoil = *flPitchRecoil * m_flYawRecoilAccumulator;
+				*flYawRecoil = *flYawRecoil * m_flYawRecoilAccumulator;
+			}
+			return;
+
+		case WEAPON_STEN:
+			*flPitchRecoil = 2.2f;
+			m_flPitchRecoilAccumulator = 0.55f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_BREN:
+			*flPitchRecoil = 6.72f;
+			m_flPitchRecoilAccumulator = 1.3f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_WEBLEY:
 			*flPitchRecoil = 1.4f;
-			flp = 0.35;
-		case 29:
-		case 30:
-		case 31:
+			m_flPitchRecoilAccumulator = 0.35f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+
+		case WEAPON_BAZOOKA:
+		case WEAPON_PSCHRECK:
+		case WEAPON_PIAT:
+			*flPitchRecoil = 10.0f;
+			m_flPitchRecoilAccumulator = 2.5f;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+			
 		default:
+			*flPitchRecoil = 0.0f;
+			*flYawRecoil = 0.0f;
+			m_flPitchRecoilAccumulator = 0.25f * *flPitchRecoil;
+			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
+			*flYawRecoil = m_flPitchRecoilAccumulator;
+
+			if( b )
+				m_flPitchRecoilAccumulator = 1.3f;
+			
+			*flYawRecoil = m_flPitchRecoilAccumulator;
+
+			if( ( g_iUser3 == OBS_CHASE_FREE || g_iVuser1x == OBS_CHASE_FREE ) && ( ( weapon_id - WEAPON_MG42 ) <= 1 || weapon_id == WEAPON_FG42 || b || weapon_id == WEAPON_MG34 ) )
+			{
+				*flPitchRecoil = 0.0f;
+				*flYawRecoil = 0.0f;
+			}
+			else
+			{
+				if( ( g_iUser3 - OBS_CHASE_LOCKED ) > 1 || weapon_id == WEAPON_MG42 || weapon_id == WEAPON_CAL30 || weapon_id == WEAPON_MG34 )
+				{
+					if( ( gHUD.m_iKeyBits & 4 ) == 0 )
+						return;
+
+					m_flYawRecoilAccumulator = 0.5f; 
+				}
+				else
+				{
+					m_flYawRecoilAccumulator = 0.25f;
+				}
+				*flPitchRecoil = *flPitchRecoil * m_flYawRecoilAccumulator;
+				*flYawRecoil = *flYawRecoil * m_flYawRecoilAccumulator;
+			}
+			return;
 	}
 }
 
