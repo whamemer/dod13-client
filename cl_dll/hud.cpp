@@ -925,7 +925,7 @@ void CHud::GetWeaponRecoilAmount( int weapon_id, float *flPitchRecoil, float *fl
 			*flPitchRecoil = 10.0f;
 			m_flPitchRecoilAccumulator = 2.5f;
 			b = weapon_id == WEAPON_BAR || weapon_id == WEAPON_BREN;
-			
+
 		default:
 			*flPitchRecoil = 0.0f;
 			*flYawRecoil = 0.0f;

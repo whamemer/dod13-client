@@ -27,6 +27,9 @@
 #include "pm_shared.h"
 
 #define IS_FIRSTPERSON_SPEC ( g_iUser1 == OBS_IN_EYE || ( g_iUser1 && ( gHUD.m_Spectator.m_pip->value == INSET_IN_EYE ) ) )
+
+cvar_t *cl_dynamiclights;
+
 /*
 =================
 GetEntity
@@ -307,7 +310,6 @@ Specific MuzzleFlash for Day of Defeat
 */
 void EV_MuzzleFlashDOD( int idx, int guntype )
 {
-	cvar_t *cl_dynamiclights;
 	cl_entity_t *ent = GetViewEntity();
 	cl_entity_t *pl = GetEntity( idx );
 	cl_entity_t *player = gEngfuncs.GetLocalPlayer();
