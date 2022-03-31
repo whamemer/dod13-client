@@ -132,7 +132,7 @@ void EV_FireGarand( event_args_s *args )
 	vec3_t origin;
 	vec3_t angles;
 
-		vec3_t vecSrc, vecAiming;
+	vec3_t vecSrc, vecAiming;
 	vec3_t up, right, forward;
 
 	VectorCopy( args->origin, origin );
@@ -196,7 +196,44 @@ void EV_FireGarand( event_args_s *args )
 
 void EV_FireScopedKar( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( 1, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( 1, 2 );
+		
+		gHUD.DoRecoil( WEAPON_SCOPEDKAR );
+	}
+	EV_MuzzleFlashDOD( idx, 2 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/kar_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_SCOPEDKAR, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireThompson( event_args_s *args )
@@ -216,7 +253,88 @@ void EV_FireSpring( event_args_s *args )
 
 void EV_FireKar( event_args_s *args )
 {
+	int idx, FireModea;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+	FireModea = args->iparam1;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	if( FireModea == 1 )
+	{
+		if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) != 1 )
+		{
+			if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) <= 1 )
+			{
+				if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) )
+					return;
+			}
+			else if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) != 2 )
+			{
+				if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) != 3 )
+					return;
+				
+				gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knifeswing2.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+				if( !EV_IsLocal( idx ) )
+					return;
+
+				if( g_iUser1 == OBS_IN_EYE )
+					g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+
+				if( g_iTeamNumber == 1 )
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( 5, gHUD.m_bBritish );
+				else
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( 5, 2 );
+				return;
+			}
+		}
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knifeswing.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+		if( !EV_IsLocal( idx ) )
+			return;
+
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( 4, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( 4, 2 );
+		return;
+	}
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( 1, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( 1, 2 );
+		
+		gHUD.DoRecoil( WEAPON_KAR );
+	}
+	EV_MuzzleFlashDOD( idx, 2 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/kar_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_KAR, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireMP40( event_args_s *args )
