@@ -981,3 +981,10 @@ void CHud::DoRecoil( int weapon_id )
 	
 	m_flRecoilTimeRemaining = 0.1f;
 }
+
+bool CHud::IsInMGDeploy( void )
+{
+	if( g_iUser3 != OBS_CHASE_FREE )\
+		return g_iVuser1x == OBS_CHASE_FREE;
+	return true;
+}

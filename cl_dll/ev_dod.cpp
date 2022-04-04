@@ -539,7 +539,58 @@ void EV_Knife( event_args_s *args )
 
 void EV_FireBAR( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( gHUD.IsInMGDeploy() )
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BAR_DOWN_SHOOT, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BAR_DOWN_SHOOT, 2 );
+		}
+		else
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BAR_UP_SHOOT, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BAR_UP_SHOOT, 2 );
+		}
+		gHUD.DoRecoil( WEAPON_BAR );
+	}
+	EV_MuzzleFlashDOD( idx, 4 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/bar_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_BAR, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireMG42( event_args_s *args )
@@ -554,7 +605,68 @@ void EV_FireMG34( event_args_s *args )
 
 void EV_Fire30CAL( event_args_s *args )
 {
+	int idx, pitch;
 
+	int ThirtyCal_DownAnims[9] = { CAL30_DOWNSHOOT, CAL30_DOWNSHOOT8, CAL30_DOWNSHOOT7, CAL30_DOWNSHOOT6, CAL30_DOWNSHOOT5, CAL30_DOWNSHOOT4, CAL30_DOWNSHOOT3, 
+	CAL30_DOWNSHOOT2, CAL30_DOWNSHOOT1 }; 
+
+	int ThirtyCal_UpAnims[9] = { CAL30_UPSHOOT, CAL30_UPSHOOT8, CAL30_UPSHOOT7, CAL30_UPSHOOT6, CAL30_UPSHOOT5, CAL30_UPSHOOT4, CAL30_UPSHOOT3,
+	CAL30_UPSHOOT2, CAL30_UPSHOOT1 };
+
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+	pitch = args->iparam1;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( pitch <= CAL30_UPIDLE1 )
+			pitch = CAL30_UPIDLE1;
+
+		if( gHUD.IsInMGDeploy() )
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( ThirtyCal_DownAnims[pitch], gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( ThirtyCal_DownAnims[pitch], 2 );
+		}
+		else
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( ThirtyCal_UpAnims[pitch], gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( ThirtyCal_UpAnims[pitch], 2 );
+		}
+		gHUD.DoRecoil( WEAPON_CAL30 );
+	}
+	EV_MuzzleFlashDOD( idx, 4 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/30cal_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_30CAL, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireGreaseGun( event_args_s *args )

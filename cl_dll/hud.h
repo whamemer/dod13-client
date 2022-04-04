@@ -667,6 +667,8 @@ public:
 	void GetWeaponRecoilAmount( int weapon_id, float *flPitchRecoil, float *flYawRecoil );
 
 	void DoRecoil( int weapon_id );
+
+	bool IsInMGDeploy( void ); 
 };
 
 extern CHud gHUD;
