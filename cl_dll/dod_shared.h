@@ -255,7 +255,7 @@ enum BREN_e
     BREN_UP_TO_DOWN = 4,
     BREN_DOWN_IDLE = 5,
     BREN_DOWN_RELOAD = 6,
-    BREN_DOWN_SHOO = 7,
+    BREN_DOWN_SHOOT = 7,
     BREN_DOWN_TO_UP = 8
 };
 
@@ -406,7 +406,7 @@ enum FG42_e
     FG42_UP_TO_DOWN = 4,
     FG42_DOWN_IDLE = 5,
     FG42_DOWN_RELOAD = 6,
-    FG42_DOWN_SHOO = 7,
+    FG42_DOWN_SHOOT = 7,
     FG42_DOWN_TO_UP = 8,
     FG42_LOWER_FOR_ZOOM = 9
 };

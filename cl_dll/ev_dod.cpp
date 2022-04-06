@@ -370,12 +370,12 @@ void EV_FireSpring( event_args_s *args )
 
 void EV_FireKar( event_args_s *args )
 {
-	int idx, FireModea;
+	int idx, pitch;
 
 	vec3_t origin, angles;
 
 	idx = args->entindex;
-	FireModea = args->iparam1;
+	pitch = args->iparam1;
 
 	vec3_t vecSrc, vecAiming;
 	vec3_t up, right, forward;
@@ -383,7 +383,7 @@ void EV_FireKar( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
-	if( FireModea == 1 )
+	if( pitch == 1 )
 	{
 		if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) != 1 )
 		{
@@ -595,12 +595,136 @@ void EV_FireBAR( event_args_s *args )
 
 void EV_FireMG42( event_args_s *args )
 {
+	int idx, pitch, empty;
+	int shell;
+	bool bCallAnim;
 
+	int MG42_DownAnims[9] = { MG42_DOWNSHOOT, MG42_DOWNSHOOT8, MG42_DOWNSHOOT7, MG42_DOWNSHOOT6, MG42_DOWNSHOOT5, MG42_DOWNSHOOT4, MG42_DOWNSHOOT3, 
+	MG42_DOWNSHOOT2, MG42_DOWNSHOOT1 }; 
+
+	int MG42_UpAnims[9] = { MG42_UPSHOOT, MG42_UPSHOOT8, MG42_UPSHOOT7, MG42_UPSHOOT6, MG42_UPSHOOT5, MG42_UPSHOOT4, MG42_UPSHOOT3,
+	MG42_UPSHOOT2, MG42_UPSHOOT1 };
+
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+	pitch = args->iparam1;
+	empty = args->bparam1;
+
+	bCallAnim = empty == 0;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	shell = gEngfuncs.pEventAPI->EV_FindModelIndex( "models/shell_mg42.dll" );
+
+	if( !EV_IsLocal )
+	{
+		if( !bCallAnim ) // TODO: Need rework - WHAMER
+		{
+			goto bCallAnimLabel1;
+		}
+		goto bCallAnimLabel2;
+	}
+
+	if( bCallAnim )
+	{
+		if( pitch <= MG42_UPIDLE1 )
+			pitch = MG42_UPIDLE1;
+
+		if( gHUD.IsInMGDeploy() )
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( MG42_DownAnims[pitch], gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( MG42_DownAnims[pitch], 2 );
+		}
+		else
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( MG42_UpAnims[pitch], gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( MG42_UpAnims[pitch], 2 );
+		}
+		gHUD.DoRecoil( WEAPON_MG42 );
+bCallAnimLabel2:
+		EV_MuzzleFlashDOD( idx, 4 );
+
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/mg42_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+	}
+bCallAnimLabel1:
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_MG42, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireMG34( event_args_s *args )
 {
+	int idx, pitch;
+	int iAnim;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+	pitch = args->iparam1;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( gHUD.IsInMGDeploy() )
+			iAnim = MG34_DOWNSHOOTEMPTY - ( pitch <= 0 == 0 );
+		else
+			iAnim = MG34_UPSHOOTEMPTY - ( pitch <= 0 == 0 );
+		
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( iAnim, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( iAnim, 2 );
+
+		gHUD.DoRecoil( WEAPON_MG34 );
+	}
+	EV_MuzzleFlashDOD( idx, 4 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/mg34_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_MG34, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_Fire30CAL( event_args_s *args )
@@ -671,32 +795,342 @@ void EV_Fire30CAL( event_args_s *args )
 
 void EV_FireGreaseGun( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( gEngfuncs.pfnRandomLong( 0, 1 ) + GREASEGUN_SHOOT1, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( gEngfuncs.pfnRandomLong( 0, 1 ) + GREASEGUN_SHOOT1, 2 );
+		
+		gHUD.DoRecoil( WEAPON_GREASEGUN );
+	}
+	EV_MuzzleFlashDOD( idx, 3 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/greasegun_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_GREASEGUN, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireFG42( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( gHUD.IsInMGDeploy() )
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( FG42_DOWN_SHOOT, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( FG42_DOWN_SHOOT, 2 );
+		}
+		else
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( FG42_UP_SHOOT, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( FG42_UP_SHOOT, 2 );
+		}
+		gHUD.DoRecoil( WEAPON_FG42 );
+	}
+	EV_MuzzleFlashDOD( idx, 3 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/fg42_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_FG42, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireK43( event_args_s *args )
 {
+	int idx, pitch;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+	pitch = args->iparam1;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( pitch == 1 )
+	{
+		if( EV_IsLocal( idx ) )
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( K43_SMASH, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( K43_SMASH, 2 );
+
+			gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knifeswing.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+		}
+	}
+	else
+	{
+		if( EV_IsLocal( idx ) )
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( gEngfuncs.pfnRandomLong( 0, 1 ) + K43_SHOOT1, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( gEngfuncs.pfnRandomLong( 0, 1 ) + K43_SHOOT1, 2 );
+
+			gHUD.DoRecoil( WEAPON_K43 );
+		}
+		EV_MuzzleFlashDOD( idx, 2 );
+
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/k43_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+		EV_GetGunPosition( args, vecSrc, origin );
+
+		VectorCopy( forward, vecAiming );
+
+		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_K43, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+		gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+		gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+		gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+		gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
+	}
 }
 
 void EV_FireEnfield( event_args_s *args )
 {
+	int idx, pitch;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+	pitch = args->iparam1;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	if( pitch == 1 )
+	{
+		if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) != 1 )
+		{
+			if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) <= 1 )
+			{
+				if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) )
+					return;
+			}
+			else if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) != 2 )
+			{
+				if( gEngfuncs.pfnRandomFloat( 0.0f, 3.0f ) != 3 )
+					return;
+				
+				gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knifeswing2.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+				if( !EV_IsLocal( idx ) )
+					return;
+
+				if( g_iUser1 == OBS_IN_EYE )
+					g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+
+				if( g_iTeamNumber == 1 )
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( ENFIELD_SWING, gHUD.m_bBritish );
+				else
+					gEngfuncs.pEventAPI->EV_WeaponAnimation( ENFIELD_SWING, 2 );
+				return;
+			}
+		}
+		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knifeswing.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+		if( !EV_IsLocal( idx ) )
+			return;
+	}
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( ENFIELD_SHOOT, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( ENFIELD_SHOOT, 2 );
+		
+		gHUD.DoRecoil( WEAPON_ENFIELD );
+	}
+	EV_MuzzleFlashDOD( idx, 2 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/enfield_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_ENFIELD, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireSten( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( gEngfuncs.pfnRandomLong( 0, 1 ) + GREASEGUN_SHOOT1, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( gEngfuncs.pfnRandomLong( 0, 1 ) + GREASEGUN_SHOOT1, 2 );
+		
+		gHUD.DoRecoil( WEAPON_STEN );
+	}
+	EV_MuzzleFlashDOD( idx, 3 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/sten_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_STEN, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireBren( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	GetViewEntity();
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( gHUD.IsInMGDeploy() )
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BREN_DOWN_SHOOT, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BREN_DOWN_SHOOT, 2 );
+		}
+		else
+		{
+			if( g_iUser1 == OBS_IN_EYE )
+				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+			if( g_iTeamNumber == 1 )
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BREN_UP_SHOOT, gHUD.m_bBritish );
+			else
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( BREN_UP_SHOOT, 2 );
+		}
+		gHUD.DoRecoil( WEAPON_BREN );
+	}
+	EV_MuzzleFlashDOD( idx, 3 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/breen_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_BREN, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireWebley( event_args_s *args )
@@ -749,27 +1183,152 @@ void EV_FireWebley( event_args_s *args )
 
 void EV_FireScopedEnfield( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin, angles;
+
+	idx = args->entindex;
+
+	vec3_t vecSrc, vecAiming;
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( SCOPEDENFIELD_SHOOT, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( SCOPEDENFIELD_SHOOT, 2 );
+		
+		gHUD.DoRecoil( WEAPON_ENFIELD );
+	}
+	EV_MuzzleFlashDOD( idx, 2 );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/enfieldsniper_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_GetGunPosition( args, vecSrc, origin );
+
+	VectorCopy( forward, vecAiming );
+
+	EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, BULLET_PLAYER_ENFIELD, 0, &g_tracerCount[idx - 1], args->fparam1, args->fparam2 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireBazooka( event_args_s *args )
 {
+	int idx;
 
+	idx = args->entindex;
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( BAZOOKA_FIRE, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( BAZOOKA_FIRE, 2 );
+		
+		gHUD.DoRecoil( WEAPON_BAZOOKA );
+	}
+	EV_MuzzleFlashDOD( idx, 4 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FirePschreck( event_args_s *args )
 {
+	int idx;
 
+	idx = args->entindex;
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( PSCHRECK_FIRE, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( PSCHRECK_FIRE, 2 );
+		
+		gHUD.DoRecoil( WEAPON_PSCHRECK);
+	}
+	EV_MuzzleFlashDOD( idx, 4 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FirePIAT( event_args_s *args )
 {
+	int idx;
 
+	idx = args->entindex;
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( PIAT_FIRE, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( PIAT_FIRE, 2 );
+		
+		gHUD.DoRecoil( WEAPON_PIAT);
+	}
+	EV_MuzzleFlashDOD( idx, 4 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireMortar( event_args_s *args )
 {
+	int idx;
 
+	vec3_t origin;
+
+	idx = args->entindex;
+
+	VectorCopy( args->origin, origin );
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( g_iUser1 == OBS_IN_EYE )
+			g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+		
+		if( g_iTeamNumber == 1 )
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( MORTAR_DEPLOYED_FIRE, gHUD.m_bBritish );
+		else
+			gEngfuncs.pEventAPI->EV_WeaponAnimation( MORTAR_DEPLOYED_FIRE, 2 );
+	}
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/mortar_shoot.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	EV_MuzzleFlashDOD( idx, 4 );
+
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser1 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser2 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser3 = 0;
+	gEngfuncs.GetEntityByIndex( idx )->baseline.iuser4 = 0;
 }
 
 void EV_FireMelee( event_args_s *args )
