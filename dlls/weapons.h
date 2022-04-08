@@ -1001,4 +1001,166 @@ public:
 private:
 	unsigned short m_usSnarkFire;
 };
+
+/*
+=================
+
+Day of defeat weapons
+
+=================
+*/
+
+class CMeleeWeapon : public CBasePlayerWeapon
+{
+public:
+	void Spawn( int weapon_id );
+	void Precache( void );
+	int AddToplayer( CBasePlayer *pPlayer );
+	BOOL Deploy( void );
+	void Holster( int skiplocal );
+	void PrimaryAttack( void );
+	void Smack( void );
+	void SwingAgain( void );
+	int Swing( int fFirst );
+	int Stab( int fFirst );
+	void WeaponIdle( void );
+
+    BOOL CanDrop( void ) { return FALSE; }
+    int Classify( void ) { return 1; }
+    int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+    void SecondaryAttack( void ) { ; }
+    int ItemSlot( void ) { return 0; }
+    BOOL UseDecrement( void ) { return TRUE; }
+
+	TraceResult m_trHit;
+	int m_iSwing;
+
+private:
+	unsigned short m_iFireEvent;
+};
+
+class CAmerKnife : public CMeleeWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+	BOOL UseDecrement( void ) { return TRUE; }
+};
+
+class CSpade : public CMeleeWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+    BOOL UseDecrement( void ) { return TRUE; }
+};
+
+class CGerKnife : public CMeleeWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+    BOOL UseDecrement( void ) { return TRUE; }
+};
+
+class CPistol : public CBasePlayerWeapon
+{
+public:
+    void Spawn( int weapon_id );
+    void PrimaryAttack( void );
+    BOOL Deploy( void );
+    void Reload( void );
+    void WeaponIdle( void );
+    int GetIdleAnim( void );
+    int GetDrawAnim( void );
+    int GetReloadAnim( void );
+    
+    void SecondaryAttack( void ) { ; }
+    BOOL CanHolster( void ) { return TRUE; }
+    int iItemSlot( void ) { return 1; }
+    BOOL UseDecrement( void ) { return TRUE; }
+    int Classify( void ) { return 8; }
+    BOOL CanDrop( void ) { return FALSE; }
+};
+
+class CCOLT : public CPistol
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+	BOOL UseDecrement( void ) { return TRUE; }
+
+private:
+    unsigned short m_iFireEvent;
+};
+
+class CColtAmmoClip : public CBasePlayerAmmo
+{
+public:
+    void Spawn( void );
+    BOOL AddAmmo( CBaseEntity *pOther );
+};
+
+class CLuger : public CPistol
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+	BOOL UseDecrement( void ) { return TRUE; }
+
+private:
+    unsigned short m_iFireEvent;
+};
+
+class CLugerAmmoClip : public CBasePlayerAmmo
+{
+public:
+    void Spawn( void );
+    BOOL AddAmmo( CBaseEntity *pOther );
+};
+
+class CWEBLEY : public CPistol
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int GetSlashAnim( int m_iSwing );
+	int GetDrawAnim( void );
+	int GetIdleAnim( void );
+	BOOL UseDecrement( void ) { return TRUE; }
+
+private:
+    unsigned short m_iFireEvent;
+};
+
+class CWebleyAmmoClip : public CBasePlayerAmmo
+{
+public:
+    void Spawn( void );
+    BOOL AddAmmo( CBaseEntity *pOther );
+};
+
 #endif // WEAPONS_H

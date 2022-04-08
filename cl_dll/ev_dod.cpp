@@ -124,7 +124,7 @@ void EV_FireLuger( event_args_s *args )
 void EV_FireGarand( event_args_s *args )
 {
 	int idx, empty;
-	int prl;
+	int iAnim;
 
 	idx = args->entindex;
 	empty = args->bparam1;
@@ -157,20 +157,20 @@ void EV_FireGarand( event_args_s *args )
 	{
 		if( EV_IsLocal( idx ) )
 		{
-			prl = 4;
+			iAnim = GARAND_SHOOT_EMPTY;
 
 			if( empty )
 			{
-				prl = gEngfuncs.pfnRandomLong( 0, 2 ) + 1;
+				iAnim = gEngfuncs.pfnRandomLong( 0, 2 ) + GARAND_SHOOT1;
 			}
 
 			if( g_iUser1 == OBS_IN_EYE )
 				g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
 
 			if( g_iTeamNumber == 1 )
-				gEngfuncs.pEventAPI->EV_WeaponAnimation( prl, gHUD.m_bBritish );
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( iAnim, gHUD.m_bBritish );
 			else
-				gEngfuncs.pEventAPI->EV_WeaponAnimation( prl, 2 );
+				gEngfuncs.pEventAPI->EV_WeaponAnimation( iAnim, 2 );
 			
 			gHUD.DoRecoil( WEAPON_GARAND );
 		}

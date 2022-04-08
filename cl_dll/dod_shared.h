@@ -84,79 +84,12 @@ enum VOICECOMSLOTS_e
 #define KNIFE_BODYHIT_VOLUME    128
 #define KNIFE_WALLHIT_VOLUME    512
 
-class CMeleeWeapon : public CBasePlayerWeapon
-{
-public:
-	void Spawn( int weapon_id );
-	void Precache( void );
-	int AddToplayer( CBasePlayer *pPlayer );
-	BOOL Deploy( void );
-	void Holster( int skiplocal );
-	void PrimaryAttack( void );
-	void Smack( void );
-	void SwingAgain( void );
-	int Swing( int fFirst );
-	int Stab( int fFirst );
-	void WeaponIdle( void );
-
-    BOOL CanDrop( void ) { return FALSE; }
-    int Classify( void ) { return 1; }
-    int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
-    void SecondaryAttack( void ) { ; }
-    int ItemSlot( void ) { return 0; }
-    BOOL UseDecrement( void ) { return TRUE; }
-
-	TraceResult m_trHit;
-	int m_iSwing;
-
-private:
-	unsigned short m_iFireEvent;
-};
-
 enum KNIFE_e
 {
     KNIFE_IDLE = 0,
     KNIFE_SLASH1 = 1,
     KNIFE_SLASH2 = 2,
     KNIFE_DRAW = 3
-};
-
-class CAmerKnife : public CMeleeWeapon
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
-	BOOL UseDecrement( void ) { return TRUE; }
-};
-
-class CSpade : public CMeleeWeapon
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
-    BOOL UseDecrement( void ) { return TRUE; }
-};
-
-class CGerKnife : public CMeleeWeapon
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
-    BOOL UseDecrement( void ) { return TRUE; }
 };
 
 enum GREASEGUN_e
@@ -259,26 +192,6 @@ enum BREN_e
     BREN_DOWN_TO_UP = 8
 };
 
-class CPistol : public CBasePlayerWeapon
-{
-public:
-    void Spawn( int weapon_id );
-    void PrimaryAttack( void );
-    BOOL Deploy( void );
-    void Reload( void );
-    void WeaponIdle( void );
-    int GetIdleAnim( void );
-    int GetDrawAnim( void );
-    int GetReloadAnim( void );
-    
-    void SecondaryAttack( void ) { ; }
-    BOOL CanHolster( void ) { return TRUE; }
-    int iItemSlot( void ) { return 1; }
-    BOOL UseDecrement( void ) { return TRUE; }
-    int Classify( void ) { return 8; }
-    BOOL CanDrop( void ) { return FALSE; }
-};
-
 enum COLT_e
 {
     COLT_IDLE = 0,
@@ -289,28 +202,6 @@ enum COLT_e
     COLT_DRAW = 5,
     COLT_SHOOT_EMPTY = 6,
     COLT_IDLE_EMPTY = 7
-};
-
-class CCOLT : public CPistol
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
-	BOOL UseDecrement( void ) { return TRUE; }
-
-private:
-    unsigned short m_iFireEvent;
-};
-
-class CColtAmmoClip : public CBasePlayerAmmo
-{
-public:
-    void Spawn( void );
-    BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 enum LUGER_e
@@ -326,56 +217,12 @@ enum LUGER_e
     LUGER_IDLE_EMPTY = 8
 };
 
-class CLuger : public CPistol
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
-	BOOL UseDecrement( void ) { return TRUE; }
-
-private:
-    unsigned short m_iFireEvent;
-};
-
-class CLugerAmmoClip : public CBasePlayerAmmo
-{
-public:
-    void Spawn( void );
-    BOOL AddAmmo( CBaseEntity *pOther );
-};
-
 enum WEBLEY_e
 {
     WEBLEY_IDLE = 0,
     WEBLEY_SHOOT = 1,
     WEBLEY_RELOAD = 2,
     WEBLEY_DRAW = 3
-};
-
-class CWEBLEY : public CPistol
-{
-public:
-	void Spawn( void );
-	void Precache( void );
-	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
-	BOOL UseDecrement( void ) { return TRUE; }
-
-private:
-    unsigned short m_iFireEvent;
-};
-
-class CWebleyAmmoClip : public CBasePlayerAmmo
-{
-public:
-    void Spawn( void );
-    BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 enum ENFIELD_e

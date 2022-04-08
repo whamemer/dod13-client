@@ -977,14 +977,14 @@ void CHud::DoRecoil( int weapon_id )
 	if( gEngfuncs.pfnRandomLong( 0, 1 ) > 0 )
 		flRecoil = -flRecoil;
 
-	flRecoil = VidInit(); // WHAMER: TODO
+	gHUD.VidInit();
 	
 	m_flRecoilTimeRemaining = 0.1f;
 }
 
 bool CHud::IsInMGDeploy( void )
 {
-	if( g_iUser3 != OBS_CHASE_FREE )\
+	if( g_iUser3 != OBS_CHASE_FREE )
 		return g_iVuser1x == OBS_CHASE_FREE;
 	return true;
 }
