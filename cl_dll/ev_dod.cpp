@@ -41,7 +41,7 @@ void EV_FireColt( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
-	gEngfuncs.pfnAngleVectors( angles, forward, right, up );
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -89,7 +89,7 @@ void EV_FireLuger( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
-	gEngfuncs.pfnAngleVectors( angles, forward, right, up );
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -137,6 +137,8 @@ void EV_FireGarand( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	if( args->iparam1 )
 	{
@@ -208,6 +210,8 @@ void EV_FireScopedKar( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
+	AngleVectors( angles, forward, right, up );
+
 	if( EV_IsLocal( idx ) )
 	{
 		if( g_iUser1 == OBS_IN_EYE )
@@ -249,6 +253,8 @@ void EV_FireThompson( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -294,6 +300,8 @@ void EV_FireMP44( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
+	AngleVectors( angles, forward, right, up );
+
 	GetViewEntity();
 
 	if( EV_IsLocal( idx ) )
@@ -337,6 +345,8 @@ void EV_FireSpring( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -382,6 +392,8 @@ void EV_FireKar( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	if( pitch == 1 )
 	{
@@ -468,6 +480,8 @@ void EV_FireMP40( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
+	AngleVectors( angles, forward, right, up );
+
 	GetViewEntity();
 
 	if( EV_IsLocal( idx ) )
@@ -508,6 +522,7 @@ void EV_Knife( event_args_s *args )
 	idx = args->entindex;
 
 	VectorCopy( args->origin, origin );
+
 
 	if( gEngfuncs.pfnRandomFloat( 0.0f, 1.0f ) == 1.0f )
 		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/knife_slash2.wav", gEngfuncs.pfnRandomFloat( 0.8f, 1.0f ), ATTN_NORM, 0, 94.0f + gEngfuncs.pfnRandomFloat( 0.0f, 15.0f ) );
@@ -550,6 +565,8 @@ void EV_FireBAR( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -618,6 +635,8 @@ void EV_FireMG42( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -692,6 +711,8 @@ void EV_FireMG34( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
+	AngleVectors( angles, forward, right, up );
+
 	GetViewEntity();
 
 	if( EV_IsLocal( idx ) )
@@ -747,6 +768,8 @@ void EV_Fire30CAL( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -807,6 +830,8 @@ void EV_FireGreaseGun( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
+	AngleVectors( angles, forward, right, up );
+
 	GetViewEntity();
 
 	if( EV_IsLocal( idx ) )
@@ -850,6 +875,8 @@ void EV_FireFG42( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -907,6 +934,8 @@ void EV_FireK43( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -970,6 +999,8 @@ void EV_FireEnfield( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	if( pitch == 1 )
 	{
@@ -1047,6 +1078,8 @@ void EV_FireSten( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
+	AngleVectors( angles, forward, right, up );
+
 	GetViewEntity();
 
 	if( EV_IsLocal( idx ) )
@@ -1090,6 +1123,8 @@ void EV_FireBren( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -1149,7 +1184,7 @@ void EV_FireWebley( event_args_s *args )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
 
-	gEngfuncs.pfnAngleVectors( angles, forward, right, up );
+	AngleVectors( angles, forward, right, up );
 
 	GetViewEntity();
 
@@ -1194,6 +1229,8 @@ void EV_FireScopedEnfield( event_args_s *args )
 
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
 
 	if( EV_IsLocal( idx ) )
 	{
@@ -1377,51 +1414,125 @@ void EV_FireMelee( event_args_s *args )
 
 void EV_Pain( struct event_args_s *args )
 {
+	int idx;
 
+	char szSound[32];
+
+	idx = args->entindex;
+
+	vec3_t origin;
+
+	VectorCopy( args->origin, origin );
+
+	sprintf( szSound, "player/damage%d.wav", gEngfuncs.pfnRandomLong( 1, 11 ) );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_VOICE, szSound, 1.0f, 2.0f, 0, 100 );
 }
 
 void EV_Smoke( struct event_args_s *args )
 {
+	vec3_t origin;
+	vec3_t angles;
 
+	vec3_t up, right, forward;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	AngleVectors( angles, forward, right, up );
+
+	// TODO: WHAMER
 }
 void EV_BloodSprite( struct event_args_s *args )
 {
+	vec3_t origin;
 
+	VectorCopy( args->origin, origin );
+
+	gEngfuncs.pEfxAPI->R_BloodSprite( origin, args->iparam2, args->iparam1, args->fparam1, args->fparam2 );
 }
 
 void EV_BloodStream( struct event_args_s *args )
 {
+	vec3_t origin, angles, velocity;
 
+	TEMPENTITY *pShotDust, *pBloodNarrow;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+	VectorCopy( args->velocity, velocity );
+
+	pShotDust = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, gEngfuncs.pfnRandomFloat( 2.0f, 4.0f ), gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/shot-dust.spr" ), 4, 0, 0.34f, 1.0f, FTENT_FADEOUT );
+
+	pShotDust->fadeSpeed = 4.0f;
+	pShotDust->entity.curstate.renderamt = 800;
+	pShotDust->entity.curstate.framerate = 15.0f;
+	pShotDust->entity.curstate.rendercolor.r = -76;
+	pShotDust->entity.curstate.rendercolor.g = -80;
+	pShotDust->entity.curstate.rendercolor.b = -108;
+
+	pBloodNarrow = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, 0.0f, gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/blood-narrow.spr" ), 4, 0, 0.34f, 1.0f, FTENT_FADEOUT );
+
+	pBloodNarrow->fadeSpeed = 4.0f;
+	pBloodNarrow->entity.curstate.renderamt = 800;
+	pBloodNarrow->entity.curstate.framerate = 15.0f;
+	pBloodNarrow->entity.curstate.rendercolor.r = 75;
+	pBloodNarrow->entity.curstate.rendercolor.g = 0;
+	pBloodNarrow->entity.curstate.rendercolor.b = 0;
 }
 
 void EV_BulletTracers( struct event_args_s *args )
 {
+	vec3_t origin, angles;
 
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	gEngfuncs.pEfxAPI->R_TracerEffect( origin, angles );
 }
 
 void EV_BubbleTrails( struct event_args_s *args )
 {
+	vec3_t origin, angles;
 
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	gEngfuncs.pEfxAPI->R_BubbleTrail( origin, angles, args->fparam1, args->iparam1, args->iparam2, args->fparam2 );
 }
 
 void EV_Bubbles( struct event_args_s *args )
 {
+	vec3_t origin, angles;
 
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+	
+	gEngfuncs.pEfxAPI->R_Bubbles( origin, angles, args->fparam1, args->iparam1, args->iparam2, args->fparam2 );
 }
 
 void EV_Explosion( struct event_args_s *args )
 {
-
+	// TODO: WHAMER
 }
 
 void EV_SparkShower( struct event_args_s *args )
 {
+	vec3_t origin;
 
+	VectorCopy( args->origin, origin );
+
+	gEngfuncs.pEfxAPI->R_SparkShower( origin );
 }
 
 void EV_PlayWhizz( struct event_args_s *args )
 {
+	int idx;
 
+	idx = args->entindex;
+
+	if( EV_IsLocal( idx ) )
+		gEngfuncs.pfnPlaySoundByName( "player/whizz.wav", 1.0f );
 }
 
 void EV_USVoice( struct event_args_s *args )
@@ -1436,7 +1547,16 @@ void EV_GERVoice( struct event_args_s *args )
 
 void EV_BodyDamage( struct event_args_s *args )
 {
+	int idx, pitch;
 
+	vec3_t origin;
+
+	idx = args->entindex;
+	pitch = args->iparam1;
+
+	VectorCopy( args->origin, origin );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_STATIC, "player/helmet_hit.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 100 );
 }
 
 void EV_RoundReleaseSound( struct event_args_s *args )
