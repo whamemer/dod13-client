@@ -16,6 +16,10 @@
 #define WEAPON_KAR              10
 #define WEAPON_BAR              11
 #define WEAPON_MP40             12
+#define WEAPON_HANDGRENADE      13
+#define WEAPON_STICKGRENADE     14
+#define WEAPON_STICKGRENADEX    15
+#define WEAPON_HANDGRENADEX     16
 #define WEAPON_MG42             17
 #define WEAPON_CAL30            18
 #define	WEAPON_SPADE			19

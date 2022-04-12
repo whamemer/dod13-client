@@ -229,6 +229,11 @@ public:
 	void RemoveAllItems( BOOL removeSuit );
 	BOOL SwitchWeapon( CBasePlayerItem *pWeapon );
 
+	// DOD
+	bool IsInMGDeploy( void );
+	bool IsProneDeployed( void );
+	bool IsSandbagDeployed( void );
+
 	// JOHN:  sends custom messages if player HUD data has changed  (eg health, ammo)
 	virtual void UpdateClientData( void );
 	

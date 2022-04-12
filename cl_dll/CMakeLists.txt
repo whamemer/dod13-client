@@ -82,6 +82,7 @@ set (CLDLL_SOURCES
 	hl/hl_events.cpp
 	hl/hl_objects.cpp
 	hl/hl_weapons.cpp
+	dod/dod_weapons.cpp
 	ammo.cpp
 	ammo_secondary.cpp
 	ammohistory.cpp

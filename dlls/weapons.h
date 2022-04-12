@@ -314,6 +314,24 @@ public:
 	BOOL DefaultDeploy( const char *szViewModel, const char *szWeaponModel, int iAnim, const char *szAnimExt, int skiplocal = 0, int body = 0 );
 	int DefaultReload( int iClipSize, int iAnim, float fDelay, int body = 0 );
 
+	// DOD
+	virtual Vector Aim( float accuracyFactor, CBasePlayer *pOther, int shared_rand );
+	virtual int ChangeFOV( int fov );
+	virtual int Classify( void );
+	virtual int GetFOV( void );
+	virtual int GetRoundState( void );
+	virtual bool PlayerIsWaterSniping( void );
+	virtual void PostMortarValue( float value );
+	virtual void RemoveStamina( float removeAmount, CBasePlayer *pOther ) { ; }
+	virtual void SendMortarFireCommand( char *c );
+	virtual void ThinkZoomIn( void );
+	virtual void ThinkZoomOut( void );
+	virtual BOOL TimedDeploy( char *szViewModel, char *szWeaponModel, int iAnim, char *szAnimExt, char *szAnimReloadExt, float idleTime, float attackTime, int skiplocal );
+	virtual void UpdateZoomSpeed( void );
+	virtual int ZoomIn( void );
+	virtual int ZoomOut( void );
+	virtual float flAim( float accuracyFactor, CBasePlayer *pOther );
+
 	virtual void ItemPostFrame( void );	// called each frame by the player PostThink
 	// called by CBasePlayerWeapons ItemPostFrame()
 	virtual void PrimaryAttack( void ) { return; }				// do "+ATTACK"
@@ -1732,7 +1750,7 @@ private:
 	unsigned short m_usFireMP44;
 };
 
-class CScodepKar : public CBasePlayerWeapon
+class CScopedKar : public CBasePlayerWeapon
 {
 public:
 	void Spawn( void );
