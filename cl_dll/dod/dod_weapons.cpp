@@ -1,4 +1,4 @@
-#include "extdll.h"
+/*#include "extdll.h"
 #include "util.h"
 #include "cbase.h"
 #include "monsters.h"
@@ -72,13 +72,6 @@ CStickGrenadeEx g_StickGrenadeEx;
 CThompson g_Thompson;
 CWEBLEY g_Webley;
 
-/*
-======================
-AlertMessage
-
-Print debug messages to console
-======================
-*/
 void AlertMessage( ALERT_TYPE atype, const char *szFmt, ... )
 {
 	va_list argptr;
@@ -92,14 +85,6 @@ void AlertMessage( ALERT_TYPE atype, const char *szFmt, ... )
 	gEngfuncs.Con_Printf( string );
 }
 
-/*
-=====================
-HUD_PrepEntity
-
-Links the raw entity to an entvars_s holder.  If a player is passed in as the owner, then
-we set up the m_pPlayer field.
-=====================
-*/
 void HUD_PrepEntity( CBaseEntity *pEntity, CBasePlayer *pWeaponOwner )
 {
 	memset( &ev[num_ents], 0, sizeof(entvars_t) );
@@ -231,13 +216,7 @@ void SetScopeId( int Id )
 
 }
 
-/*
-=====================
-HUD_SetLastOrg
 
-Remember our exact predicted origin so we can draw the egon to the right position.
-=====================
-*/
 void HUD_SetLastOrg( void )
 {
 	int i;
@@ -249,13 +228,6 @@ void HUD_SetLastOrg( void )
 	}
 }
 
-/*
-=====================
-HUD_InitClientWeapons
-
-Set up weapons, player and functions needed to run weapons code client-side.
-=====================
-*/
 void HUD_InitClientWeapons( void )
 {
 	static int initialized = 0;
@@ -324,13 +296,6 @@ void HUD_InitClientWeapons( void )
     HUD_PrepEntity( &g_Webley, &player );
 }
 
-/*
-=====================
-HUD_WeaponsPostThink
-
-Run Weapon firing code on client
-=====================
-*/
 void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cmd, double time, unsigned int random_seed )
 {
 	int i;
@@ -481,23 +446,16 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 
 		pCurrent->m_fInReload = pfrom->m_fInReload;
 		pCurrent->m_fInSpecialReload = pfrom->m_fInSpecialReload;
-		//pCurrent->m_flPumpTime = pfrom->m_flPumpTime;
 		pCurrent->m_iClip = pfrom->m_iClip;
 		pCurrent->m_flNextPrimaryAttack	= pfrom->m_flNextPrimaryAttack;
 		pCurrent->m_flNextSecondaryAttack = pfrom->m_flNextSecondaryAttack;
 		pCurrent->m_flTimeWeaponIdle = pfrom->m_flTimeWeaponIdle;
-		pCurrent->pev->fuser1 = pfrom->fuser1;
-		pCurrent->m_flStartThrow = pfrom->fuser2;
-		pCurrent->m_flReleaseThrow = pfrom->fuser3;
-		pCurrent->m_chargeReady = pfrom->iuser1;
-		pCurrent->m_fInAttack = pfrom->iuser2;
-		pCurrent->m_fireState = pfrom->iuser3;
-
-		pCurrent->m_iSecondaryAmmoType = (int)from->client.vuser3[2];
-		pCurrent->m_iPrimaryAmmoType = (int)from->client.vuser4[0];
-		player.m_rgAmmo[pCurrent->m_iPrimaryAmmoType] = (int)from->client.vuser4[1];
-		player.m_rgAmmo[pCurrent->m_iSecondaryAmmoType] = (int)from->client.vuser4[2];
+		pCurrent->m_iWeaponState = pfrom->m_iWeaponState;
+		pCurrent->m_flWeaponHeat = pfrom->fuser1;
 	}
+
+	int g_iWeaponFlags = pWeapon->m_iWeaponState;
+	float g_flWeaponHeat = pWeapon->m_flWeaponHeat;
 
 	// For random weapon events, use this seed to seed random # generator
 	player.random_seed = random_seed;
@@ -530,3 +488,4 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	player.m_flNextAmmoBurn = from->client.fuser2;
 	player.m_flAmmoStartCharge = from->client.fuser3;
 }
+*/

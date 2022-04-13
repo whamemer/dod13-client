@@ -43,6 +43,7 @@ int g_iTeamNumber;
 int g_iUser1 = 0;
 int g_iUser2 = 0;
 int g_iUser3 = 0;
+int g_iVuser1x = 0;
 
 #if USE_VGUI
 #include "vgui_ScorePanel.h"

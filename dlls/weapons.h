@@ -315,6 +315,7 @@ public:
 	int DefaultReload( int iClipSize, int iAnim, float fDelay, int body = 0 );
 
 	// DOD
+	/*
 	virtual Vector Aim( float accuracyFactor, CBasePlayer *pOther, int shared_rand );
 	virtual int ChangeFOV( int fov );
 	virtual int Classify( void );
@@ -331,6 +332,7 @@ public:
 	virtual int ZoomIn( void );
 	virtual int ZoomOut( void );
 	virtual float flAim( float accuracyFactor, CBasePlayer *pOther );
+	*/
 
 	virtual void ItemPostFrame( void );	// called each frame by the player PostThink
 	// called by CBasePlayerWeapons ItemPostFrame()
@@ -363,6 +365,10 @@ public:
 	int		m_iClientClip;										// the last version of m_iClip sent to hud dll
 	int		m_iClientWeaponState;								// the last version of the weapon state sent to hud dll (is current weapon, is on target)
 	int		m_fInReload;										// Are we in the middle of a reload;
+	
+	// DOD
+	float	m_flWeaponHeat;
+	int		m_iWeaponState;
 
 	int		m_iDefaultAmmo;// how much ammo you get when you pick up this weapon as placed by a level designer.
 
@@ -1027,7 +1033,7 @@ Day of defeat weapons
 
 =================
 */
-
+/*
 class CBipodWeapon : public CBasePlayerWeapon
 {
 public:
@@ -1526,7 +1532,7 @@ class CDoDGrenadeEx : public CDoDGrenade
 	int Classify( void );
 };
 
-class CHandGrenade : public CDoDGrenade
+class CHandGrenaded : public CDoDGrenade
 {
 public:
 	void Spawn( void );
@@ -1868,5 +1874,7 @@ public:
 private:
 	unsigned short m_usFireThompson;
 };
+
+*/
 
 #endif // WEAPONS_H
