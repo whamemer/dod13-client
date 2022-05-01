@@ -27,7 +27,6 @@ static int g_tracerCount[32];
 
 extern "C"
 {
-void EV_TrainPitchAdjust( struct event_args_s *args );
 void EV_FireColt( struct event_args_s *args );
 void EV_FireLuger( struct event_args_s *args );
 void EV_FireM1Carbine( struct event_args_s *args );
