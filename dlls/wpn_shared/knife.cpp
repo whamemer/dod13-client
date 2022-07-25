@@ -1,25 +1,19 @@
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
-#include "player.h"
 #include "monsters.h"
 #include "weapons.h"
 #include "nodes.h"
-#include "soundent.h"
-#include "decals.h"
-#include "gamerules.h"
-#include "dod_shared.h"
+#include "player.h"
 
-LINK_ENTITY_TO_CLASS( weapon_melee, CMeleeWeapon );
+#include "dod_shared.h"
 
 void CMeleeWeapon::Spawn( int weapon_id )
 {	
+	Precache();
 	m_iId = weapon_id;
-	SET_MODEL( ENT( pev ), "models/w_fairbairn.mdl" );
-	m_iDefaultAmmo = MELEE_DEFAULT_GIVE;
 
 	FallInit();
-    Precache();
 }
 
 void CMeleeWeapon::Precache( void )
@@ -40,14 +34,7 @@ void CMeleeWeapon::Precache( void )
 
 int CMeleeWeapon::AddToplayer( CBasePlayer *pPlayer )
 {
-    return 0;
-}
-
-BOOL CMeleeWeapon::Deploy( void )
-{
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.75f;
-
-    return DefaultDeploy( "models/v_fairbairn.mdl", "models/p_fairbairn.mdl", KNIFE_DRAW, "melee", 0 );
+    return FALSE;
 }
 
 void CMeleeWeapon::Holster( int skiplocal )
@@ -55,9 +42,9 @@ void CMeleeWeapon::Holster( int skiplocal )
     m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5f;
 }
 
-void FindHullIntersection( const Vector &vecSrc, TraceResult &tr, float *mins, float *maxs, edict_t *pEntity )
+void FindHullIntersectionDOD( const Vector &vecSrc, TraceResult &tr, float *mins, float *maxs, edict_t *pEntity )
 {
-	int		i, j, k;
+	int			i, j, k;
 	float		distance;
 	float		*minmaxs[2] = {mins, maxs};
 	TraceResult	tmpTrace;
@@ -139,7 +126,7 @@ int CMeleeWeapon::Swing( int fFirst )
 
 			if ( !pHit || pHit->IsBSPModel() )
 			{
-				FindHullIntersection( vecSrc, tr, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, m_pPlayer->edict() );
+				FindHullIntersectionDOD( vecSrc, tr, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, m_pPlayer->edict() );
 			}
 
 			// This is the point on the actual surface (the hull could have hit space)
@@ -287,7 +274,7 @@ int CMeleeWeapon::Stab( int fFirst )
 
 			if ( !pHit || pHit->IsBSPModel() )
 			{
-				FindHullIntersection( vecSrc, tr, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, m_pPlayer->edict() );
+				FindHullIntersectionDOD( vecSrc, tr, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, m_pPlayer->edict() );
 			}
 
 			// This is the point on the actual surface (the hull could have hit space)
@@ -429,160 +416,4 @@ void CMeleeWeapon::WeaponIdle( void )
 			}
         }
     }
-}
-
-LINK_ENTITY_TO_CLASS( weapon_amerkinfe, CAmerKnife );
-
-void CAmerKnife::Spawn( void )
-{	
-	CMeleeWeapon::Spawn( WEAPON_AMER_KNIFE );
-}
-
-void CAmerKnife::Precache( void )
-{
-    PRECACHE_MODEL( "models/v_amerk.mdl" );
-    PRECACHE_MODEL( "models/w_amerk.mdl" );
-    PRECACHE_MODEL( "models/p_amerk.mdl" );
-
-    CMeleeWeapon::Precache();
-}
-
-int CAmerKnife::GetItemInfo( ItemInfo *p )
-{
-	p->pszAmmo1 = NULL;
-	p->iMaxAmmo1 = -1;
-    p->pszName = STRING(pev->classname);
-	p->pszAmmo2 = NULL;
-	p->iMaxAmmo2 = -1;
-	p->iMaxClip = AMERKNIFE_MAX_CLIP;
-	p->iSlot = 0;
-	p->iPosition = 0;
-	p->iId = WEAPON_AMER_KNIFE;
-	p->iWeight = AMERKNIFE_WEIGHT;
-
-	return 1;
-}
-
-int CAmerKnife::GetSlashAnim( int m_iSwing )
-{
-    if( m_iSwing % KNIFE_SLASH2 )
-    {
-        if( m_iSwing % KNIFE_SLASH2 == KNIFE_SLASH1 )
-            return KNIFE_SLASH2;
-    }
-    return KNIFE_SLASH1;
-}
-
-int CAmerKnife::GetDrawAnim( void )
-{
-    return KNIFE_DRAW;
-}
-
-int CAmerKnife::GetIdleAnim( void )
-{
-    return KNIFE_IDLE;
-}
-
-LINK_ENTITY_TO_CLASS( weapon_spade, CSpade );
-
-void CSpade::Spawn( void )
-{
-	CMeleeWeapon::Spawn( WEAPON_SPADE );
-}
-
-void CSpade::Precache( void )
-{
-    PRECACHE_MODEL( "models/v_spade.mdl" );
-    PRECACHE_MODEL( "models/w_spade.mdl" );
-    PRECACHE_MODEL( "models/p_spade.mdl" );
-
-    CMeleeWeapon::Precache();
-}
-
-int CSpade::GetItemInfo( ItemInfo *p )
-{
-	p->pszAmmo1 = NULL;
-	p->iMaxAmmo1 = -1;
-    p->pszName = STRING(pev->classname);
-	p->pszAmmo2 = NULL;
-	p->iMaxAmmo2 = -1;
-	p->iMaxClip = SPADE_MAXCLIP;
-	p->iSlot = 0;
-	p->iPosition = 2;
-	p->iId = WEAPON_SPADE;
-	p->iWeight = SPADE_WEIGHT;
-
-	return 1;
-}
-
-int CSpade::GetSlashAnim( int m_iSwing )
-{
-    if( m_iSwing % KNIFE_SLASH2 )
-    {
-        if( m_iSwing % KNIFE_SLASH2 == KNIFE_SLASH1 )
-            return KNIFE_SLASH2;
-    }
-    return KNIFE_SLASH1;
-}
-
-int CSpade::GetDrawAnim( void )
-{
-    return KNIFE_DRAW;
-}
-
-int CSpade::GetIdleAnim( void )
-{
-    return KNIFE_IDLE;
-}
-
-LINK_ENTITY_TO_CLASS( weapon_gerkinfe, CGerKnife );
-
-void CGerKnife::Spawn( void )
-{
-	CMeleeWeapon::Spawn( WEAPON_GER_KNIFE );
-}
-
-void CGerKnife::Precache( void )
-{
-    PRECACHE_MODEL( "models/v_paraknife.mdl" );
-    PRECACHE_MODEL( "models/w_paraknife.mdl" );
-    PRECACHE_MODEL( "models/p_paraknife.mdl" );
-
-    CMeleeWeapon::Precache();
-}
-
-int CGerKnife::GetItemInfo( ItemInfo *p )
-{
-    p->pszAmmo1 = NULL;
-	p->iMaxAmmo1 = -1;
-    p->pszName = STRING(pev->classname);
-	p->pszAmmo2 = NULL;
-	p->iMaxAmmo2 = -1;
-	p->iMaxClip = GERKNIFE_MAXCLIP;
-	p->iSlot = 0;
-	p->iPosition = 1;
-	p->iId = WEAPON_GER_KNIFE;
-	p->iWeight = GERKNIFE_WEIGHT;
-
-	return 1;
-}
-
-int CGerKnife::GetSlashAnim( int m_iSwing )
-{
-    if( m_iSwing % KNIFE_SLASH2 )
-    {
-        if( m_iSwing % KNIFE_SLASH2 == KNIFE_SLASH1 )
-            return KNIFE_SLASH2;
-    }
-    return KNIFE_SLASH1;
-}
-
-int CGerKnife::GetDrawAnim( void )
-{
-    return KNIFE_DRAW;
-}
-
-int CGerKnife::GetIdleAnim( void )
-{
-    return KNIFE_IDLE;
 }

@@ -187,6 +187,10 @@ typedef	enum
 #define ITEM_FLAG_LIMITINWORLD		8
 #define ITEM_FLAG_EXHAUSTIBLE		16 // A player can totally exhaust their ammo supply and lose this weapon
 
+#define ITEM_FLAG_BREN				128
+#define ITEM_FLAG_MG34				130
+#define ITEM_FLAG_MG42				2178
+
 #define WEAPON_IS_ONTARGET 0x40
 
 typedef struct
@@ -202,6 +206,9 @@ typedef struct
 	int		iId;
 	int		iFlags;
 	int		iWeight;// this value used to determine this weapon's importance in autoselection.
+
+	int		iBulletId;
+	float	flRecoil;
 } ItemInfo;
 
 typedef struct
@@ -318,7 +325,6 @@ public:
 	/*
 	virtual Vector Aim( float accuracyFactor, CBasePlayer *pOther, int shared_rand );
 	virtual int ChangeFOV( int fov );
-	virtual int Classify( void );
 	virtual int GetFOV( void );
 	virtual int GetRoundState( void );
 	virtual bool PlayerIsWaterSniping( void );
@@ -1033,27 +1039,22 @@ Day of defeat weapons
 
 =================
 */
-/*
+
 class CBipodWeapon : public CBasePlayerWeapon
 {
 public:
 	void Spawn( int weapon_id );
 	void Precache( void );
 	void PrimaryAttack( void );
-	BOOL Deploy( void );
+	void SecondaryAttack( void );
 	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
-	int AddToplayer( CBasePlayer *pPlayer );
+	int AddToPlayer( CBasePlayer *pPlayer );
 	void Holster( int skiplocal );
 	void ForceUndeploy( void );
-	int ItemSlot( void );
-	BOOL CanDrop( void );
-	int GetIdleAnim( void );
-	int GetDrawAnim( void );
-	int GetReloadAnim( void );
-	int GetUpToDownAnim( void );
-	int GetDownToUpAnim( void );
+	int ItemSlot( void ) { return 2; }
+	BOOL CanDrop( void ) { return CanHolster(); }
 	float GetBipodSpread( void );
 	bool IsDeployed( void );
 	void CoolThink( void );
@@ -1080,6 +1081,7 @@ public:
 	void Precache( void );
 	int ItemSlot( void );
 	int GetItemInfo( ItemInfo *p );
+	BOOL Deploy( void );
 	int Classify( void );
 	int GetIdleAnim( void );
 	int GetDrawAnim( void );
@@ -1091,6 +1093,13 @@ private:
 	unsigned short m_usFireBren;
 };
 
+class CBRENAmmoClip : public CBasePlayerAmmo
+{
+public:
+	void Spawn( void );
+	BOOL AddAmmo( CBaseEntity *pOther );
+};
+
 class CMG34 : public CBipodWeapon
 {
 public:
@@ -1098,6 +1107,7 @@ public:
 	void Precache( void );
 	int ItemSlot( void );
 	int GetItemInfo( ItemInfo *p );
+	BOOL Deploy( void );
 	int Classify( void );
 	int GetIdleAnim( void );
 	int GetDrawAnim( void );
@@ -1109,6 +1119,13 @@ private:
 	unsigned short m_usFireMG34;
 };
 
+class CMG34AmmoClip : public CBasePlayerAmmo
+{
+public:
+	void Spawn( void );
+	BOOL AddAmmo( CBaseEntity *pOther );
+};
+
 class CMG42 : public CBipodWeapon
 {
 public:
@@ -1116,6 +1133,7 @@ public:
 	void Precache( void );
 	int ItemSlot( void );
 	int GetItemInfo( ItemInfo *p );
+	BOOL Deploy( void );
 	int Classify( void );
 	int GetIdleAnim( void );
 	int GetDrawAnim( void );
@@ -1125,6 +1143,13 @@ public:
 
 private:
 	unsigned short m_usFireMG42;
+};
+
+class CMG42AmmoClip : public CBasePlayerAmmo
+{
+public:
+	void Spawn( void );
+	BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 class C30CAL : public CBipodWeapon
@@ -1169,7 +1194,6 @@ public:
 	void Spawn( int weapon_id );
 	void Precache( void );
 	int AddToplayer( CBasePlayer *pPlayer );
-	BOOL Deploy( void );
 	void Holster( int skiplocal );
 	void PrimaryAttack( void );
 	void Smack( void );
@@ -1207,6 +1231,7 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	int GetItemInfo( ItemInfo *p );
+	BOOL Deploy( void );
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
@@ -1218,6 +1243,7 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	int GetItemInfo( ItemInfo *p );
+	BOOL Deploy( void );
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
@@ -1229,6 +1255,7 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	int GetItemInfo( ItemInfo *p );
+	BOOL Deploy( void );
 	int GetSlashAnim( int m_iSwing );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
@@ -1874,7 +1901,5 @@ public:
 private:
 	unsigned short m_usFireThompson;
 };
-
-*/
 
 #endif // WEAPONS_H

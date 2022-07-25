@@ -37,19 +37,41 @@
 #define WEAPON_PIAT             31
 
 // weapon weight factors (for auto-switching)   (-1 = noswitch)
+#define BREN_WEIGHT
+#define MG34_WEIGHT
+#define MG42_WEIGHT
+
 #define AMERKNIFE_WEIGHT	0
 #define GERKNIFE_WEIGHT		0
 #define SPADE_WEIGHT		0
 
+// weapon clip/carry ammo capacities
+#define _55MM_MAX_CARRY                 // BREN
+#define _66MM_MAX_CARRY                 // MG34
+#define _66MM_GER_MAX_CARRY             // MG42
+
 // the maximum amount of ammo each weapon's clip can hold
 #define WEAPON_NOCLIP			-1
+
+#define BREN_MAX_CLIP
+#define MG34_MAX_CLIP
+#define MG42_MAX_CLIP
 
 #define AMERKNIFE_MAX_CLIP		WEAPON_NOCLIP
 #define GERKNIFE_MAXCLIP		WEAPON_NOCLIP
 #define SPADE_MAXCLIP			WEAPON_NOCLIP
 
 // the default amount of ammo that comes with each gun when it spawns
+#define BREN_DEFAULT_GIVE      30
+#define MG34_DEFAULT_GIVE      75
+#define MG42_DEFAULT_GIVE      250
+
 #define MELEE_DEFAULT_GIVE     0
+
+// The amount of ammo given to a player by an ammo item.
+#define AMMO_BRENCLIP_GIVE		BREN_MAX_CLIP
+#define AMMO_MG34CLIP_GIVE      MG34_MAX_CLIP
+#define AMMO_MG42CLIP_GIVE      MG42_MAX_CLIP
 
 typedef enum
 {
@@ -346,7 +368,7 @@ enum MG42_e
     MG42_DOWNIDLE2 = 17,
     MG42_DOWNIDLE1 = 18,
     MG42_DOWNIDLEEMPTY = 19,
-    MG42_DOWNTOUPMG42_DOWNTOUP8 = 20,
+    MG42_DOWNTOUP8 = 20,
     MG42_DOWNTOUP7 = 21,
     MG42_DOWNTOUP6 = 22,
     MG42_DOWNTOUP5 = 23,

@@ -35,6 +35,8 @@ struct WEAPON
 	int		iId;
 	int		iClip;
 
+	int		iBulletId;
+
 	int		iCount;		// # of itesm in plist
 
 	HSPRITE hActive;
