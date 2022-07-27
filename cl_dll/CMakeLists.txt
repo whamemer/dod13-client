@@ -65,6 +65,8 @@ set (CLDLL_SOURCES
 	../dlls/wpn_shared/bren.cpp
 	../dlls/wpn_shared/mg34.cpp
 	../dlls/wpn_shared/mg42.cpp
+	../dlls/wpn_shared/30cal.cpp
+	../dlls/wpn_shared/bar.cpp
     ../dlls/wpn_shared/knife.cpp
 	../dlls/wpn_shared/amer_knife.cpp
 	../dlls/wpn_shared/ger_knife.cpp

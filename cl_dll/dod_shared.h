@@ -40,15 +40,18 @@
 #define BREN_WEIGHT
 #define MG34_WEIGHT
 #define MG42_WEIGHT
+#define CAL30_WEIGHT
+#define BAR_WEIGHT
 
 #define AMERKNIFE_WEIGHT	0
 #define GERKNIFE_WEIGHT		0
 #define SPADE_WEIGHT		0
 
 // weapon clip/carry ammo capacities
-#define _55MM_MAX_CARRY                 // BREN
+#define _55MM_MAX_CARRY                 // BREN, BAR
 #define _66MM_MAX_CARRY                 // MG34
 #define _66MM_GER_MAX_CARRY             // MG42
+#define _66MM_US_MAX_CARRY              // 30CAL
 
 // the maximum amount of ammo each weapon's clip can hold
 #define WEAPON_NOCLIP			-1
@@ -56,6 +59,8 @@
 #define BREN_MAX_CLIP
 #define MG34_MAX_CLIP
 #define MG42_MAX_CLIP
+#define CAL30_MAX_CLIP
+#define BAR_MAX_CLIP
 
 #define AMERKNIFE_MAX_CLIP		WEAPON_NOCLIP
 #define GERKNIFE_MAXCLIP		WEAPON_NOCLIP
@@ -65,6 +70,8 @@
 #define BREN_DEFAULT_GIVE      30
 #define MG34_DEFAULT_GIVE      75
 #define MG42_DEFAULT_GIVE      250
+#define CAL30_DEFAULT_GIVE
+#define BAR_DEFAULT_GIVE
 
 #define MELEE_DEFAULT_GIVE     0
 
@@ -72,6 +79,8 @@
 #define AMMO_BRENCLIP_GIVE		BREN_MAX_CLIP
 #define AMMO_MG34CLIP_GIVE      MG34_MAX_CLIP
 #define AMMO_MG42CLIP_GIVE      MG42_MAX_CLIP
+#define AMMO_CAL30CLIP_GIVE     CAL30_MAX_CLIP
+#define AMMO_BARCLIP_GIVE       BAR_MAX_CLIP
 
 typedef enum
 {
