@@ -53,7 +53,7 @@ int CBREN::GetItemInfo( ItemInfo *p )
     p->iMaxAmmo2 = -1;
 	p->iSlot = 2;
 	p->iPosition = 0;
-	p->iFlags = ITEM_FLAG_BRENBAR;
+	p->iFlags = ITEM_FLAG_BREN;
     p->iMaxClip = BREN_MAX_CLIP;
 	p->iId = m_iId = WEAPON_BREN;
     p->iBulletId = BULLET_PLAYER_BREN;

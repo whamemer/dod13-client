@@ -61,7 +61,7 @@ int CMG34::GetItemInfo( ItemInfo *p )
     p->iMaxAmmo2 = -1;
 	p->iSlot = 2;
 	p->iPosition = 0;
-	p->iFlags = ITEM_FLAG_MG34CAL30;
+	p->iFlags = ITEM_FLAG_MG34;
     p->iMaxClip = MG34_MAX_CLIP;
 	p->iId = m_iId = WEAPON_MG34;
     p->iBulletId = BULLET_PLAYER_MG34;
@@ -73,7 +73,7 @@ int CMG34::GetItemInfo( ItemInfo *p )
 
 BOOL CMG34::Deploy( void )
 {
-    return DefaultDeploy( "models/v_mg34.mdl", "models/p_mg34.mdl", , "mg34" );
+    return DefaultDeploy( "models/v_mg34.mdl", "models/p_mg34.mdl", BREN_UP_DRAW, "mg34" );
 }
 
 int CMG34::Classify( void )

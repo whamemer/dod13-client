@@ -187,8 +187,8 @@ typedef	enum
 #define ITEM_FLAG_LIMITINWORLD		8
 #define ITEM_FLAG_EXHAUSTIBLE		16 // A player can totally exhaust their ammo supply and lose this weapon
 
-#define ITEM_FLAG_BRENBAR			128
-#define ITEM_FLAG_MG34CAL30			130
+#define ITEM_FLAG_BREN				128
+#define ITEM_FLAG_MG34				130
 #define ITEM_FLAG_MG42				2178
 
 #define WEAPON_IS_ONTARGET 0x40
@@ -1159,7 +1159,6 @@ public:
 	void Precache( void );
 	int ItemSlot( void );
 	int GetItemInfo( ItemInfo *p );
-	BOOL Deploy( void );
 	int Classify( void );
 	int GetIdleAnim( void );
 	int GetDrawAnim( void );
@@ -1171,13 +1170,6 @@ private:
 	unsigned short m_usFire30CAL;
 };
 
-class C30CALAmmoClip : public CBasePlayerAmmo
-{
-public:
-	void Spawn( void );
-	BOOL AddAmmo( CBaseEntity *pOther );
-};
-
 class CBAR : public CBipodWeapon
 {
 public:
@@ -1185,7 +1177,6 @@ public:
 	void Precache( void );
 	int ItemSlot( void );
 	int GetItemInfo( ItemInfo *p );
-	BOOL Deploy( void );
 	int Classify( void );
 	int GetIdleAnim( void );
 	int GetDrawAnim( void );
@@ -1195,13 +1186,6 @@ public:
 
 private:
 	unsigned short m_usFireBAR;
-};
-
-class CBARAmmoClip : public CBasePlayerAmmo
-{
-public:
-	void Spawn( void );
-	BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 class CMeleeWeapon : public CBasePlayerWeapon
