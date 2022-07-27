@@ -120,7 +120,7 @@ int CMG42::GetItemInfo( ItemInfo *p )
 
 BOOL CMG42::Deploy( void )
 {
-    return DefaultDeploy( "models/v_mg42.mdl", "models/p_mg42.mdl", BREN_UP_DRAW, "mg42" );
+    return DefaultDeploy( "models/v_mg42.mdl", "models/p_mg42.mdl", , "mg42" );
 }
 
 int CMG42::Classify( void )
