@@ -71,6 +71,10 @@ set (CLDLL_SOURCES
 	../dlls/wpn_shared/amer_knife.cpp
 	../dlls/wpn_shared/ger_knife.cpp
 	../dlls/wpn_shared/spade.cpp
+	../dlls/wpn_shared/pistol.cpp
+	../dlls/wpn_shared/webley.cpp
+	../dlls/wpn_shared/luger.cpp
+	../dlls/wpn_shared/colt.cpp
 	
 	../dlls/crossbow.cpp
 	../dlls/crowbar.cpp

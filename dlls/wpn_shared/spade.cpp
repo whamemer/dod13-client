@@ -33,7 +33,7 @@ int CSpade::GetItemInfo( ItemInfo *p )
     p->pszName = STRING(pev->classname);
 	p->pszAmmo2 = NULL;
 	p->iMaxAmmo2 = -1;
-	p->iMaxClip = SPADE_MAXCLIP;
+	p->iMaxClip = SPADE_MAX_CLIP;
 	p->iSlot = 0;
 	p->iPosition = 2;
 	p->iId = WEAPON_SPADE;

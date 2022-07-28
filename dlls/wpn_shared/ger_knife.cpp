@@ -33,7 +33,7 @@ int CGerKnife::GetItemInfo( ItemInfo *p )
     p->pszName = STRING(pev->classname);
 	p->pszAmmo2 = NULL;
 	p->iMaxAmmo2 = -1;
-	p->iMaxClip = GERKNIFE_MAXCLIP;
+	p->iMaxClip = GERKNIFE_MAX_CLIP;
 	p->iSlot = 0;
 	p->iPosition = 1;
 	p->iId = WEAPON_GER_KNIFE;

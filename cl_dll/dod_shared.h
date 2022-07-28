@@ -42,16 +42,19 @@
 #define MG42_WEIGHT
 #define CAL30_WEIGHT
 #define BAR_WEIGHT
-
-#define AMERKNIFE_WEIGHT	0
-#define GERKNIFE_WEIGHT		0
-#define SPADE_WEIGHT		0
+#define AMERKNIFE_WEIGHT        0
+#define GERKNIFE_WEIGHT		    0
+#define SPADE_WEIGHT		    0
+#define COLT_WEIGHT
+#define LUGER_WEIGHT
+#define WEBLEY_WEIGHT
 
 // weapon clip/carry ammo capacities
 #define _55MM_MAX_CARRY                 // BREN, BAR
 #define _66MM_MAX_CARRY                 // MG34
 #define _66MM_GER_MAX_CARRY             // MG42
 #define _66MM_US_MAX_CARRY              // 30CAL
+#define _12MM_MAX_CARRY                 // COLT, LUGER, WEBLEY
 
 // the maximum amount of ammo each weapon's clip can hold
 #define WEAPON_NOCLIP			-1
@@ -61,10 +64,12 @@
 #define MG42_MAX_CLIP
 #define CAL30_MAX_CLIP
 #define BAR_MAX_CLIP
-
 #define AMERKNIFE_MAX_CLIP		WEAPON_NOCLIP
-#define GERKNIFE_MAXCLIP		WEAPON_NOCLIP
-#define SPADE_MAXCLIP			WEAPON_NOCLIP
+#define GERKNIFE_MAX_CLIP		WEAPON_NOCLIP
+#define SPADE_MAX_CLIP			WEAPON_NOCLIP
+#define COLT_MAX_CLIP
+#define LUGER_MAX_CLIP
+#define WEBLEY_MAX_CLIP
 
 // the default amount of ammo that comes with each gun when it spawns
 #define BREN_DEFAULT_GIVE      30
@@ -72,8 +77,10 @@
 #define MG42_DEFAULT_GIVE      250
 #define CAL30_DEFAULT_GIVE
 #define BAR_DEFAULT_GIVE
-
 #define MELEE_DEFAULT_GIVE     0
+#define COLT_DEFAULT_GIVE
+#define LUGER_DEFAULT_GIVE
+#define WEBLEY_DEFAULT_GIVE
 
 // The amount of ammo given to a player by an ammo item.
 #define AMMO_BRENCLIP_GIVE		BREN_MAX_CLIP
@@ -81,6 +88,9 @@
 #define AMMO_MG42CLIP_GIVE      MG42_MAX_CLIP
 #define AMMO_CAL30CLIP_GIVE     CAL30_MAX_CLIP
 #define AMMO_BARCLIP_GIVE       BAR_MAX_CLIP
+#define AMMO_COLTCLIP_GIVE      COLT_MAX_CLIP
+#define AMMO_LUGERCLIP_GIVE     LUGER_MAX_CLIP
+#define AMMO_WEBLEYCLIP_GIVE    WEBLEY_MAX_CLIP
 
 typedef enum
 {

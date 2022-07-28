@@ -187,6 +187,7 @@ typedef	enum
 #define ITEM_FLAG_LIMITINWORLD		8
 #define ITEM_FLAG_EXHAUSTIBLE		16 // A player can totally exhaust their ammo supply and lose this weapon
 
+#define ITEM_FLAG_PISTOL			64
 #define ITEM_FLAG_BRENBAR			128
 #define ITEM_FLAG_MG34CAL30			130
 #define ITEM_FLAG_MG42				2178
@@ -209,6 +210,7 @@ typedef struct
 
 	int		iBulletId;
 	float	flRecoil;
+	float	flSpread;
 } ItemInfo;
 
 typedef struct
@@ -322,7 +324,6 @@ public:
 	int DefaultReload( int iClipSize, int iAnim, float fDelay, int body = 0 );
 
 	// DOD
-	/*
 	virtual Vector Aim( float accuracyFactor, CBasePlayer *pOther, int shared_rand );
 	virtual int ChangeFOV( int fov );
 	virtual int GetFOV( void );
@@ -338,7 +339,6 @@ public:
 	virtual int ZoomIn( void );
 	virtual int ZoomOut( void );
 	virtual float flAim( float accuracyFactor, CBasePlayer *pOther );
-	*/
 
 	virtual void ItemPostFrame( void );	// called each frame by the player PostThink
 	// called by CBasePlayerWeapons ItemPostFrame()
@@ -1365,18 +1365,17 @@ class CPistol : public CBasePlayerWeapon
 public:
     void Spawn( int weapon_id );
     void PrimaryAttack( void );
-    BOOL Deploy( void );
     void Reload( void );
     void WeaponIdle( void );
-    int GetIdleAnim( void );
-    int GetDrawAnim( void );
-    int GetReloadAnim( void );
+    int GetIdleAnim( void ) { return 0; }; 
+    int GetDrawAnim( void ) { return 0; }; 
+    int GetReloadAnim( void ) { return 0; }; 
     
     void SecondaryAttack( void );
-    BOOL CanHolster( void );
-    int iItemSlot( void );
-    int Classify( void );
-    BOOL CanDrop( void );
+    BOOL CanHolster( void ) { return TRUE; };
+    int iItemSlot( void ) { return 1; };
+    int Classify( void ) { return CLASS_ALIEN_PREY; };
+    BOOL CanDrop( void ) { return FALSE; };
 
 	virtual BOOL UseDecrement( void )
 	{
@@ -1394,26 +1393,42 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
+	BOOL Deploy( void );
+	int GetReloadAnim( void );
 	int GetDrawAnim( void );
 	int GetIdleAnim( void );
 
 private:
-    unsigned short m_iFireEvent;
+    unsigned short m_usFireColt;
 };
 
-class CLuger : public CPistol
+class CColtAmmoClip : public CBasePlayerAmmo
+{
+public:
+	void Spawn( void );
+	BOOL AddAmmo( CBaseEntity *pOther );
+};
+
+class CLUGER : public CPistol
 {
 public:
 	void Spawn( void );
 	void Precache( void );
 	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
+	BOOL Deploy( void );
+	void PrimaryAttack( void );
+    BOOL CanHolster( void );
+	void WeaponIdle( void );
 
 private:
-    unsigned short m_iFireEvent;
+    unsigned short m_usFireLuger;
+};
+
+class CLugerAmmoClip : public CBasePlayerAmmo
+{
+public:
+	void Spawn( void );
+	BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 class CWEBLEY : public CPistol
@@ -1422,12 +1437,20 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	int GetItemInfo( ItemInfo *p );
-	int GetSlashAnim( int m_iSwing );
-	int GetDrawAnim( void );
-	int GetIdleAnim( void );
+	BOOL Deploy( void );
+	void PrimaryAttack( void );
+    BOOL CanHolster( void );
+	void WeaponIdle( void );
 
 private:
-    unsigned short m_iFireEvent;
+    unsigned short m_usFireWebley;
+};
+
+class CWEBLEYAmmoClip : public CBasePlayerAmmo
+{
+public:
+	void Spawn( void );
+	BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 class CENFIELD : public CBasePlayerWeapon
