@@ -187,6 +187,8 @@ typedef	enum
 #define ITEM_FLAG_LIMITINWORLD		8
 #define ITEM_FLAG_EXHAUSTIBLE		16 // A player can totally exhaust their ammo supply and lose this weapon
 
+// DOD ITEM FLAGS
+// TODO: WHAMER: rename this in the future
 #define ITEM_FLAG_PISTOL			64
 #define ITEM_FLAG_BRENBAR			128
 #define ITEM_FLAG_MG34CAL30			130
@@ -1465,7 +1467,7 @@ public:
 	BOOL Deploy( void );
 	BOOL CanHolster( void );
 	void ThinkZoomOutIn( void );
-	void Holster( void );
+	void Holster( int skiplocal );
 	void Reload( void );
 	void WeaponIdle( void );
 	int Classify( void );
@@ -1482,6 +1484,13 @@ public:
 private:
 	unsigned short m_usFireEnfield;
 	unsigned short m_usFireScopedEnfield;
+};
+
+class CEnfieldAmmoClip : public CBasePlayerAmmo
+{
+public:
+	void Spawn( void );
+	BOOL AddAmmo( CBaseEntity *pOther );
 };
 
 class CFG42 : public CBasePlayerWeapon

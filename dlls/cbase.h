@@ -107,6 +107,8 @@ typedef void(CBaseEntity::*USEPTR)( CBaseEntity *pActivator, CBaseEntity *pCalle
 
 // CLASSIFY DOD
 #define CLASS_MACHINEGUN		256
+#define CLASS_SNIPER			16
+#define CLASS_SCOPED_SNIPER		32
 
 class CBaseEntity;
 class CBaseMonster;

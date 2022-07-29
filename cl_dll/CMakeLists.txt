@@ -75,6 +75,7 @@ set (CLDLL_SOURCES
 	../dlls/wpn_shared/webley.cpp
 	../dlls/wpn_shared/luger.cpp
 	../dlls/wpn_shared/colt.cpp
+	../dlls/wpn_shared/enfield.cpp
 	
 	../dlls/crossbow.cpp
 	../dlls/crowbar.cpp

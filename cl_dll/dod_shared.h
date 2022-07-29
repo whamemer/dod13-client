@@ -48,6 +48,7 @@
 #define COLT_WEIGHT
 #define LUGER_WEIGHT
 #define WEBLEY_WEIGHT
+#define ENFIELD_WEIGHT
 
 // weapon clip/carry ammo capacities
 #define _55MM_MAX_CARRY                 // BREN, BAR
@@ -55,6 +56,7 @@
 #define _66MM_GER_MAX_CARRY             // MG42
 #define _66MM_US_MAX_CARRY              // 30CAL
 #define _12MM_MAX_CARRY                 // COLT, LUGER, WEBLEY
+#define _16MM_MAX_CARRY                 // ENFIELD, SCOPED ENFIELD
 
 // the maximum amount of ammo each weapon's clip can hold
 #define WEAPON_NOCLIP			-1
@@ -70,6 +72,7 @@
 #define COLT_MAX_CLIP
 #define LUGER_MAX_CLIP
 #define WEBLEY_MAX_CLIP
+#define ENFIELD_MAX_CLIP
 
 // the default amount of ammo that comes with each gun when it spawns
 #define BREN_DEFAULT_GIVE      30
@@ -81,6 +84,7 @@
 #define COLT_DEFAULT_GIVE
 #define LUGER_DEFAULT_GIVE
 #define WEBLEY_DEFAULT_GIVE
+#define ENFIELD_DEFAULT_GIVE
 
 // The amount of ammo given to a player by an ammo item.
 #define AMMO_BRENCLIP_GIVE		BREN_MAX_CLIP
@@ -91,6 +95,7 @@
 #define AMMO_COLTCLIP_GIVE      COLT_MAX_CLIP
 #define AMMO_LUGERCLIP_GIVE     LUGER_MAX_CLIP
 #define AMMO_WEBLEYCLIP_GIVE    WEBLEY_MAX_CLIP
+#define AMMO_ENFIELDCLIP_GIVE   ENFIELD_MAX_CLIP
 
 typedef enum
 {
