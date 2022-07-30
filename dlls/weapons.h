@@ -1501,7 +1501,7 @@ public:
 	int iItemSlot( void );
 	int GetItemInfo( ItemInfo *p );
 	int AddToPlayer( CBasePlayer *pPlayer );
-	void Holster( void );
+	void Holster( int skiplocal );
 	BOOL CanHolster( void );
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );

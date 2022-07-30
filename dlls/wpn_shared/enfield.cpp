@@ -111,7 +111,6 @@ BOOL CENFIELD::Deploy( void )
         m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + ;
         return DefaultDeploy( "models/v_enfield_scoped.mdl", "models/p_enfields.mdl", SCOPEDENFIELD_DRAW, "scopedenfield" );
     }
-        
 }
 
 BOOL CENFIELD::CanHolster( void )
