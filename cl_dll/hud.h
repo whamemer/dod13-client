@@ -683,6 +683,8 @@ public:
 	bool m_bBritish;
 
 	int g_iWeaponFlags;
+	int m_iRoundState;
+	int m_iWaterLevel;
 
 	void AddHudElem( CHudBase *p );
 
@@ -696,7 +698,9 @@ public:
 
 	void DoRecoil( int weapon_id );
 
-	bool IsInMGDeploy( void ); 
+	bool IsInMGDeploy( void );
+
+	int GetWaterLevel( void ) { return m_iWaterLevel; }
 };
 
 extern CHud gHUD;

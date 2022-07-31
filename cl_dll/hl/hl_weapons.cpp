@@ -50,6 +50,12 @@ static globalvars_t Globals;
 
 static CBasePlayerWeapon *g_pWpns[32];
 
+static Vector g_clorg;
+static Vector g_clang;
+
+static int g_gaitseq;
+static int g_rseq;
+
 float g_flApplyVel = 0.0;
 int g_irunninggausspred = 0;
 
@@ -484,7 +490,7 @@ CBasePlayerWeapon::Classify
 */
 int CBasePlayerWeapon::Classify( void )
 {
-
+	return 0;
 }
 
 /*
@@ -495,7 +501,7 @@ CBasePlayerWeapon::GetFOV
 */
 int CBasePlayerWeapon::GetFOV( void )
 {
-
+	return g_lastFOV;
 }
 
 /*
@@ -506,7 +512,7 @@ CBasePlayerWeapon::GetRoundState
 */
 int CBasePlayerWeapon::GetRoundState( void )
 {
-
+	return gHUD.m_iRoundState;
 }
 
 /*
@@ -517,7 +523,17 @@ CBasePlayerWeapon::PlayerIsWaterSniping
 */
 bool CBasePlayerWeapon::PlayerIsWaterSniping( void )
 {
+	bool result = true;
 
+	if( CHud::GetWaterLevel( &gHUD ) != 3 )
+	{
+		result = false;
+
+		if( CHud::GetWaterLevel( &gHUD ) > 0 )
+			return g_iUser3 == true;
+	}
+
+	return result;
 }
 
 /*
@@ -528,7 +544,7 @@ CBasePlayerWeapon::PostMortarValue
 */
 void CBasePlayerWeapon::PostMortarValue( float value )
 {
-
+	// TODO: WHAMER: need vgui functions
 }
 
 /*
@@ -539,7 +555,11 @@ CBasePlayerWeapon::PrintState
 */
 void CBasePlayerWeapon::PrintState( void )
 {
-
+	COM_Log("c:\\hl.log", "%.4f ", gpGlobals->time);
+	COM_Log("c:\\hl.log", "%.4f ", m_pPlayer->m_flNextAttack);
+	COM_Log("c:\\hl.log", "%.4f ", m_flNextPrimaryAttack);
+	COM_Log("c:\\hl.log", "%.4f ", m_flTimeWeaponIdle - gpGlobals->time);
+	COM_Log("c:\\hl.log", "%.4f ", m_iClip);
 }
 
 /*
@@ -550,7 +570,7 @@ CBasePlayerWeapon::RemoveStamina
 */
 void CBasePlayerWeapon::RemoveStamina( float removeAmount, CBasePlayer *pOther )
 {
-
+	// Nothing.
 }
 
 /*
@@ -561,7 +581,7 @@ CBasePlayerWeapon::SendMortarFireCommand
 */
 void CBasePlayerWeapon::SendMortarFireCommand( char *c )
 {
-
+	gEngfuncs.pfnServerCmd( c );
 }
 
 /*
@@ -594,7 +614,19 @@ CBasePlayerWeapon::TimedDeploy
 */
 BOOL CBasePlayerWeapon::TimedDeploy( char *szViewModel, char *szWeaponModel, int iAnim, char *szAnimExt, char *szAnimReloadExt, float idleTime, float attackTime, int skiplocal )
 {
+	BOOL result = FALSE;
+	float flBoltHideXHair;
 
+	if( CanDeploy() )
+	{
+		gEngfuncs.CL_LoadModel( szViewModel, &m_pPlayer->pev->viewmodel );
+		SendWeaponAnim( iAnim );
+		result = TRUE;
+		m_pPlayer->m_flNextAttack = attackTime;
+		flBoltHideXHair = attackTime;
+		m_flTimeWeaponIdle = idleTime;
+	}
+	return result;
 }
 
 /*
@@ -605,7 +637,7 @@ CBasePlayerWeapon::UpdateZoomSpeed
 */
 void CBasePlayerWeapon::UpdateZoomSpeed( void )
 {
-
+	// Nothing.
 }
 
 /*
@@ -616,7 +648,18 @@ CBasePlayerWeapon::ZoomIn
 */
 int CBasePlayerWeapon::ZoomIn( void )
 {
+	if( m_pPlayer->pev->fuser2 != g_lastFOV )
+		return 0;
+	
+	if( g_iVuser1z )
+	{
+		CHudScope::SetScope( &gHUD.m_Scope, m_iId );
+		gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
+	}
+	
+	g_lastFOV = 20.0f;
 
+	return 0;
 }
 
 /*
@@ -627,7 +670,15 @@ CBasePlayerWeapon::ZoomOut
 */
 int CBasePlayerWeapon::ZoomOut( void )
 {
-    
+	if( g_iVuser1z || m_pPlayer->pev->fuser2 != g_lastFOV )
+		return 0;
+	
+	CHudScope::SetScope( &gHUD.m_Scope, m_iId );
+	gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
+	
+	g_lastFOV = 0.0f;
+	
+	return 0;
 }
 
 /*
@@ -638,7 +689,7 @@ CBasePlayerWeapon::flAim
 */
 float CBasePlayerWeapon::flAim( float accuracyFactor, CBasePlayer *pOther )
 {
-
+	return accuracyFactor;
 }
 
 /*
@@ -649,7 +700,10 @@ CBasePlayer::IsInMGDeploy
 */
 bool CBasePlayer::IsInMGDeploy( void )
 {
-
+	if( g_iUser3 != OBS_CHASE_FREE )
+		return g_iVuser1x == OBS_CHASE_FREE;
+	
+	return true;
 }
 
 /*
@@ -660,7 +714,7 @@ CBasePlayer::IsProneDeployed
 */
 bool CBasePlayer::IsProneDeployed( void )
 {
-
+	return g_iUser3 == OBS_CHASE_FREE;
 }
 
 /*
@@ -671,7 +725,7 @@ CBasePlayer::IsSandbagDeployed
 */
 bool CBasePlayer::IsSandbagDeployed( void )
 {
-
+	return g_iVuser1x == OBS_CHASE_FREE;
 }
 
 /*
@@ -905,6 +959,38 @@ void HUD_InitClientWeapons( void )
 	HUD_PrepEntity( &g_Satchel, &player );
 	HUD_PrepEntity( &g_Tripmine, &player );
 	HUD_PrepEntity( &g_Snark, &player );
+
+	HUD_PrepEntity( &g_30CAL, &player );
+	HUD_PrepEntity( &g_AmerKnife, &player );
+	HUD_PrepEntity( &g_BAR, &player );
+	HUD_PrepEntity( &g_Bazooka, &player );
+	HUD_PrepEntity( &g_Bren, &player );
+	HUD_PrepEntity( &g_Colt, &player );
+	HUD_PrepEntity( &g_Enfield, &player );
+	HUD_PrepEntity( &g_FG42, &player );
+	HUD_PrepEntity( &g_Garand, &player );
+	HUD_PrepEntity( &g_GerKnife, &player );
+	HUD_PrepEntity( &g_GreaseGun, &player );
+	HUD_PrepEntity( &g_HandGrenade, &player );
+	HUD_PrepEntity( &g_HandGrenadeEx, &player );
+	HUD_PrepEntity( &g_K43, &player );
+	HUD_PrepEntity( &g_KAR, &player );
+	HUD_PrepEntity( &g_Luger, &player );
+	HUD_PrepEntity( &g_M1Carbine, &player );
+	HUD_PrepEntity( &g_MG34, &player );
+	HUD_PrepEntity( &g_MG42, &player );
+	HUD_PrepEntity( &g_MP40, &player );
+	HUD_PrepEntity( &g_MP44, &player );
+	HUD_PrepEntity( &g_PIAT, &player );
+	HUD_PrepEntity( &g_Pschreck, &player );
+	HUD_PrepEntity( &g_ScopedKar, &player );
+	HUD_PrepEntity( &g_Spade, &player );
+	HUD_PrepEntity( &g_Spring, &player );
+	HUD_PrepEntity( &g_Sten, &player );
+	HUD_PrepEntity( &g_StickGrenade, &player );
+	HUD_PrepEntity( &g_StickGrenadeEx, &player );
+	HUD_PrepEntity( &g_Thompson, &player );
+	HUD_PrepEntity( &g_Webley, &player );
 }
 
 /*
@@ -968,47 +1054,98 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	// FIXME, make this a method in each weapon?  where you pass in an entity_state_t *?
 	switch( from->client.m_iId )
 	{
-		case WEAPON_CROWBAR:
-			pWeapon = &g_Crowbar;
+		case WEAPON_AMER_KNIFE:
+			pWeapon = &g_AmerKnife;
 			break;
-		case WEAPON_GLOCK:
-			pWeapon = &g_Glock;
+		case WEAPON_GER_KNIFE:
+			pWeapon = &g_GerKnife;
 			break;
-		case WEAPON_PYTHON:
-			pWeapon = &g_Python;
+		case WEAPON_COLT:
+			pWeapon = &g_Colt;
 			break;
-		case WEAPON_MP5:
-			pWeapon = &g_Mp5;
+		case WEAPON_LUGER:
+			pWeapon = &g_Luger;
 			break;
-		case WEAPON_CROSSBOW:
-			pWeapon = &g_Crossbow;
+		case WEAPON_GARAND:
+			pWeapon = &g_Garand;
 			break;
-		case WEAPON_SHOTGUN:
-			pWeapon = &g_Shotgun;
+		case WEAPON_SCOPEDKAR:
+			pWeapon = &g_ScopedKar;
 			break;
-		case WEAPON_RPG:
-			pWeapon = &g_Rpg;
+		case WEAPON_THOMPSON:
+			pWeapon = &g_Thompson;
 			break;
-		case WEAPON_GAUSS:
-			pWeapon = &g_Gauss;
+		case WEAPON_MP44:
+			pWeapon = &g_MP44;
 			break;
-		case WEAPON_EGON:
-			pWeapon = &g_Egon;
+		case WEAPON_SPRING:
+			pWeapon = &g_Spring;
 			break;
-		case WEAPON_HORNETGUN:
-			pWeapon = &g_HGun;
+		case WEAPON_KAR:
+			pWeapon = &g_KAR;
+			break;
+		case WEAPON_BAR:
+			pWeapon = &g_BAR;
+			break;
+		case WEAPON_MP40:
+			pWeapon = &g_MP40;
+			break;
+		case WEAPON_MG42:
+			pWeapon = &g_MG42;
+			break;
+		case WEAPON_CAL30:
+			pWeapon = &g_30CAL;
+			break;
+		case WEAPON_SPADE:
+			pWeapon = &g_Spade;
+			break;
+		case WEAPON_M1CARBINE:
+			pWeapon = &g_M1Carbine;
+			break;
+		case WEAPON_MG34:
+			pWeapon = &g_MG34;
+			break;
+		case WEAPON_GREASEGUN:
+			pWeapon = &g_GreaseGun;
+			break;
+		case WEAPON_FG42:
+			pWeapon = &g_FG42;
+			break;
+		case WEAPON_K43:
+			pWeapon = &g_K43;
+			break;
+		case WEAPON_ENFIELD:
+			pWeapon = &g_Enfield;
+			break;
+		case WEAPON_STEN:
+			pWeapon = &g_Sten;
+			break;
+		case WEAPON_BREN:
+			pWeapon = &g_Bren;
+			break;
+		case WEAPON_WEBLEY:
+			pWeapon = &g_Webley;
+			break;
+		case WEAPON_BAZOOKA:
+			pWeapon = &g_Bazooka;
+			break;
+		case WEAPON_PSCHRECK:
+			pWeapon = &g_Pschreck;
+			break;
+		case WEAPON_PIAT:
+			pWeapon = &g_PIAT;
 			break;
 		case WEAPON_HANDGRENADE:
-			pWeapon = &g_HandGren;
+			pWeapon = &g_HandGrenade;
 			break;
-		case WEAPON_SATCHEL:
-			pWeapon = &g_Satchel;
+		case WEAPON_HANDGRENADEX:
+			pWeapon = &g_HandGrenadeEx;
 			break;
-		case WEAPON_TRIPMINE:
-			pWeapon = &g_Tripmine;
+		case WEAPON_STICKGRENADE:
+			pWeapon = &g_StickGrenade;
 			break;
-		case WEAPON_SNARK:
-			pWeapon = &g_Snark;
+		case WEAPON_STICKGRENADEX:
+			pWeapon = &g_StickGrenadeEx;
 			break;
 	}
 
@@ -1355,7 +1492,12 @@ DoD_GetOrientation
 */
 void DoD_GetOrientation( float *o, float *a )
 {
-
+	*o = g_clorg.x;
+	*a = g_clang.x;
+	o[1] = g_clorg.y;
+	a[1] = g_clang.y;
+	o[2] = g_clorg.z;
+	a[2] = g_clang.z;
 }
 
 /*
@@ -1366,7 +1508,8 @@ DoD_GetSequence
 */
 void DoD_GetSequence( int *seq, int *gaitseq )
 {
-
+	*seq = g_rseq;
+	*gaitseq = g_gaitseq;
 }
 
 /*
@@ -1377,7 +1520,12 @@ DoD_SetOrientation
 */
 void DoD_SetOrientation( Vector *p_o, Vector *p_a )
 {
-
+	g_clorg.x = p_o->x;
+	g_clorg.y = p_o->y;
+	g_clorg.z = p_o->z;
+	g_clang.x = p_a->x;
+	g_clang.y = p_a->y;
+	g_clang.z = p_a->z;
 }
 
 /*
@@ -1388,5 +1536,6 @@ DoD_SetSequence
 */
 void DoD_SetSequence( int seq, int gaitseq )
 {
-
+	g_rseq = seq;
+	g_gaitseq = gaitseq;
 }
