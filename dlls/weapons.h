@@ -326,13 +326,15 @@ public:
 	int DefaultReload( int iClipSize, int iAnim, float fDelay, int body = 0 );
 
 	// DOD
-	virtual Vector Aim( float accuracyFactor, CBasePlayer *pOther, int shared_rand );
+	virtual Vector Aim( Vector *retstr, float accuracyFactor, CBasePlayer *pOther, int shared_rand );
 	virtual int ChangeFOV( int fov );
+	virtual int Classify( void );
 	virtual int GetFOV( void );
 	virtual int GetRoundState( void );
 	virtual bool PlayerIsWaterSniping( void );
 	virtual void PostMortarValue( float value );
-	virtual void RemoveStamina( float removeAmount, CBasePlayer *pOther ) { ; }
+	virtual void PrintState( void );
+	virtual void RemoveStamina( float removeAmount, CBasePlayer *pOther );
 	virtual void SendMortarFireCommand( char *c );
 	virtual void ThinkZoomIn( void );
 	virtual void ThinkZoomOut( void );

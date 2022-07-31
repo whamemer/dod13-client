@@ -80,6 +80,7 @@ typedef struct physent_s
 	int		iuser2;
 	int		iuser3;
 	int		iuser4;
+	int		g_iVuser1z;
 	float		fuser1;		// also contains pev->scale when "sv_allow_studio_scaling" is "1"
 	float		fuser2;
 	float		fuser3;
@@ -153,6 +154,7 @@ typedef struct playermove_s
 	int		iuser2;
 	int		iuser3;
 	int		iuser4;
+	int		g_iVuser1z;
 	float		fuser1;
 	float		fuser2;
 	float		fuser3;

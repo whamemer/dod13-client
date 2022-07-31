@@ -41,6 +41,7 @@ typedef struct weapon_data_s
 	int		iuser2;
 	int		iuser3;
 	int		iuser4;
+	int		g_iVuser1z;
 	float		fuser1;
 	float		fuser2;
 	float		fuser3;

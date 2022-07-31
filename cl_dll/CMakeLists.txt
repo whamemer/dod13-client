@@ -98,7 +98,6 @@ set (CLDLL_SOURCES
 	hl/hl_events.cpp
 	hl/hl_objects.cpp
 	hl/hl_weapons.cpp
-	#dod/dod_weapons.cpp
 	ammo.cpp
 	ammo_secondary.cpp
 	ammohistory.cpp
@@ -132,6 +131,7 @@ set (CLDLL_SOURCES
 	../pm_shared/pm_math.c
 	../pm_shared/pm_shared.c
 	saytext.cpp
+	scope.cpp
 	status_icons.cpp
 	statusbar.cpp
 	studio_util.cpp

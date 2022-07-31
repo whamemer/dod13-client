@@ -32,6 +32,9 @@
 #include "../com_weapons.h"
 #include "../demo.h"
 
+#include "dod_shared.h"
+#include "hud.h"
+
 extern globalvars_t *gpGlobals;
 extern int g_iUser1;
 
@@ -68,6 +71,38 @@ CSatchel g_Satchel;
 CTripmine g_Tripmine;
 CSqueak g_Snark;
 
+C30CAL g_30CAL;
+CAmerKnife g_AmerKnife;
+CBAR g_BAR;
+CBazooka g_Bazooka;
+CBREN g_Bren;
+CCOLT g_Colt;
+CENFIELD g_Enfield;
+CFG42 g_FG42;
+CGarand g_Garand;
+CGerKnife g_GerKnife;
+CGreaseGun g_GreaseGun;
+CHandGrenade g_HandGrenade;
+CHandGrenadeEx g_HandGrenadeEx;
+CK43 g_K43;
+CKAR g_KAR;
+CLUGER g_Luger;
+CM1Carbine g_M1Carbine;
+CMG34 g_MG34;
+CMG42 g_MG42;
+CMP40 g_MP40;
+CMP44 g_MP44;
+CPIAT g_PIAT;
+CPschreck g_Pschreck;
+CScopedKar g_ScopedKar;
+CSpade g_Spade;
+CSPRING g_Spring;
+CSTEN g_Sten;
+CStickGrenade g_StickGrenade;
+CStickGrenadeEx g_StickGrenadeEx;
+CThompson g_Thompson;
+CWEBLEY g_Webley;
+
 /*
 ======================
 AlertMessage
@@ -99,6 +134,11 @@ bool bIsMultiplayer( void )
 void LoadVModel( const char *szViewModel, CBasePlayer *m_pPlayer )
 {
 	gEngfuncs.CL_LoadModel( szViewModel, &m_pPlayer->pev->viewmodel );
+}
+
+void SetScopeId( int id )
+{
+
 }
 
 /*
@@ -387,6 +427,251 @@ void CBasePlayerWeapon::ItemPostFrame( void )
 	{
 		WeaponIdle();
 	}
+}
+
+/*
+=====================
+CBasePlayerWeapon::Aim
+
+=====================
+*/
+Vector CBasePlayerWeapon::Aim( Vector *retstr, float accuracyFactor, CBasePlayer *pOther, int shared_rand )
+{
+	float x = 0.0f, y = 0.0f, z = 0.0f;
+
+	x = UTIL_SharedRandomFloat( shared_rand, accuracyFactor, 0.0f );
+	y = UTIL_SharedRandomFloat( shared_rand, accuracyFactor, 0.0f );
+	z = UTIL_SharedRandomFloat( shared_rand, accuracyFactor, 0.0f );
+
+	return Vector( x, y, z );
+}
+
+/*
+=====================
+CBasePlayerWeapon::ChangeFOV
+
+=====================
+*/
+int CBasePlayerWeapon::ChangeFOV( int fov )
+{
+	if( g_iVuser1z )
+		return g_lastFOV;
+
+	if( m_pPlayer->pev->fuser2 != g_lastFOV )
+		return 0;
+
+	if( g_lastFOV < 0.0f )
+	{
+		int weaponId = m_iId;
+		g_lastFOV = fov;
+
+		CHudScope::SetScope( &gHUD.m_Scope, weaponId );
+	}
+	else
+	{
+		g_lastFOV = 0.0f;
+		CHudScope::SetScope( &gHUD.m_Scope, 0 );
+	}
+
+	gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
+}
+
+/*
+=====================
+CBasePlayerWeapon::Classify
+
+=====================
+*/
+int CBasePlayerWeapon::Classify( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::GetFOV
+
+=====================
+*/
+int CBasePlayerWeapon::GetFOV( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::GetRoundState
+
+=====================
+*/
+int CBasePlayerWeapon::GetRoundState( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::PlayerIsWaterSniping
+
+=====================
+*/
+bool CBasePlayerWeapon::PlayerIsWaterSniping( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::PostMortarValue
+
+=====================
+*/
+void CBasePlayerWeapon::PostMortarValue( float value )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::PrintState
+
+=====================
+*/
+void CBasePlayerWeapon::PrintState( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::RemoveStamina
+
+=====================
+*/
+void CBasePlayerWeapon::RemoveStamina( float removeAmount, CBasePlayer *pOther )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::SendMortarFireCommand
+
+=====================
+*/
+void CBasePlayerWeapon::SendMortarFireCommand( char *c )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::ThinkZoomIn
+
+=====================
+*/
+void CBasePlayerWeapon::ThinkZoomIn( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::ThinkZoomOut
+
+=====================
+*/
+void CBasePlayerWeapon::ThinkZoomOut( void )
+{
+    
+}
+
+/*
+=====================
+CBasePlayerWeapon::TimedDeploy
+
+=====================
+*/
+BOOL CBasePlayerWeapon::TimedDeploy( char *szViewModel, char *szWeaponModel, int iAnim, char *szAnimExt, char *szAnimReloadExt, float idleTime, float attackTime, int skiplocal )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::UpdateZoomSpeed
+
+=====================
+*/
+void CBasePlayerWeapon::UpdateZoomSpeed( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::ZoomIn
+
+=====================
+*/
+int CBasePlayerWeapon::ZoomIn( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayerWeapon::ZoomOut
+
+=====================
+*/
+int CBasePlayerWeapon::ZoomOut( void )
+{
+    
+}
+
+/*
+=====================
+CBasePlayerWeapon::flAim
+
+=====================
+*/
+float CBasePlayerWeapon::flAim( float accuracyFactor, CBasePlayer *pOther )
+{
+
+}
+
+/*
+=====================
+CBasePlayer::IsInMGDeploy
+
+=====================
+*/
+bool CBasePlayer::IsInMGDeploy( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayer::IsProneDeployed
+
+=====================
+*/
+bool CBasePlayer::IsProneDeployed( void )
+{
+
+}
+
+/*
+=====================
+CBasePlayer::IsSandbagDeployed
+
+=====================
+*/
+bool CBasePlayer::IsSandbagDeployed( void )
+{
+
 }
 
 /*
@@ -1060,4 +1345,48 @@ void _DLLEXPORT HUD_PostRunCmd( struct local_state_s *from, struct local_state_s
 
 	// All games can use FOV state
 	g_lastFOV = to->client.fov;
+}
+
+/*
+=====================
+DoD_GetOrientation
+
+=====================
+*/
+void DoD_GetOrientation( float *o, float *a )
+{
+
+}
+
+/*
+=====================
+DoD_GetSequence
+
+=====================
+*/
+void DoD_GetSequence( int *seq, int *gaitseq )
+{
+
+}
+
+/*
+=====================
+DoD_SetOrientation
+
+=====================
+*/
+void DoD_SetOrientation( Vector *p_o, Vector *p_a )
+{
+
+}
+
+/*
+=====================
+DoD_SetSequence
+
+=====================
+*/
+void DoD_SetSequence( int seq, int gaitseq )
+{
+
 }

@@ -528,6 +528,33 @@ private:
 	icon_sprite_t m_IconList[MAX_ICONSPRITES];
 };
 
+class CHudScope : public CHudBase
+{
+public:
+	int Init( void );
+	int MsgFunc_Scope( int iSize, void *pbuf );
+	void SetScope( int weaponId );
+	int VidInit( void );
+	void Reset( void );
+	int Draw( float flTime );
+	void Think( void );
+	void DrawTriApiScope( void );
+
+private:
+	int			m_iWeaponId;
+	bool		m_bWeaponChanged;
+	int			m_nLastWpnId;
+
+	HSPRITE		spring_sprite;
+	model_s		*spring_model;
+	HSPRITE		k43_sprite;
+	model_s		*k43_model;
+	HSPRITE		binoc_sprite;
+	model_s		*binoc_model;
+	HSPRITE		enfield_sprite;
+	model_s		*enfield_model;
+};
+
 //
 //-----------------------------------------------------
 //
@@ -607,6 +634,7 @@ public:
 	CHudAmmoSecondary	m_AmmoSecondary;
 	CHudTextMessage m_TextMessage;
 	CHudStatusIcons m_StatusIcons;
+	CHudScope		m_Scope;
 #if !USE_VGUI || USE_NOVGUI_SCOREBOARD
 	CHudScoreboard	m_Scoreboard;
 #endif
@@ -680,4 +708,5 @@ extern int g_iUser2;
 extern int g_iUser3;
 
 extern int g_iVuser1x;
+extern int g_iVuser1z;
 #endif
