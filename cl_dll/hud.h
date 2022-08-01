@@ -684,6 +684,7 @@ public:
 	bool m_bBritish;
 
 	int g_iWeaponFlags;
+	int g_iClip;
 	int m_iRoundState;
 	int m_iWaterLevel;
 
@@ -705,6 +706,7 @@ public:
 };
 
 extern CHud gHUD;
+extern CHudScope gHUDScope;
 
 extern int g_iPlayerClass;
 extern int g_iTeamNumber;

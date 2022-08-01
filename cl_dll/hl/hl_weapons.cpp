@@ -528,11 +528,11 @@ bool CBasePlayerWeapon::PlayerIsWaterSniping( void )
 {
 	bool result = true;
 
-	if( CHud::GetWaterLevel( &gHUD ) != 3 )
+	if( gHUD.GetWaterLevel() != 3 )
 	{
 		result = false;
 
-		if( CHud::GetWaterLevel( &gHUD ) > 0 )
+		if( gHUD.GetWaterLevel() > 0 )
 			return g_iUser3 == true;
 	}
 
@@ -656,7 +656,7 @@ int CBasePlayerWeapon::ZoomIn( void )
 	
 	if( g_iVuser1z )
 	{
-		CHudScope::SetScope( &gHUD.m_Scope, m_iId );
+		gHUDScope.SetScope( m_iId );
 		gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
 	}
 	
@@ -676,7 +676,7 @@ int CBasePlayerWeapon::ZoomOut( void )
 	if( g_iVuser1z || m_pPlayer->pev->fuser2 != g_lastFOV )
 		return 0;
 	
-	CHudScope::SetScope( &gHUD.m_Scope, m_iId );
+	gHUDScope.SetScope( m_iId );
 	gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
 	
 	g_lastFOV = 0.0f;
