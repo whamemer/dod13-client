@@ -85,6 +85,7 @@ void UTIL_ClientPrintAll( int,char const *,char const *,char const *,char const 
 void ClientPrint( entvars_t *client, int msg_dest, const char *msg_name, const char *param1, const char *param2, const char *param3, const char *param4 ) { }
 
 // CBaseToggle Stubs
+TOGGLE_STATE CBaseToggle::GetState( void ) { return TS_AT_TOP; }
 int CBaseToggle::Restore( class CRestore & ) { return 1; }
 int CBaseToggle::Save( class CSave & ) { return 1; }
 void CBaseToggle::KeyValue( struct KeyValueData_s * ) { }
@@ -95,8 +96,10 @@ void CGrenade::Explode( Vector, Vector ) { }
 void CGrenade::Explode( TraceResult *, int ) { }
 void CGrenade::Killed( entvars_t *, int ) { }
 void CGrenade::Spawn( void ) { }
+void CGrenade::Precache( void ) { }
 CGrenade *CGrenade::ShootTimed( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity, float time ){ return 0; }
 CGrenade *CGrenade::ShootContact( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity ){ return 0; }
+CGrenade *CGrenade::ShootPickup( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity, float time, grenType value, float f ){ return 0; }
 void CGrenade::DetonateUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value ){ }
 
 void UTIL_Remove( CBaseEntity *pEntity ){ }
@@ -196,6 +199,7 @@ Vector CBaseMonster::GetGunPosition( void ) { return g_vecZero; }
 void CBaseEntity::TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType ) { }
 void CBaseEntity::FireBullets( ULONG cShots, Vector vecSrc, Vector vecDirShooting, Vector vecSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t *pevAttacker ) { }
 void CBaseEntity::TraceBleed( float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType ) { }
+void CBaseEntity::RifleMeleeAttack( CBasePlayer *m_pPlayer, BOOL bSendMsgToAll ) { }
 void CBaseMonster::MakeDamageBloodDecal( int cCount, float flNoise, TraceResult *ptr, const Vector &vecDir ) { }
 BOOL CBaseMonster::FGetNodeRoute( Vector vecDest ) { return TRUE; }
 int CBaseMonster::FindHintNode( void ) { return NO_NODE; }
@@ -301,7 +305,13 @@ Vector CBasePlayer::GetGunPosition( void ) { return g_vecZero; }
 const char *CBasePlayer::TeamID( void ) { return ""; }
 int CBasePlayer::GiveAmmo( int iCount, const char *szName, int iMax ) { return 0; }
 void CBasePlayer::AddPoints( int score, BOOL bAllowNegativeScore ) { } 
-void CBasePlayer::AddPointsToTeam( int score, BOOL bAllowNegativeScore ) { } 
+void CBasePlayer::AddPointsToTeam( int score, BOOL bAllowNegativeScore ) { }
+BOOL CBasePlayer::CheckPlayerSpeed( void ) { return FALSE; }
+void CBasePlayer::ClearHasWeapon( int weapon_id ) { }
+void CBasePlayer::FireMapMarker( void ) { }
+BOOL CBasePlayer::SetSpeed( int speed ) { return FALSE; }
+void CBasePlayer::Stamina( void ) { }
+void CBasePlayer::UpdateScope( int weapon_id ) { }
 
 void ClearMultiDamage( void ) { }
 void ApplyMultiDamage( entvars_t *pevInflictor, entvars_t *pevAttacker ) { }
@@ -330,6 +340,7 @@ void CBasePlayerItem::Drop( void ) { }
 void CBasePlayerItem::Kill( void ) { }
 void CBasePlayerItem::Holster( int skiplocal ) { }
 void CBasePlayerItem::AttachToPlayer ( CBasePlayer *pPlayer ) { }
+void CBasePlayerItem::RoundRespawn( void ) { }
 int CBasePlayerWeapon::AddDuplicate( CBasePlayerItem *pOriginal ) { return 0; }
 int CBasePlayerWeapon::AddToPlayer( CBasePlayer *pPlayer ) { return FALSE; }
 int CBasePlayerWeapon::UpdateClientData( CBasePlayer *pPlayer ) { return 0; }
