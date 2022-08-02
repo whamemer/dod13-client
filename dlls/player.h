@@ -267,6 +267,12 @@ public:
 	void AddPointsToTeam( int score, BOOL bAllowNegativeScore );
 	BOOL AddPlayerItem( CBasePlayerItem *pItem );
 	BOOL RemovePlayerItem( CBasePlayerItem *pItem, bool bCallHoster );
+	BOOL CheckPlayerSpeed( void );
+	void ClearHasWeapon( int weapon_id );
+	void FireMapMarker( void );
+	BOOL SetSpeed( int speed );
+	void Stamina( void );
+	void UpdateScope( int weapon_id );
 	void DropPlayerItem ( char *pszItemName );
 	BOOL HasPlayerItem( CBasePlayerItem *pCheckItem );
 	BOOL HasNamedPlayerItem( const char *pszItemName );

@@ -183,6 +183,12 @@ public:
 	virtual void AddPoints( int score, BOOL bAllowNegativeScore ) {}
 	virtual void AddPointsToTeam( int score, BOOL bAllowNegativeScore ) {}
 	virtual BOOL AddPlayerItem( CBasePlayerItem *pItem ) { return 0; }
+	virtual BOOL CheckPlayerSpeed( void ) {}
+	virtual void ClearHasWeapon( int weapon_id ) {}
+	virtual void FireMapMarker( void ) {}
+	virtual BOOL SetSpeed( int speed ) {}
+	virtual void Stamina( void ) {}
+	virtual void UpdateScope( int weapon_id ) {}
 	virtual BOOL RemovePlayerItem( CBasePlayerItem *pItem ) { return 0; }
 	virtual int GiveAmmo( int iAmount, const char *szName, int iMax ) { return -1; };
 	virtual float GetDelay( void ) { return 0; }
@@ -203,6 +209,7 @@ public:
 	virtual	BOOL IsPlayer( void ) { return FALSE; }
 	virtual BOOL IsNetClient( void ) { return FALSE; }
 	virtual const char *TeamID( void ) { return ""; }
+	virtual void RifleMeleeAttack( CBasePlayer *m_pPlayer, BOOL bSendMsgToAll );
 
 	//virtual void SetActivator( CBaseEntity *pActivator ) {}
 	virtual CBaseEntity *GetNextTarget( void );
@@ -525,6 +532,7 @@ public:
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
+	virtual TOGGLE_STATE GetState( void );
 
 	static	TYPEDESCRIPTION m_SaveData[];
 
