@@ -29,6 +29,7 @@
 #include "wrect.h"
 #include "cl_dll.h"
 #include "ammo.h"
+//#include "com_model.h"
 
 #define DHN_DRAWZERO 1
 #define DHN_2DIGITS  2
@@ -528,11 +529,15 @@ private:
 	icon_sprite_t m_IconList[MAX_ICONSPRITES];
 };
 
+//
+//-----------------------------------------------------
+//
+
 class CHudScope : public CHudBase
 {
 public:
 	int Init( void );
-	int MsgFunc_Scope( int iSize, void *pbuf );
+	int MsgFunc_Scope( const char *pszName, int iSize, void *pbuf );
 	void SetScope( int weaponId );
 	int VidInit( void );
 	void Reset( void );
@@ -546,13 +551,13 @@ private:
 	int			m_nLastWpnId;
 
 	HSPRITE		spring_sprite;
-	model_s		*spring_model;
-	HSPRITE		k43_sprite;
-	model_s		*k43_model;
-	HSPRITE		binoc_sprite;
-	model_s		*binoc_model;
-	HSPRITE		enfield_sprite;
-	model_s		*enfield_model;
+	const struct model_s		*spring_model;
+	HSPRITE						k43_sprite;
+	const struct model_s		*k43_model;
+	HSPRITE						binoc_sprite;
+	const struct model_s		*binoc_model;
+	HSPRITE						enfield_sprite;
+	const struct model_s		*enfield_model;
 };
 
 //

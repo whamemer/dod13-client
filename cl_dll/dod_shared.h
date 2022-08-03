@@ -36,6 +36,8 @@
 #define WEAPON_PSCHRECK         30
 #define WEAPON_PIAT             31
 
+#define WEAPON_BINOC            33
+
 // weapon weight factors (for auto-switching)   (-1 = noswitch)
 #define BREN_WEIGHT
 #define MG34_WEIGHT
