@@ -989,3 +989,8 @@ bool CHud::IsInMGDeploy( void )
 		return g_iVuser1x == OBS_CHASE_FREE;
 	return true;
 }
+
+int CHud::GetCurrentWeaponId( void )
+{
+	return gHUDAmmo.GetCurrentWeaponId();
+}

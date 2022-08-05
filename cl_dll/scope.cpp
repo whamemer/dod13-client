@@ -18,9 +18,39 @@
 #include "screenfade.h"
 #include "shake.h"
 
-DECLARE_COMMAND( m_Scope, Scope )
+#include "pm_shared.h"
+
+#include "../com_weapons.h"
+
+#include "demo_api.h"
+#include "view.h"
+#include "triangleapi.h"
+
+DECLARE_MESSAGE( m_Scope, Scope )
 
 extern engine_studio_api_t IEngineStudio;
+
+/*
+====================
+CalcFov
+====================
+*/
+float CalcFovDOD( float fov_x, float width, float height )
+{
+	float a;
+	float x;
+
+	if( fov_x < 1.0f || fov_x > 179.0f )
+		fov_x = 90.0f;	// error, set to 90
+
+	x = width / tan( fov_x / 360.0f * M_PI_F );
+
+	a = atan ( height / x );
+
+	a = a * 360.0f / M_PI_F;
+
+	return a;
+}
 
 int CHudScope::Init( void )
 {
@@ -126,7 +156,7 @@ void CHudScope::Think( void )
     if( m_bWeaponChanged )
     {
         if( m_iWeaponId == WEAPON_SCOPEDKAR || m_iWeaponId == WEAPON_SPRING || m_iWeaponId == WEAPON_FG42 
-            || m_iWeaponId == WEAPON_BINOC || m_iWeaponId == WEAPON_ENFIELD && g_iWeaponFlags )
+            || m_iWeaponId == WEAPON_BINOC || m_iWeaponId == WEAPON_ENFIELD && gHUD.g_iWeaponFlags )
         {
 
             screenfade_t sf;
@@ -162,5 +192,184 @@ void CHudScope::Think( void )
 
 void CHudScope::DrawTriApiScope( void )
 {
+    extern float in_fov;
 
+    vec3_t viewangles;
+
+    gEngfuncs.GetViewAngles( (float *)viewangles );
+
+    if( g_iUser1 == OBS_IN_EYE )
+    {
+        m_iWeaponId = WEAPON_SPRING;
+        viewangles = v_angles;
+    }
+
+    int iPlaying = 0;
+
+    if( gHUD.m_iFOV - 1 < 90 )
+        iPlaying = gEngfuncs.pDemoAPI->IsPlayingback() == 0;
+
+    if( in_fov == gHUD.m_iFOV && IEngineStudio.IsHardware() != 0 && gEngfuncs.pDemoAPI->IsPlayingback() )
+    {
+        if( in_fov )
+            in_fov = 90;
+
+        if( !m_iWeaponId )
+            m_iWeaponId = gHUD.GetCurrentWeaponId();
+        
+        switch( m_iWeaponId )
+        {
+            case WEAPON_SCOPEDKAR:
+                spring_model = k43_model;
+                break;
+            case WEAPON_SPRING:
+                spring_model = spring_model;
+                break;
+            case WEAPON_FG42:
+                if( !gHUD.g_iWeaponFlags )
+                    return;
+                spring_model = k43_model;
+                break;
+            case WEAPON_ENFIELD:
+                if( !gHUD.g_iWeaponFlags )
+                    return;
+                spring_model = enfield_model;
+                break;
+            case WEAPON_BINOC:
+                spring_model = binoc_model;
+                break;
+            default:
+                return;
+        }
+
+        if( spring_model )
+        {
+            float fov;
+            float width, height;
+
+            fov = CalcFovDOD( in_fov, (float)ScreenWidth, (float)ScreenHeight );
+
+            width = tan( in_fov / 360.0f * M_PI_F ) * 5.0f * 1.1f;
+            height = tan( fov / 360.0f * M_PI_F ) * 5.0f * 1.1f;
+
+            vec3_t view, forward, right, up, temporg, v_origin;
+
+            if( gHUD.m_fPlayerDead )
+                view.z = 80.f;
+            
+            gEngfuncs.pfnAngleVectors( view, forward, right, up );
+            gEngfuncs.pTriAPI->RenderMode( kRenderTransAlpha );
+            gEngfuncs.pTriAPI->CullFace( TRI_FRONT );
+
+            int i;
+
+            while( TRUE )
+            {
+                while( TRUE )
+                {
+                    if( !gEngfuncs.pTriAPI->SpriteTexture( (model_s *)spring_model, i - 1 ) )
+                        return;
+                    
+                    gEngfuncs.pTriAPI->Color4f( 1.0f, 1.0f, 1.0f, 1.0f );
+                    gEngfuncs.pTriAPI->Begin( TRI_QUADS );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    if( i != 3 )
+                        break;
+
+                    temporg = -height * up + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = forward * 5.0f + v_origin;
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = width * right + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = -height * up + width * right + ( forward * 5.0f + v_origin );
+
+pasti:
+                    ++i;
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+
+                    gEngfuncs.pTriAPI->End();
+                }
+
+                if( i == 4 )
+                {
+                    temporg = -height * up + right * -width + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = right * -width + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = forward * 5.0f + v_origin;
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = -height * up + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+
+                    gEngfuncs.pTriAPI->End();
+                    return;
+                }
+
+                if( i == 2 )
+                {
+                    temporg = forward * 5.0f + v_origin;
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = height * up + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = height * up + width * right + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    gEngfuncs.pTriAPI->Brightness( 1 );
+                    gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                    temporg = width * right + ( forward * 5.0f + v_origin );
+                    gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                    
+                    goto pasti;
+                }
+
+                temporg = -width * right + ( forward * 5.0f + v_origin );
+                gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                gEngfuncs.pTriAPI->Brightness( 1 );
+                gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                temporg = height * up + -width * right + ( forward * 5.0f + v_origin );
+                gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                gEngfuncs.pTriAPI->Brightness( 1 );
+                gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                temporg = height * up + ( forward * 5.0f + v_origin );
+                gEngfuncs.pTriAPI->Vertex3fv( temporg );
+                gEngfuncs.pTriAPI->Brightness( 1 );
+                gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
+
+                temporg = forward * 5.0f + v_origin;
+                gEngfuncs.pTriAPI->Vertex3fv( temporg );
+
+                gEngfuncs.pTriAPI->End();
+                ++i;
+            }
+        }
+    }
 }

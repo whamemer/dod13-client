@@ -118,6 +118,8 @@ public:
 	int MsgFunc_ItemPickup( const char *pszName, int iSize, void *pbuf );
 	int MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf );
 
+	int GetCurrentWeaponId( void );
+
 	void SlotInput( int iSlot );
 	void _cdecl UserCmd_Slot1( void );
 	void _cdecl UserCmd_Slot2( void );
@@ -604,6 +606,8 @@ public:
 	int DrawHudStringLen( const char *szIt );
 	void DrawDarkRectangle( int x, int y, int wide, int tall );
 
+	int GetCurrentWeaponId( void );
+
 private:
 	// the memory for these arrays are allocated in the first call to CHud::VidInit(), when the hud.txt and associated sprites are loaded.
 	// freed in ~CHud()
@@ -712,6 +716,7 @@ public:
 
 extern CHud gHUD;
 extern CHudScope gHUDScope;
+extern CHudAmmo gHUDAmmo;
 
 extern int g_iPlayerClass;
 extern int g_iTeamNumber;

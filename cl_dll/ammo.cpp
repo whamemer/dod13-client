@@ -1181,3 +1181,13 @@ client_sprite_t *GetSpriteList( client_sprite_t *pList, const char *psz, int iRe
 
 	return NULL;
 }
+
+int CHudAmmo::GetCurrentWeaponId( void )
+{
+	WEAPON *m_pWeapon;
+
+	if( m_pWeapon )
+		return m_pWeapon->iId;
+	else
+		return -1;
+}
