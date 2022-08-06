@@ -143,6 +143,101 @@ int __MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
 	return gHUD.MsgFunc_GameMode( pszName, iSize, pbuf );
 }
 
+int __MsgFunc_BloodPuff( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_CurMarker( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_Frags( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_HandSignal( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_MapMarker( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_ObjScore( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_PClass( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_PStatus( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_PTeam( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_ScoreInfoLong( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_ScoreShort( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_WaveStatus( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_WaveTime( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_WideScreen( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int __MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
 // TFFree Command Menu
 void __CmdFunc_OpenCommandMenu( void )
 {
@@ -183,6 +278,16 @@ void __CmdFunc_ForceCloseCommandMenu( void )
 		gViewPort->HideCommandMenu();
 	}
 #endif
+}
+
+void __CmdFunc_HideCommandMenu( void )
+{
+
+}
+
+void __CmdFunc_ShowCommandMenu( void )
+{
+
 }
 
 // TFFree Command Menu Message Handlers
@@ -983,6 +1088,56 @@ void CHud::DoRecoil( int weapon_id )
 	m_flRecoilTimeRemaining = 0.1f;
 }
 
+int CHud::GetCurrentWeaponId( void )
+{
+	return gHUDAmmo.GetCurrentWeaponId();
+}
+
+void CHud::GetMapBounds( int *x, int *y, int *w, int *h )
+{
+
+}
+
+int CHud::GetMinimapState( void )
+{
+
+}
+
+int CHud::GetMinimapZoomLevel( void )
+{
+
+}
+
+float CHud::GetMortarDeployTime( void )
+{
+
+}
+
+char *CHud::GetPlayerClassName( int playerclass )
+{
+
+}
+
+char *CHud::GetTeamName( int team )
+{
+
+}
+
+int CHud::GetWaterLevel( void )
+{
+
+}
+
+void CHud::InitMapBounds( void )
+{
+
+}
+
+bool CHud::IsDucking( void )
+{
+
+}
+
 bool CHud::IsInMGDeploy( void )
 {
 	if( g_iUser3 != OBS_CHASE_FREE )
@@ -990,7 +1145,122 @@ bool CHud::IsInMGDeploy( void )
 	return true;
 }
 
-int CHud::GetCurrentWeaponId( void )
+bool CHud::IsInMortarDeploy( void )
 {
-	return gHUDAmmo.GetCurrentWeaponId();
+
+}
+
+bool CHud::IsProne( void )
+{
+
+}
+
+bool CHud::IsProneDeployed( void )
+{
+
+}
+
+bool CHud::IsSandbagDeployed( void )
+{
+
+}
+
+bool CHud::IsTeamPara( void )
+{
+
+}
+
+int CHud::MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int CHud::MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int CHud::MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int CHud::MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+void CHud::PlaySoundOnChan( char *name, float fVol, int chan )
+{
+
+}
+
+void CHud::PopRecoil( float frametime, float *flPitchRecoil, float *flYawRecoil )
+{
+
+}
+
+void CHud::PostMortarValue( float value )
+{
+
+}
+
+void CHud::SetMinimapState( int state )
+{
+
+}
+
+void CHud::SetMortarDeployTime( void )
+{
+
+}
+
+void CHud::SetMortarUnDeployTime( void )
+{
+
+}
+
+void CHud::SetRecoilAmount( float flPitchRecoil, float flYawRecoil )
+{
+
+}
+
+void CHud::SetWaterLevel( int level )
+{
+
+}
+
+void CHud::VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b )
+{
+
+}
+
+int CHud::ZoomMinimap( void )
+{
+
+}
+
+void ClientSetSensitivity( int level )
+{
+
+}
+
+void EV_BloodPuff( float *org )
+{
+
+}
+
+int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+int EV_HandSignalMsg( const char *pszName, int iSize, void *pbuf )
+{
+
+}
+
+bool ShouldShowBlood( void )
+{
+
 }

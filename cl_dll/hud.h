@@ -669,7 +669,12 @@ public:
 	void _cdecl MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf );
 	void _cdecl MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_SetFOV( const char *pszName,  int iSize, void *pbuf );
-	int  _cdecl MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf );
+
+	int _cdecl MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf );
 
 	// Screen information
 	SCREENINFO	m_scrinfo;
@@ -706,12 +711,36 @@ public:
 	// DOD
 
 	void GetWeaponRecoilAmount( int weapon_id, float *flPitchRecoil, float *flYawRecoil );
-
 	void DoRecoil( int weapon_id );
+	void GetMapBounds( int *x, int *y, int *w, int *h );
+	void InitMapBounds( void );
+	void PlaySoundOnChan( char *name, float fVol, int chan );
+	void PopRecoil( float frametime, float *flPitchRecoil, float *flYawRecoil );
+	void PostMortarValue( float value );
+	void SetMinimapState( int state );
+	void SetMortarDeployTime( void );
+	void SetMortarUnDeployTime( void );
+	void SetRecoilAmount( float flPitchRecoil, float flYawRecoil );
+	void SetWaterLevel( int level );
+	void VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b );
 
+	int GetMinimapState( void );
+	int GetMinimapZoomLevel( void );
+	int GetWaterLevel( void );
+	int ZoomMinimap( void );
+
+	float GetMortarDeployTime( void );
+
+	char *GetPlayerClassName( int playerclass );
+	char *GetTeamName( int team );
+
+	bool IsDucking( void );
 	bool IsInMGDeploy( void );
-
-	int GetWaterLevel( void ) { return m_iWaterLevel; }
+	bool IsInMortarDeploy( void );
+	bool IsProne( void );
+	bool IsProneDeployed( void );
+	bool IsSandbagDeployed( void );
+	bool IsTeamPara( void );
 };
 
 extern CHud gHUD;
