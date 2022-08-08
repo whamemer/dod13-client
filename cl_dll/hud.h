@@ -56,6 +56,7 @@ typedef struct
 } RGBA;
 
 typedef struct cvar_s cvar_t;
+typedef struct particle_shooter_s particle_shooter_t;
 
 #define HUD_ACTIVE	1
 #define HUD_INTERMISSION 2
@@ -565,6 +566,478 @@ private:
 //
 //-----------------------------------------------------
 //
+
+class CHudDoDCommon : public CHudBase
+{
+public:
+	int Init( void );
+	void InitHUDData( void );
+	int VidInit( void );
+	int Draw( float fltime );
+	int MsgFunc_GameRules( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_ResetSens( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_CameraView( const char *pszName, int iSize, void *pbuf );
+
+};
+
+//
+//-----------------------------------------------------
+//
+
+class CHudDoDCrossHair : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	void SetDoDCrosshair( void );
+	int Draw( float flTime );
+	void Reset( void );
+	int MsgFunc_ClanTimer( const char *pszName, int iSize, void *pbuf );
+	bool ShouldDrawCrossHair( void );
+	float GetCurrentWeaponAccuracy( void );
+	void DrawClanTimer( float flTime );
+	void DrawSpectatorCrossHair( void );
+	void DrawDynamicCrossHair( void );
+	void DrawCustomCrossHair( int style );
+	int GetCrossHairWidth( void );
+
+private:
+	int m_MoveWidth;
+	int m_MoveHeigth;
+	int m_MoveWidthD;
+	int m_MoveHeigthD;
+	int i_xSet;
+	int m_iXPos;
+	int m_iYPos;
+	int m_iLastXHairWidth;
+
+	float f_xPos;
+	float f_yPos;
+	float f_xLPos;
+	float f_xRPos;
+	float m_fClanTimer;
+	float m_fMoveTime;
+	float m_flLastSetTime;
+
+	vec3_t v_evPunch;
+
+	HSPRITE CrossSprite2horiz;
+	wrect_t *CrossArea2horiz;
+	HSPRITE CrossSprite2vert;
+	wrect_t *CrossArea2vert;
+	HSPRITE CrossSprite2dot;
+	wrect_t *CrossArea2dot;
+	HSPRITE m_hCrosshair;
+	wrect_t m_crosshairRect;
+	HSPRITE m_hCustomCrosshair;
+	wrect_t m_customCrosshairRect;
+};
+
+//
+//-----------------------------------------------------
+//
+
+class CHudDoDMap : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	void InitHUDData( void );
+	int Draw( float flTime );
+	void DrawOverview( void );
+	void DrawOverviewLayer( void );
+	void DrawOverviewEntities( void );
+	void CheckOverviewEntities( void );
+	void HandleMapButton( void );
+	void HandleMapZoomButton( void );
+	void SetMapState( void );
+	void GetSmallMapOffset( float *x, float *y, float *z );
+	bool AddMapEntityToMap( HSPRITE sprite, double lifeTime, vec3_t *p_origin );
+	void DrawOverviewIcon( vec3_t *p_origin, HSPRITE hIcon, int iconScale, vec3_t *p_angles );
+
+private:
+	struct cl_entity_s m_MapTag[64];
+	float m_flZoom;
+	float m_flZoomTime;
+	float m_flSmallMapScale;
+	float m_flIdealMapScale;
+	float m_flPreviousMapScale;
+
+	typedef struct
+	{
+		vec3_t origin;
+		HSPRITE hSprite;
+		double killTime;
+	} map_icon_t;
+	
+	map_icon_t m_ExtraOverviewEntities[32];
+
+};
+
+//
+//-----------------------------------------------------
+//
+
+class CHudDodIcons : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	void Reset( void );
+	void PlayerDied( void );
+	int MsgFunc_Health( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_Object( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_ClientAreas( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_ClCorpse( const char *pszName, int iSize, void *pbuf );
+	int Draw( float flTime );
+	void MapMarkerPosted( void );
+	void ActivateHintBacking( int team, float flTime );
+	void GetHintMessageLocation( int *x, int *y );
+	void StartDrawingCredits( void );
+	void DrawCredits( float flTime );
+	void DrawMarkerIcon( HSPRITE pSpr );
+
+private:
+	int iHealth;
+	int sprite_array[5];
+	int m_iKey;
+	int i_HeartFrame;
+	int m_iIconHeight;
+	int m_iIconWidth;
+	int m_iHintTeam;
+	int m_iMsgX;
+	int m_iMsgY;
+	int m_hHintHeads[3];
+	int m_iCreditName;
+
+	float m_fLastMapMarkerTime;
+	float f_HeartTime;
+	float f_HeartSpeed;
+	float m_flHintDieTime;
+	float m_flCreditChangeTime;
+	float m_flDrawSelectedMarkerTime;
+
+	char *m_szObjectIcon;
+
+	HSPRITE m_hObjectSpr;
+	HSPRITE MapMarkerSprite;
+	HSPRITE m_hHorizHintBacking;
+	HSPRITE m_hVertHintBacking;
+	HSPRITE m_hsprSelectedMarker;
+
+	wrect_t *m_wObjectArea;
+	wrect_t *area_array[5];
+	wrect_t *MapMarkerArea;
+	wrect_t *m_rectHintHeads[3];
+	wrect_t *m_rectHorizHintBacking;
+	wrect_t *m_rectVertHintBacking;
+
+	HSPRITE IconMGDeploy;
+	wrect_t *IconMGDeployArea;
+	HSPRITE MainHUD;
+	wrect_t *MainHUDArea;
+	HSPRITE ObjectivesHUD;
+	wrect_t *ObjectivesHUDArea;
+	HSPRITE ReinforcementsHUD;
+	wrect_t *ReinforcementsHUDArea;
+	HSPRITE HeartHUD;
+	wrect_t *HeartHUDArea;
+	HSPRITE StaminaBarHUD;
+	wrect_t StaminaBarHUDArea;
+	HSPRITE HealthBarHUD;
+	wrect_t *HealthBarHUDArea;
+	HSPRITE HealthOverlayHUD;
+	wrect_t *HealthOverlayHUDArea;
+
+	struct ClientArea
+	{
+		int nStatus;
+		HSPRITE hSpr;
+	};
+	
+	struct ClientArea m_Areas[128];
+
+};
+
+//
+//-----------------------------------------------------
+//
+// TODO: WHAMER: need vgui2 :(
+class CHudVGUI2Print : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	int DrawVGUI2String( char *charMsg, int x, int y, float r, float g, float b );
+	int DrawVGUI2StringReverse( char *charMsg, int x, int y, float r, float g, float b );
+	int DrawVGUI2String( wchar_t *msg, int x, int y, float r, float g, float b );
+	int DrawVGUI2StringReverse( wchar_t *msg, int x, int y, float r, float g, float b );
+	void VGUI2HudPrintArgs( char *charMsg, char *sstr1, char *sstr2, char *sstr3, char *sstr4, int x, int y, float r, float g, float b );
+	void VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b );
+	int GetHudFontHeight( void );
+	void GetStringSize( wchar_t *string, int *width, int *height );
+	int Draw( float flTime );
+	//vgui2::HFont GetFont( void ); 
+
+private:
+	int m_iX;
+	int m_iY;
+
+	unsigned long m_Fonts[3];
+
+	float m_flVGUI2StringTime;
+	float m_fR;
+	float m_fG;
+	float m_fB;
+
+	wchar_t m_wCharBuf[512];
+
+};
+
+//
+//-----------------------------------------------------
+//
+
+class CClientEnvModel : public CHudBase
+{
+public:
+	typedef struct
+	{
+		// TODO: WHAMER
+	} env_model_t;
+
+	int Init( void );
+	int VidInit( void );
+	void Think( void );
+	void RemoveAllModels( void );
+	void AddEnvModel( env_model_t *pModel );
+
+private:
+	struct tempent_s *m_teEnvModelTE;
+	env_model_t *m_sEnvModels[192];
+
+};
+
+//
+//-----------------------------------------------------
+//
+
+class CObjectiveIcons : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	int Draw( float flTime );
+	void Think( void );
+	int MsgFunc_InitObj( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_SetObj( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_StartProg( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_StartProgF( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_ProgUpdate( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_CancelProg( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_TimerStatus( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_PlayersIn( const char *pszName, int iSize, void *pbuf );
+	void ClearAllCapPoints( void );
+	void ChangeCapPoint( int point, int newowner, int timedCap );
+	void StartCapProgress( int point, int newOwner, float time );
+	void CancelCapProgress( int point, int owner );
+	void SetNumPlayersInArea( int point, int team, int numplayers, int required );
+	void SetVisible( int point, int visible );
+	void UpdateObjectiveIcons( void );
+	void DrawDigit( int digit, int x, int y );
+
+private:
+	int m_Init;
+	int m_Set;
+	int m_StartProgress;
+	int m_CancelProgress;
+	int m_iWaveStatus;
+	int m_nTimerStatus;
+	int m_TimerIcons[11];
+
+	float m_fTimerSeconds;
+	float m_flWaveTime;
+	float m_fLastTime;
+
+	wrect_t m_iconarea;
+	wrect_t *TimerHUDArea;
+	wrect_t *m_TimerAreas[11];
+	wrect_t m_topwrect;
+	wrect_t m_bottomwrect;
+
+	HSPRITE TimerHUD;
+	HSPRITE m_TopNumber;
+	HSPRITE m_BottomNumber;
+
+	bool m_bWarmupMode;
+
+	struct control_point_t
+	{
+		int entindex;
+		int visible;
+		int owner;
+		int nextOwner;
+		int numplayers;
+		int requiredplayers;
+		int occupyingteam;
+		int m_iIcons[3];
+		int m_iMapXPos;
+		int m_iMapYPos;
+		
+		struct rect_s m_rAreas[3];
+
+		vec3_t m_rOrigin;
+
+		float animtime;
+		float totaltime;
+
+		bool valid;
+	};
+	
+	control_point_t m_eControlPoints[12];
+};
+
+//
+//-----------------------------------------------------
+//
+
+class CParticleShooter : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	void Think( void );
+	void AddParticleSystem( particle_shooter_t *pShooter );
+	int MsgFunc_PReg( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_PShoot( const char *pszName, int iSize, void *pbuf );
+
+private:
+	int m_iNumShooters;
+
+	struct particle_shooter_s
+	{
+		int id;
+		int iNumParticles;
+		int iParticlesRemaining;
+		int iFlags;
+		int iSprite;
+		int iColour[3];
+		int iSpinDegPerSec;
+		int iFramerate;
+		int iRenderModel;
+		int iState;
+
+		float fParticleLife;
+		float fFireDelay;
+		float fVariance;
+		float fNextShootTime;
+		float fGravity;
+		float fFadeSpeed;
+		float fSize;
+		float fDampingTime;
+		float fDampingVel;
+		float fBrightness;
+		float fScaleSpeed;
+
+		char szSprite[128];
+
+		vec3_t vOrigin;
+		vec3_t vVelocity;
+
+		model_s *pSprite;
+	};
+	
+	particle_shooter_s m_sShooters[64];
+
+};
+
+//
+//-----------------------------------------------------
+// TODO: WHAMER: need Particleman :(
+
+class CWeatherManager : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	void CreateRainParticle( void );
+	void CreateSnowParticle( void );
+
+private:
+	model_s *m_pRainSprite;
+	model_s *m_pSnowSprite;
+	model_s *m_pSplashSprite;
+	model_s *m_pRippleSprite;
+
+};
+
+//
+//-----------------------------------------------------
+//
+
+class CTrajectoryList
+{
+public:
+	enum
+	{
+		MAX_TRAJECTORIES = 32,
+		TRAJECTORY_LIFETIME = 30
+	};
+
+	typedef struct
+	{
+		// TODO: WHAMER
+	} trajectory_t;
+
+	void GetTrajectory( vec3_t *p_launchPos, vec3_t *p_targetPos, float *pitch1, float *pitch2, float *yaw );
+	void CalculateTrajectory( vec3_t *p_launchPos, vec3_t *p_targetPos, float *pitch1, float *pitch2, float *yaw );
+	trajectory_t *AddTrajectory( vec3_t *p_targetPos );
+	void InvalidateAllTrajectories( void );
+
+private:
+	vec3_t m_vecLaunchPos;
+
+	trajectory_t m_Trajectories[32];
+};
+
+class CMortarHud : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	int Draw( float flTime );
+	void CalculateFireAngle( float *pitch, float *yaw );
+	void DrawPredictedMortarImpactSite( void );
+
+private:
+	CTrajectoryList *m_TrajectoryList;
+
+};
+
+//
+//-----------------------------------------------------
+//
+
+class Element
+{
+	float flTimeCreated;
+	Element *next;
+	Element *previous;
+};
+
+class Queue
+{
+	int count;
+	int maxelements;
+	float m_flDuration;
+	Element *first;
+	Element *last;
+	Element *current;
+};
+
+//
+//-----------------------------------------------------
+//
 class CHud
 {
 private:
@@ -645,6 +1118,16 @@ public:
 	CHudTextMessage m_TextMessage;
 	CHudStatusIcons m_StatusIcons;
 	CHudScope		m_Scope;
+	CHudDodIcons	m_Icons;
+	CObjectiveIcons	m_ObjectiveIcons;
+	CParticleShooter	m_PShooter;
+	CClientEnvModel	m_CEnvModel;
+	CWeatherManager	m_Weather;
+	CHudDoDCrossHair	m_DoDCrossHair;
+	CHudDoDMap		m_DoDMap;
+	CHudDoDCommon	m_DoDCommon;
+	CHudVGUI2Print	m_VGUI2Print;
+	CMortarHud		m_MortarHud;
 #if !USE_VGUI || USE_NOVGUI_SCOREBOARD
 	CHudScoreboard	m_Scoreboard;
 #endif
