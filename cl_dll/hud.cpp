@@ -145,97 +145,97 @@ int __MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
 
 int __MsgFunc_BloodPuff( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_BloodPuff( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_CurMarker( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_CurMarker( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_Frags( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_Frags( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_HLTV( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_HandSignal( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_HandSignal( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_MapMarker( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_MapMarker( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_ObjScore( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_ObjScore( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_PClass( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_PClass( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_PStatus( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_PStatus( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_PTeam( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_PTeam( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_RoundState( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_ScoreInfoLong( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_ScoreInfoLong( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_ScoreShort( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_ScoreShort( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_TimeLeft( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_UseSound( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_WaveStatus( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_WaveStatus( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_WaveTime( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_WaveTime( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_WideScreen( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_WideScreen( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 {
-
+	return gHUD.MsgFunc_YouDied( pszName, iSize, pbuf );
 }
 
 // TFFree Command Menu
@@ -282,12 +282,22 @@ void __CmdFunc_ForceCloseCommandMenu( void )
 
 void __CmdFunc_HideCommandMenu( void )
 {
-
+#if USE_VGUI
+	if ( gViewPort )
+	{
+		gViewPort->HideCommandMenu();
+	}
+#endif
 }
 
 void __CmdFunc_ShowCommandMenu( void )
 {
-
+#if USE_VGUI
+	if ( gViewPort )
+	{
+		gViewPort->ShowCommandMenu( gViewPort->m_StandardMenu );
+	}
+#endif
 }
 
 // TFFree Command Menu Message Handlers
@@ -435,11 +445,16 @@ void CHud::Init( void )
 {
 	HOOK_MESSAGE( Logo );
 	HOOK_MESSAGE( ResetHUD );
+	HOOK_MESSAGE( YouDied );
 	HOOK_MESSAGE( GameMode );
 	HOOK_MESSAGE( InitHUD );
 	HOOK_MESSAGE( ViewMode );
 	HOOK_MESSAGE( SetFOV );
+	HOOK_MESSAGE( HLTV );
 	HOOK_MESSAGE( Concuss );
+	HOOK_MESSAGE( BloodPuff );
+	HOOK_MESSAGE( HandSignal );
+	HOOK_MESSAGE( UseSound );
 
 	// TFFree CommandMenu
 	HOOK_COMMAND( "+commandmenu", OpenCommandMenu );
@@ -461,6 +476,7 @@ void CHud::Init( void )
 
 #if USE_VGUI && !USE_NOVGUI_SCOREBOARD
 	HOOK_MESSAGE( ScoreInfo );
+	HOOK_MESSAGE( ScoreInfoLong );
 	HOOK_MESSAGE( TeamScore );
 	HOOK_MESSAGE( TeamInfo );
 #endif
@@ -471,21 +487,56 @@ void CHud::Init( void )
 #if USE_VGUI
 	HOOK_MESSAGE( SpecFade );
 	HOOK_MESSAGE( ResetFade );
+	HOOK_MESSAGE( MapMarker );
 #endif
 
 	// VGUI Menus
 	HOOK_MESSAGE( VGUIMenu );
+	HOOK_MESSAGE( WaveTime );
+	HOOK_MESSAGE( WaveStatus );
+	HOOK_MESSAGE( WideScreen );
+	HOOK_MESSAGE( Frags );
+	HOOK_MESSAGE( ObjScore );
+	HOOK_MESSAGE( PStatus );
+	HOOK_MESSAGE( ScoreShort );
+	HOOK_MESSAGE( PClass );
+	HOOK_MESSAGE( PTeam );
+	HOOK_MESSAGE( RoundState );
+	HOOK_MESSAGE( CurMarker );
+	HOOK_MESSAGE( TimeLeft );
 
 	CVAR_CREATE( "hud_classautokill", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );		// controls whether or not to suicide immediately on TF class switch
-	CVAR_CREATE( "hud_takesshots", "0", FCVAR_ARCHIVE );		// controls whether or not to automatically take screenshots at the end of a round
+	hud_takesshots = CVAR_CREATE( "hud_takesshots", "0", FCVAR_ARCHIVE );		// controls whether or not to automatically take screenshots at the end of a round
 	hud_textmode = CVAR_CREATE ( "hud_textmode", "0", FCVAR_ARCHIVE );
+	max_rubble = CVAR_CREATE( "max_rubble", "240", FCVAR_ARCHIVE );
+	cl_corpsestay = CVAR_CREATE( "cl_corpsestay", "10", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmsmallmap", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowmarkers", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowplayers", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowflags", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowobjects", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowgrenades", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_numshotrubble", "5", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_weatherdis", "1700", FCVAR_ARCHIVE );
 
 	m_iLogo = 0;
 	m_iFOV = 0;
+	m_bAllieParatrooper = false;
+	m_bAllieInfiniteLives = true;
+	m_bAxisParatrooper = false;
+	m_bAxisInfiniteLives = true;
+	m_bParatrooper = false;
+	m_bInfiniteLives = true;
+	m_bBritish = false;
+	m_iRoundState = 1;
 
-	CVAR_CREATE( "zoom_sensitivity_ratio", "1.2", FCVAR_ARCHIVE );
+	_cl_minimap = CVAR_CREATE( "_cl_minimap", "2", FCVAR_ARCHIVE | FCVAR_EXTDLL );
+	_cl_minimapzoom = CVAR_CREATE( "_cl_minimapzoom", "1", FCVAR_ARCHIVE );
+	zoom_sensitivity_ratio = CVAR_CREATE( "zoom_sensitivity_ratio", "1.2", FCVAR_ARCHIVE );
 	CVAR_CREATE( "cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
+	_ah = CVAR_CREATE( "_ah", "1", FCVAR_ARCHIVE | FCVAR_EXTDLL );
 	default_fov = CVAR_CREATE( "default_fov", "90", FCVAR_ARCHIVE );
+	cl_hudfont = CVAR_CREATE( "cl_hudfont", "1", FCVAR_ARCHIVE );
 	m_pCvarStealMouse = CVAR_CREATE( "hud_capturemouse", "1", FCVAR_ARCHIVE );
 	m_pCvarDraw = CVAR_CREATE( "hud_draw", "1", FCVAR_ARCHIVE );
 	cl_lw = gEngfuncs.pfnGetCvarPointer( "cl_lw" );
@@ -507,8 +558,17 @@ void CHud::Init( void )
 	}
 
 	// In case we get messages before the first update -- time will be valid
+	i_Recoil = 0;
+	m_iWaterLevel = 0;
 	m_flTime = 1.0;
 
+	m_Scope.Init();
+	m_Icons.Init();
+	m_DoDMap.Init();
+	m_ObjectiveIcons.Init();
+	m_PShooter.Init();
+	m_CEnvModel.Init();
+	m_Weather.Init();
 	m_Ammo.Init();
 	m_Health.Init();
 	m_SayText.Init();
@@ -523,6 +583,9 @@ void CHud::Init( void )
 	m_AmmoSecondary.Init();
 	m_TextMessage.Init();
 	m_StatusIcons.Init();
+	m_DoDCrossHair.Init();
+	m_MortarHud.Init();
+	m_VGUI2Print.Init();
 #if USE_VGUI
 	GetClientVoiceMgr()->Init(&g_VoiceStatusHelper, (vgui::Panel**)&gViewPort);
 #endif
@@ -537,6 +600,21 @@ void CHud::Init( void )
 	m_Menu.Init();
 
 	MsgFunc_ResetHUD( 0, 0, NULL );
+
+	m_iSensLevel = 0;
+	m_szTeamNames[0][0] = 0;
+	g_RubbleQueue.m_flDuration = 2.0f;
+	
+	char *teamallies = CHudTextMessage::BufferedLocaliseTextString( "#Teamname_allies" );
+	strcpy( m_szTeamNames[1], teamallies );
+	char *teamaxis = CHudTextMessage::BufferedLocaliseTextString( "#Teamname_axis" );
+	strcpy( m_szTeamNames[2], teamaxis );
+	char *teamspectators = CHudTextMessage::BufferedLocaliseTextString( "#Teamname_spectators" );
+	strcpy( m_szTeamNames[3], teamspectators );
+	char *teambritish = CHudTextMessage::BufferedLocaliseTextString( "#Teamname_british" );
+	strcpy( m_szTeamNames[4], teambritish );
+
+	gHUD.InitMapBounds();
 }
 
 // CHud destructor

@@ -1020,6 +1020,7 @@ private:
 
 class Element
 {
+public:
 	float flTimeCreated;
 	Element *next;
 	Element *previous;
@@ -1027,6 +1028,7 @@ class Element
 
 class Queue
 {
+public:
 	int count;
 	int maxelements;
 	float m_flDuration;
@@ -1154,10 +1156,25 @@ public:
 	int _cdecl MsgFunc_SetFOV( const char *pszName,  int iSize, void *pbuf );
 	int _cdecl MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf );
 
+	int _cdecl MsgFunc_BloodPuff( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_CurMarker( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_Frags( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_HandSignal( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_MapMarker( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_ObjScore( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_PClass( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_PStatus( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_PTeam( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_ScoreInfoLong( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_ScoreShort( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_WaveStatus( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_WaveTime( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_WideScreen( const char *pszName, int iSize, void *pbuf );
+	int _cdecl MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf );
 
 	// Screen information
 	SCREENINFO	m_scrinfo;
@@ -1180,10 +1197,25 @@ public:
 	bool m_bInfiniteLives;
 	bool m_bBritish;
 
+	int i_Recoil;
 	int g_iWeaponFlags;
 	int g_iClip;
 	int m_iRoundState;
+	int m_iSensLevel;
 	int m_iWaterLevel;
+
+	char m_szTeamNames[5][32];
+
+	Queue g_RubbleQueue;
+
+	cvar_t *_cl_minimap;
+	cvar_t *_cl_minimapzoom;
+	cvar_t *zoom_sensitivity_ratio;
+	cvar_t *hud_takesshots;
+	cvar_t *max_rubble;
+	cvar_t *_ah;
+	cvar_t *cl_corpsestay;
+	cvar_t *cl_hudfont;
 
 	void AddHudElem( CHudBase *p );
 
