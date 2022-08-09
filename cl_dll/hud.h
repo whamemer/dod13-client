@@ -315,10 +315,17 @@ struct team_info_t
 	int teamnumber;
 };
 
+struct pmodel_fx_t
+{
+	// TODO: WHAMER
+};
+
+
 extern hud_player_info_t	g_PlayerInfoList[MAX_PLAYERS + 1];	   // player info from the engine
 extern extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS + 1];   // additional player info sent directly to the client dll
 extern team_info_t			g_TeamInfo[MAX_TEAMS + 1];
 extern int					g_IsSpectator[MAX_PLAYERS + 1];
+extern pmodel_fx_t			g_PModelFxInfo[MAX_TEAMS + 1];
 
 //
 //-----------------------------------------------------
@@ -1203,6 +1210,9 @@ public:
 	int m_iRoundState;
 	int m_iSensLevel;
 	int m_iWaterLevel;
+
+	float m_flPlaySprintSoundTime;
+	float m_fRoundEndsTime;
 
 	char m_szTeamNames[5][32];
 

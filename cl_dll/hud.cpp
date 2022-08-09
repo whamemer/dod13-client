@@ -37,6 +37,7 @@
 hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
 team_info_t		g_TeamInfo[MAX_TEAMS + 1];
+pmodel_fx_t g_PModelFxInfo[MAX_TEAMS + 1];
 int		g_IsSpectator[MAX_PLAYERS+1];
 int g_iPlayerClass;
 int g_iTeamNumber;
@@ -673,6 +674,20 @@ void CHud::VidInit( void )
 	else
 		m_iRes = 640;
 
+	m_bAllieParatrooper = false;
+	m_bAllieInfiniteLives = true;
+	m_bAxisParatrooper = false;
+	m_bAxisInfiniteLives = true;
+	m_bParatrooper = false;
+	m_bInfiniteLives = true;
+	m_bBritish = false;
+	m_flPlaySprintSoundTime = 0.0f;
+	m_fRoundEndsTime = 0.0f;
+	m_iFOV = 0;
+	g_lastFOV = 0;
+	m_flPitchRecoilAccumulator = 0.0f;
+	m_flRecoilTimeRemaining = 0.0f;
+
 	// Only load this once
 	if( !m_pSpriteList )
 	{
@@ -774,8 +789,16 @@ void CHud::VidInit( void )
 	}
 
 	m_iFontHeight = m_rgrcRects[m_HUD_number_0].bottom - m_rgrcRects[m_HUD_number_0].top;
+	//m_iFontEngineHeight = vgui2::surface( engineFont ) + 252;
 
 	m_Ammo.VidInit();
+	m_Scope.VidInit();
+	m_Icons.VidInit();
+	m_DoDMap.VidInit();
+	m_ObjectiveIcons.VidInit();
+	m_CEnvModel.VidInit();
+	m_PShooter.VidInit();
+	m_Weather.VidInit();
 	m_Health.VidInit();
 	m_Spectator.VidInit();
 	m_Geiger.VidInit();
@@ -790,6 +813,10 @@ void CHud::VidInit( void )
 	m_AmmoSecondary.VidInit();
 	m_TextMessage.VidInit();
 	m_StatusIcons.VidInit();
+	m_DoDCrossHair.VidInit();
+	m_MortarHud.VidInit();
+	m_Spectator.VidInit();
+	m_VGUI2Print.VidInit();
 #if USE_VGUI
 	GetClientVoiceMgr()->VidInit();
 #endif
@@ -799,6 +826,18 @@ void CHud::VidInit( void )
 #if !USE_VGUI || USE_NOVGUI_SCOREBOARD
 	m_Scoreboard.VidInit();
 #endif
+
+	int entindex;
+	int iTeam = g_PlayerExtraInfo[entindex].teamnumber;
+
+	/*do
+	{
+		iTeam->frags = 3;
+		++iTeam;
+	} while ( iTeam != g_PlayerExtraInfo[MAX_PLAYERS+1].teamnumber );*/
+
+	m_iSensLevel = 0;
+	memset( g_PModelFxInfo, 0, sizeof( g_PModelFxInfo ) );
 }
 
 int CHud::MsgFunc_Logo( const char *pszName,  int iSize, void *pbuf )
