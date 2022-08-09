@@ -997,7 +997,7 @@ public:
 private:
 	vec3_t m_vecLaunchPos;
 
-	trajectory_t m_Trajectories[32];
+	trajectory_t m_Trajectories[MAX_TRAJECTORIES];
 };
 
 class CMortarHud : public CHudBase
