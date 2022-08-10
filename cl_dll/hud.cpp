@@ -1484,7 +1484,7 @@ int CHud::ZoomMinimap( void )
 
 void ClientSetSensitivity( int level )
 {
-
+	gHUD.m_iSensLevel = level;
 }
 
 void EV_BloodPuff( float *org )
