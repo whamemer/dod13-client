@@ -1411,7 +1411,21 @@ void CHud::PlaySoundOnChan( char *name, float fVol, int chan )
 
 void CHud::PopRecoil( float frametime, float *flPitchRecoil, float *flYawRecoil )
 {
-
+	if( m_flRecoilTimeRemaining < 0.0f )
+	{
+		*flPitchRecoil = 0.0f;
+		*flYawRecoil = 0.0f;
+	}
+	else
+	{
+		if( frametime < m_flRecoilTimeRemaining )
+			m_flRecoilTimeRemaining = frametime;
+		
+		float flRecoilProportion = m_flRecoilTimeRemaining / 0.1;
+		*flPitchRecoil = m_flPitchRecoilAccumulator * flRecoilProportion;
+		*flYawRecoil = m_flYawRecoilAccumulator * flRecoilProportion;
+		m_flRecoilTimeRemaining = m_flRecoilTimeRemaining - frametime;
+	}
 }
 
 void CHud::PostMortarValue( float value )
