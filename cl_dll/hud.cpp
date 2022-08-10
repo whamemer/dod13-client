@@ -1471,12 +1471,15 @@ void CHud::SetWaterLevel( int level )
 
 void CHud::VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b )
 {
-
+	// TODO: WHAMER: need vgui2 :(
 }
 
 int CHud::ZoomMinimap( void )
 {
+	if( _cl_minimapzoom->value + 1.0f > 3.0f )
+		_cl_minimapzoom->value = 0.0f;
 
+	return _cl_minimapzoom->value;
 }
 
 void ClientSetSensitivity( int level )
