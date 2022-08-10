@@ -1448,7 +1448,7 @@ void CHud::SetMortarDeployTime( void )
 
 void CHud::SetMortarUnDeployTime( void )
 {
-
+	SetMortarDeployTime() = gEngfuncs.GetClientTime();
 }
 
 void CHud::SetRecoilAmount( float flPitchRecoil, float flYawRecoil )
