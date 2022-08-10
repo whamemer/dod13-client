@@ -1274,7 +1274,7 @@ public:
 	bool IsProne( void );
 	bool IsProneDeployed( void );
 	bool IsSandbagDeployed( void );
-	bool IsTeamPara( void );
+	bool IsTeamPara( int team );
 };
 
 extern CHud gHUD;

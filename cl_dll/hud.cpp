@@ -1363,9 +1363,12 @@ bool CHud::IsSandbagDeployed( void )
 	return g_iVuser1x == OBS_CHASE_FREE;
 }
 
-bool CHud::IsTeamPara( void )
+bool CHud::IsTeamPara( int team )
 {
-
+	if( team == 1 )
+		return m_bAllieParatrooper;
+	else
+		return m_bAxisParatrooper;;
 }
 
 int CHud::MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
