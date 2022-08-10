@@ -1438,12 +1438,12 @@ void CHud::SetMinimapState( int state )
 	if( IEngineStudio.IsHardware() )
 		gEngfuncs.Cvar_SetValue( "_cl_minimap", state );
 	else
-		GetMinimapState() = 0;
+		SetMinimapState() = 0;
 }
 
 void CHud::SetMortarDeployTime( void )
 {
-
+	SetMortarDeployTime() = gEngfuncs.GetClientTime();
 }
 
 void CHud::SetMortarUnDeployTime( void )
