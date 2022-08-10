@@ -1466,7 +1466,7 @@ void CHud::SetRecoilAmount( float flPitchRecoil, float flYawRecoil )
 
 void CHud::SetWaterLevel( int level )
 {
-
+	m_iWaterLevel = level;
 }
 
 void CHud::VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b )
