@@ -1350,7 +1350,7 @@ bool CHud::IsInMortarDeploy( void )
 
 bool CHud::IsProne( void )
 {
-
+	return ( g_iUser3 - 1 ) <= OBS_CHASE_LOCKED;
 }
 
 bool CHud::IsProneDeployed( void )
