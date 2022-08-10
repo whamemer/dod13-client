@@ -1330,7 +1330,7 @@ void CHud::InitMapBounds( void )
 
 bool CHud::IsDucking( void )
 {
-
+	return ( gHUD.m_iKeyBits & 4 ) != false;
 }
 
 bool CHud::IsInMGDeploy( void )
@@ -1342,7 +1342,10 @@ bool CHud::IsInMGDeploy( void )
 
 bool CHud::IsInMortarDeploy( void )
 {
+	if( !g_iDeadFlag )
+		return g_iUser3 == OBS_ROAMING;
 
+	return false;
 }
 
 bool CHud::IsProne( void )

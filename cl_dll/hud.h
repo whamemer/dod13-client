@@ -1207,6 +1207,7 @@ public:
 	int i_Recoil;
 	int g_iWeaponFlags;
 	int g_iClip;
+	int g_iDeadFlag;
 	int m_iRoundState;
 	int m_iSensLevel;
 	int m_iWaterLevel;
