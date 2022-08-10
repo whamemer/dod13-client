@@ -1406,7 +1406,7 @@ int CHud::MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
 
 void CHud::PlaySoundOnChan( char *name, float fVol, int chan )
 {
-
+	PlaySound( name, fVol );
 }
 
 void CHud::PopRecoil( float frametime, float *flPitchRecoil, float *flYawRecoil )
