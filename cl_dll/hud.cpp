@@ -1258,7 +1258,13 @@ void CHud::GetMapBounds( int *x, int *y, int *w, int *h )
 
 int CHud::GetMinimapState( void )
 {
-
+	if( IEngineStudio.IsHardware() && m_iFOV == 90 )
+	{
+		SetMinimapState( 12 );
+		return 1;
+	}
+	else
+		return 0;
 }
 
 int CHud::GetMinimapZoomLevel( void )
