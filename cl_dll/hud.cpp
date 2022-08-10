@@ -1313,7 +1313,19 @@ int CHud::GetWaterLevel( void )
 
 void CHud::InitMapBounds( void )
 {
+	int iWidth, iHeight;
 
+	iWidth = gHUD.m_scrinfo.iWidth;
+	iHeight = gHUD.m_scrinfo.iHeight;
+
+	m_iMapWidth = iWidth * 0.625;
+	m_iMapHeight = iHeight * 0.625;
+	m_iMapX = iWidth / 2 - m_iMapWidth / 2;
+	m_iMapY = iHeight / 2 - m_iMapHeight / 2;
+	m_iSmallMapWidth = iWidth * 0.24;
+	m_iSmallMapHeight = iHeight * 0.24;
+	m_iSmallMapX = iWidth - m_iSmallMapWidth - iWidth / 640.0 + iWidth / 640.0 + 0.5;
+	m_iSmallMapY = iHeight / 480.0 + iHeight / 480.0 + 0.5;
 }
 
 bool CHud::IsDucking( void )
