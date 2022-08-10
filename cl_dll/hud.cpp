@@ -1430,12 +1430,15 @@ void CHud::PopRecoil( float frametime, float *flPitchRecoil, float *flYawRecoil 
 
 void CHud::PostMortarValue( float value )
 {
-
+	// TODO: WHAMER: need vgui2 :(
 }
 
 void CHud::SetMinimapState( int state )
 {
-
+	if( IEngineStudio.IsHardware() )
+		gEngfuncs.Cvar_SetValue( "_cl_minimap", state );
+	else
+		GetMinimapState() = 0;
 }
 
 void CHud::SetMortarDeployTime( void )
