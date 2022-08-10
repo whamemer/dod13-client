@@ -1297,7 +1297,13 @@ char *CHud::GetPlayerClassName( int playerclass )
 
 char *CHud::GetTeamName( int team )
 {
+	if( team == 1 )
+		return m_szTeamNames[1];
 
+	if( team != 2 )
+		return m_szTeamNames[3];
+
+	return m_szTeamNames[2];
 }
 
 int CHud::GetWaterLevel( void )
