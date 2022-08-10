@@ -1281,7 +1281,18 @@ float CHud::GetMortarDeployTime( void )
 
 char *CHud::GetPlayerClassName( int playerclass )
 {
+	if( ( playerclass - 10 ) > 10 )
+	{
+		if( !m_bAllieParatrooper )
+			return g_ClassInfo[playerclass].classname;
+	}
+	else
+	{
+		if( !m_bAxisParatrooper )
+			return g_ClassInfo[playerclass].classname;
+	}
 
+	return g_ParaClassInfo[playerclass].classname;
 }
 
 char *CHud::GetTeamName( int team )

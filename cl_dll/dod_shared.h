@@ -553,4 +553,27 @@ enum Mortar_e
     MORTAR_DRAW = 8
 };
 
+typedef struct DodClassInfo_s
+{
+    int team;
+    int speed;
+    int weapons;
+    int weapons2;
+    int numgrenades;
+    int armskin;
+    int headgroup;
+    int helmetgroup;
+    int geargroup;
+    int bodygroup;
+    int hairgroup;
+
+    char selectcmd[32];
+    char classname[128];
+    char modelname[128];
+    char limitcvar[32];
+} DodClassInfo_t;
+
+DodClassInfo_t g_ClassInfo[28];
+DodClassInfo_t g_ParaClassInfo[21];
+
 #endif // DOD_SHARED_H
