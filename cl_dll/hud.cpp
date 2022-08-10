@@ -1274,7 +1274,9 @@ int CHud::GetMinimapZoomLevel( void )
 
 float CHud::GetMortarDeployTime( void )
 {
+	SetMortarDeployTime();
 
+	return 1.0f;
 }
 
 char *CHud::GetPlayerClassName( int playerclass )
