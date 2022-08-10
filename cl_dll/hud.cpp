@@ -35,6 +35,7 @@
 #include "pm_defs.h"
 
 #include "r_studioint.h"
+#include "r_efx.h"
 
 hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
@@ -1487,9 +1488,65 @@ void ClientSetSensitivity( int level )
 	gHUD.m_iSensLevel = level;
 }
 
-void EV_BloodPuff( float *org )
+void EV_BloodPuff( struct event_args_s *org )
 {
+	vec3_t origin, velocity, to_view, closerOrigin;
 
+	VectorCopy( org->origin, origin );
+	VectorCopy( org->velocity, velocity );
+
+	double m_dNormalize = VectorNormalize( origin );
+	
+	float fl;
+
+	if( m_dNormalize > 32.0 )
+	{
+		if( m_dNormalize < 1200.0 )
+		{
+			if( m_dNormalize < 600.0 )
+			{
+				fl = 1.0f;
+			}
+			else
+			{
+				fl = ( ( m_dNormalize - 600.0 ) / 600.0 * 0.5 + 1.0 );
+			}
+		}
+		else
+		{
+			fl = 1.5;
+		}
+
+		float flRandsd = fl * gEngfuncs.pfnRandomFloat( 0.7, 0.8 );
+
+		TEMPENTITY *pShotDust;
+		
+		pShotDust = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, flRandsd, gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/shot-dust.spr" ), kRenderTransAlpha, kRenderFxNone, 0.15f, 30.0f, FTENT_SPRANIMATE );
+
+		pShotDust->entity.curstate.renderamt = 800;
+		pShotDust->entity.curstate.framerate = 45.0f;
+		pShotDust->entity.curstate.rendercolor.r = -76;
+		pShotDust->entity.curstate.rendercolor.g = -80;
+		pShotDust->entity.curstate.rendercolor.b = -108;
+		pShotDust->entity.angles.z = gEngfuncs.pfnRandomLong( 0, 90 );
+
+		to_view = origin;
+		VectorNormalize( to_view );
+		VectorMA( origin, 2.0f, to_view, closerOrigin );
+
+		float flRandbn = fl * gEngfuncs.pfnRandomFloat( 0.4, 0.45 );
+
+		TEMPENTITY *pBloodNarrow;
+
+		pBloodNarrow = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, flRandbn, gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/blood-narrow.spr" ), kRenderTransAlpha, kRenderFxNone, 0.35f, 30.0f, FTENT_FADEOUT );
+
+		pBloodNarrow->entity.curstate.renderamt = 800;
+		pBloodNarrow->entity.curstate.framerate = 20.0f;
+		pBloodNarrow->entity.curstate.rendercolor.r = 120;
+		pBloodNarrow->entity.curstate.rendercolor.g = 0;
+		pBloodNarrow->entity.curstate.rendercolor.b = 0;
+		pBloodNarrow->entity.angles.z = gEngfuncs.pfnRandomLong( 0, 90 );
+	}
 }
 
 int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
