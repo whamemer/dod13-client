@@ -1308,7 +1308,7 @@ char *CHud::GetTeamName( int team )
 
 int CHud::GetWaterLevel( void )
 {
-
+	return m_iWaterLevel;
 }
 
 void CHud::InitMapBounds( void )
