@@ -1438,22 +1438,30 @@ void CHud::SetMinimapState( int state )
 	if( IEngineStudio.IsHardware() )
 		gEngfuncs.Cvar_SetValue( "_cl_minimap", state );
 	else
-		SetMinimapState() = 0;
+		SetMinimapState( 0 );
 }
 
 void CHud::SetMortarDeployTime( void )
 {
-	SetMortarDeployTime() = gEngfuncs.GetClientTime();
+	gEngfuncs.GetClientTime();
 }
 
 void CHud::SetMortarUnDeployTime( void )
 {
-	SetMortarDeployTime() = gEngfuncs.GetClientTime();
+	gEngfuncs.GetClientTime();
 }
 
 void CHud::SetRecoilAmount( float flPitchRecoil, float flYawRecoil )
 {
+	m_flPitchRecoilAccumulator = flPitchRecoil;
 
+	float fl = gEngfuncs.pfnRandomFloat( 0.8f, 1.1f ) * flYawRecoil;
+
+	if( gEngfuncs.pfnRandomLong( 0, 1 ) > 0 )
+		fl = -fl;
+
+	DoRecoil( fl );
+	m_flRecoilTimeRemaining = 0.1f;
 }
 
 void CHud::SetWaterLevel( int level )
