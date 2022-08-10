@@ -1355,7 +1355,7 @@ bool CHud::IsProne( void )
 
 bool CHud::IsProneDeployed( void )
 {
-
+	return g_iUser3 == OBS_CHASE_FREE;
 }
 
 bool CHud::IsSandbagDeployed( void )
