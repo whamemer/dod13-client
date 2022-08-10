@@ -1269,7 +1269,7 @@ int CHud::GetMinimapState( void )
 
 int CHud::GetMinimapZoomLevel( void )
 {
-
+	return _cl_minimapzoom->value;
 }
 
 float CHud::GetMortarDeployTime( void )
