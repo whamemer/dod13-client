@@ -1360,7 +1360,7 @@ bool CHud::IsProneDeployed( void )
 
 bool CHud::IsSandbagDeployed( void )
 {
-
+	return g_iVuser1x == OBS_CHASE_FREE;
 }
 
 bool CHud::IsTeamPara( void )
