@@ -1378,17 +1378,30 @@ int CHud::MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
 
 int CHud::MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf )
 {
+	BEGIN_READ( pbuf, iSize );
+	m_iRoundState = READ_BYTE();
 
+	return 1;
 }
 
 int CHud::MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
 {
+	BEGIN_READ( pbuf, iSize );
+	m_fRoundEndsTime = READ_SHORT() + gHUD.m_flTime;
 
+	return 1;
 }
 
 int CHud::MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
 {
+	BEGIN_READ( pbuf, iSize );
 
+	if( READ_BYTE() )
+		PlaySound( "common/wpn_select.wav", 1 );
+	else
+		PlaySound( "common/wpn_denyselect.wav", 1 );
+	
+	return 1;
 }
 
 void CHud::PlaySoundOnChan( char *name, float fVol, int chan )
