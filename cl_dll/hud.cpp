@@ -34,6 +34,8 @@
 #include "dod_shared.h"
 #include "pm_defs.h"
 
+#include "r_studioint.h"
+
 hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
 team_info_t		g_TeamInfo[MAX_TEAMS + 1];
@@ -45,6 +47,8 @@ int g_iUser1 = 0;
 int g_iUser2 = 0;
 int g_iUser3 = 0;
 int g_iVuser1x = 0;
+
+extern engine_studio_api_t IEngineStudio;
 
 #if USE_VGUI
 #include "vgui_ScorePanel.h"
@@ -1212,7 +1216,44 @@ int CHud::GetCurrentWeaponId( void )
 
 void CHud::GetMapBounds( int *x, int *y, int *w, int *h )
 {
+	if( !IEngineStudio.IsHardware() || m_iFOV != 90 )
+	{
+		*h = 0;
+		*w = 0;
+		*y = 0;
+		*x = 0;
 
+		return;
+	}
+
+	if( GetMinimapState() == 1 )
+	{
+		*x = m_iMapX;
+		*y = m_iMapY;
+		*w = m_iMapWidth;
+		*h = m_iMapHeight;
+	}
+
+	if( GetMinimapState() != 2 )
+	{
+		*h = 0;
+		*w = 0;
+		*y = 0;
+		*x = 0;
+
+		return;
+	}
+
+	*x = m_iSmallMapX;
+	*y = m_iSmallMapY;
+
+	if( g_iUser1 )
+	{
+		*y = gHUD.m_scrinfo.iHeight / 480.0f * 0.54f + 0.5f + m_iSmallMapY;
+	}
+
+	*w = m_iSmallMapWidth;
+	*h = m_iSmallMapHeight;
 }
 
 int CHud::GetMinimapState( void )

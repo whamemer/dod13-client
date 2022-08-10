@@ -1210,6 +1210,14 @@ public:
 	int m_iRoundState;
 	int m_iSensLevel;
 	int m_iWaterLevel;
+	int m_iMapX;
+	int m_iMapY;
+	int m_iMapWidth;
+	int m_iMapHeight;
+	int m_iSmallMapX;
+	int m_iSmallMapY;
+	int m_iSmallMapWidth;
+	int m_iSmallMapHeight;
 
 	float m_flPlaySprintSoundTime;
 	float m_fRoundEndsTime;
