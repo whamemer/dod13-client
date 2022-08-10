@@ -1488,12 +1488,13 @@ void ClientSetSensitivity( int level )
 	gHUD.m_iSensLevel = level;
 }
 
-void EV_BloodPuff( struct event_args_s *org )
+void EV_BloodPuff( float *org )
 {
 	vec3_t origin, velocity, to_view, closerOrigin;
+	struct event_args_s *args;
 
-	VectorCopy( org->origin, origin );
-	VectorCopy( org->velocity, velocity );
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->velocity, velocity );
 
 	double m_dNormalize = VectorNormalize( origin );
 	
@@ -1551,7 +1552,24 @@ void EV_BloodPuff( struct event_args_s *org )
 
 int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
 {
+	vec3_t origin;
+	
+	*origin = READ_COORD();
 
+	cvar_t *violence_hblood;
+
+	if( violence_hblood )
+	{
+		violence_hblood = gEngfuncs.pfnGetCvarPointer( "violence_hblood" );
+
+		if( !violence_hblood )
+			return 1;
+	}
+
+	if( violence_hblood->value != 1.0f )
+		return 1;
+	
+	EV_BloodPuff( origin );
 }
 
 int EV_HandSignalMsg( const char *pszName, int iSize, void *pbuf )
