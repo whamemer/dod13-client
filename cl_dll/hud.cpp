@@ -37,6 +37,8 @@
 #include "r_studioint.h"
 #include "r_efx.h"
 
+#include "event_api.h"
+
 hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
 team_info_t		g_TeamInfo[MAX_TEAMS + 1];
@@ -1496,6 +1498,8 @@ void EV_BloodPuff( float *org )
 	VectorCopy( args->origin, origin );
 	VectorCopy( args->velocity, velocity );
 
+	origin = org;
+
 	double m_dNormalize = VectorNormalize( origin );
 	
 	float fl;
@@ -1556,7 +1560,7 @@ int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
 	
 	*origin = READ_COORD();
 
-	cvar_t *violence_hblood;
+	static cvar_t *violence_hblood;
 
 	if( violence_hblood )
 	{
