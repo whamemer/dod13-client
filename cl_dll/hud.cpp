@@ -53,6 +53,8 @@ int g_iVuser1x = 0;
 
 extern engine_studio_api_t IEngineStudio;
 
+static cvar_t *violence_hblood;
+
 #if USE_VGUI
 #include "vgui_ScorePanel.h"
 
@@ -1560,8 +1562,6 @@ int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
 	
 	*origin = READ_COORD();
 
-	static cvar_t *violence_hblood;
-
 	if( violence_hblood )
 	{
 		violence_hblood = gEngfuncs.pfnGetCvarPointer( "violence_hblood" );
@@ -1614,5 +1614,16 @@ int EV_HandSignalMsg( const char *pszName, int iSize, void *pbuf )
 
 bool ShouldShowBlood( void )
 {
+	if( !violence_hblood )
+	{
+		violence_hblood = gEngfuncs.pfnGetCvarPointer( "violence_hblood" );
 
+		if( !violence_hblood )
+			return false;
+	}
+
+	if( violence_hblood->value != 1.0f )
+		return false;
+	
+	return true;
 }
