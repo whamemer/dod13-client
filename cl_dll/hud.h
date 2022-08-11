@@ -298,6 +298,7 @@ struct extra_player_info_t
 	short deaths;
 	short playerclass;
 	short teamnumber;
+	short teamId;
 	char teamname[MAX_TEAM_NAME];
 };
 

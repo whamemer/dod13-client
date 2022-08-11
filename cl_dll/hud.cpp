@@ -1578,7 +1578,38 @@ int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
 
 int EV_HandSignalMsg( const char *pszName, int iSize, void *pbuf )
 {
+	char sz[256];
+	int index = READ_BYTE();
 
+	BEGIN_READ( pbuf, iSize );
+
+	if( index < 64 && index > 0 && index < 25 )
+	{
+		gEngfuncs.pfnGetPlayerInfo( index, &g_PlayerInfoList[index] );
+		sprintf( sz, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[index].name, ": %s2" );
+
+		if( g_PlayerExtraInfo[index].teamId == 2 )
+		{
+			if( s_HandSignalSubtitles[index][1] )
+			{
+				/* gHUD.m_SayText.SayTextPrint( sz, 256, index, "#Handsignal", s_HandSignalSubtitles[index][1], 0, 0 );
+				&gHUD.m_Spectator.AddVoiceIconToPlayerEnt( index ); */ // TODO: WHAMER: need vgui2 :(
+			}
+		}
+		else if( g_PlayerExtraInfo[index].teamId == 1 && gHUD.m_bBritish )
+		{
+			if( s_HandSignalSubtitles[index][2] )
+			{
+				/* gHUD.m_SayText.SayTextPrint( sz, 256, index, "#Handsignal", s_HandSignalSubtitles[index][2], 0, 0 );
+				&gHUD.m_Spectator.AddVoiceIconToPlayerEnt( index ); */ // TODO: WHAMER: need vgui2 :(
+			}
+		}
+
+		/* gHUD.m_SayText.SayTextPrint( sz, 256, index, "#Handsignal", s_HandSignalSubtitles[index][0], 0, 0 );
+		&gHUD.m_Spectator.AddVoiceIconToPlayerEnt( index ); */ // TODO: WHAMER: need vgui2 :(
+	}
+
+	return 1;
 }
 
 bool ShouldShowBlood( void )

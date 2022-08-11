@@ -576,4 +576,6 @@ typedef struct DodClassInfo_s
 DodClassInfo_t g_ClassInfo[28];
 DodClassInfo_t g_ParaClassInfo[21];
 
+char *s_HandSignalSubtitles[25][3];
+
 #endif // DOD_SHARED_H
