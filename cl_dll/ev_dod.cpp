@@ -1558,7 +1558,7 @@ void EV_BloodStream( struct event_args_s *args )
 	VectorCopy( args->angles, angles );
 	VectorCopy( args->velocity, velocity );
 
-	pShotDust = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, gEngfuncs.pfnRandomFloat( 2.0f, 4.0f ), gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/shot-dust.spr" ), 4, 0, 0.34f, 1.0f, FTENT_FADEOUT );
+	pShotDust = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, gEngfuncs.pfnRandomFloat( 2.0f, 4.0f ), gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/shot-dust.spr" ), kRenderTransAlpha, kRenderFxNone, 0.34f, 1.0f, FTENT_FADEOUT );
 
 	pShotDust->fadeSpeed = 4.0f;
 	pShotDust->entity.curstate.renderamt = 800;
@@ -1567,7 +1567,7 @@ void EV_BloodStream( struct event_args_s *args )
 	pShotDust->entity.curstate.rendercolor.g = -80;
 	pShotDust->entity.curstate.rendercolor.b = -108;
 
-	pBloodNarrow = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, 0.0f, gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/blood-narrow.spr" ), 4, 0, 0.34f, 1.0f, FTENT_FADEOUT );
+	pBloodNarrow = gEngfuncs.pEfxAPI->R_TempSprite( origin, velocity, 0.0f, gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/blood-narrow.spr" ), kRenderTransAlpha, kRenderFxNone, 0.34f, 1.0f, FTENT_FADEOUT );
 
 	pBloodNarrow->fadeSpeed = 4.0f;
 	pBloodNarrow->entity.curstate.renderamt = 800;
