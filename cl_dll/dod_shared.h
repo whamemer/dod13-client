@@ -576,6 +576,53 @@ typedef struct DodClassInfo_s
 DodClassInfo_t g_ClassInfo[28];
 DodClassInfo_t g_ParaClassInfo[21];
 
+struct p_wpninfo_s
+{
+    char pmodel[32];
+    char vmodel[32];
+    char wmodel[32];
+    char leftreload[32];
+    char bipodup[32];
+    char bipoddown[32];
+    char sandbagreload[32];
+    char pronereload[32];
+    char szAnimExt[16];
+    char szAnimReloadExt[16];
+
+    float anim_reloadtime;
+    float anim_firedelay;
+    float anim_reloadtime2;
+    float anim_firetime2;
+    float anim_drawtime;
+    float anim_up2downtime;
+    float anim_down2uptime;
+    float base_accuracy;
+    float accuracy_penalty;
+    float base_accuracy2;
+
+    int ammo_default;
+    int ammo_maxcarry;
+    int ammo_maxclip;
+    int ammo_give;
+    int misc_weight;
+};
+
+p_wpninfo_s P_WpnInfo[41];
+
+int iVoiceToHandSignal[29];
+
+cvar_t *pcvar_classlimitcvars[28];
+
+char weaponnames[64][64];
+
 char *s_HandSignalSubtitles[25][3];
+char *sHandSignals[30];
+char *sHelmetModels[7];
+char *sPlayerModelFiles[6];
+char *s_BRITVoiceFiles[28];
+char *s_GERVoiceFiles[29];
+char *s_USVoiceFiles[28];
+char *s_VoiceCommands[29][4];
+char *szMapMarkerIcons[15];
 
 #endif // DOD_SHARED_H
