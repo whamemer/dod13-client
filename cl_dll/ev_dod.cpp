@@ -1647,16 +1647,99 @@ void EV_USVoice( struct event_args_s *args )
 
 	if( GetClientVoiceMgr()->IsPlayerBlocked( iPlayer ) )
 	{
-		if( pitch2 )
-		{
+		char *vcFiles, *vcCommands;
 
+		if( pitch2 )
+			vcFiles = s_BRITVoiceFiles[pitch1];
+		else
+			vcFiles = s_USVoiceFiles[pitch1];
+
+		gEngfuncs.pEventAPI->EV_PlaySound( iPlayer, origin, CHAN_VOICE, vcFiles, gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 100 );
+		GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+
+		int team = gEngfuncs.GetEntityByIndex( iPlayer )->curstate.team;
+
+		if( team == g_iTeamNumber && !g_iUser1 && team == gEngfuncs.GetLocalPlayer()->curstate.team )
+		{
+			Vector vecTeam = origin - gEngfuncs.GetLocalPlayer()->curstate.origin;
+			float len = VectorNormalize( vecTeam );
+
+			char pattern[256];
+
+			if( len <= 1100.0f )
+			{
+				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+				sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[iPlayer].name, ": %s2" );
+
+				vcCommands = s_VoiceCommands[pitch1][3];
+
+				if( !vcCommands || !*vcCommands || !gHUD.m_bBritish )
+					vcCommands = s_VoiceCommands[pitch1][1];
+				
+				// TODO: WHAMER: Specific SayTextPrint function with vgui2, remake mthis
+				// gHUD.m_SayText.SayTextPrint( pattern, 256, iPlayer, "#VOICE", vcCommands, 0, 0 );
+
+				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+
+				// gHUD.m_Spectator.AddVoiceIconToPlayerEnt( iPlayer ); TODO: WHAMER
+			}
 		}
 	}
 }
 
 void EV_GERVoice( struct event_args_s *args )
 {
+	int iPlayer, pitch1;
 
+	vec3_t origin;
+
+	iPlayer = args->entindex;
+	pitch1 = args->iparam1;
+
+	VectorCopy( args->origin, origin );
+
+	if( GetClientVoiceMgr()->IsPlayerBlocked( iPlayer ) )
+	{
+		char *vcFiles = s_GERVoiceFiles[pitch1];
+		const char *vcCommands;
+
+		if( pitch1 == 27 && gHUD.m_bBritish )
+			pitch1 = 28;
+
+		gEngfuncs.pEventAPI->EV_PlaySound( iPlayer, origin, CHAN_VOICE, vcFiles, gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 100 );
+
+		int team = gEngfuncs.GetEntityByIndex( iPlayer )->curstate.team;
+
+		if( team == g_iTeamNumber && !g_iUser1 && team == gEngfuncs.GetLocalPlayer()->curstate.team )
+		{
+			Vector vecTeam = origin - gEngfuncs.GetLocalPlayer()->curstate.origin;
+			float len = VectorNormalize( vecTeam );
+
+			char pattern[256];
+
+			if( len <= 1100.0f )
+			{
+				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+				sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[iPlayer].name, ": %s2" );
+
+				vcCommands = *s_VoiceCommands[pitch1];
+
+				char *text;
+
+				if( vcCommands[2] )
+					text = CHudTextMessage::BufferedLocaliseTextString( vcCommands[2] );
+				else
+					text = CHudTextMessage::BufferedLocaliseTextString( vcCommands[1] );
+				
+				// TODO: WHAMER: Specific SayTextPrint function with vgui2, remake mthis
+				// gHUD.m_SayText.SayTextPrint( pattern, 256, iPlayer, "#VOICE", text, 0, 0 );
+
+				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+
+				// gHUD.m_Spectator.AddVoiceIconToPlayerEnt( iPlayer ); TODO: WHAMER
+			}
+		}
+	}
 }
 
 void EV_BodyDamage( struct event_args_s *args )
