@@ -23,6 +23,8 @@
 
 #include "dod_shared.h"
 
+#include "voice_status.h"
+
 static int g_tracerCount[32];
 
 extern "C"
@@ -1633,7 +1635,23 @@ void EV_PlayWhizz( struct event_args_s *args )
 
 void EV_USVoice( struct event_args_s *args )
 {
+	int iPlayer, pitch1, pitch2;
 
+	vec3_t origin;
+
+	iPlayer = args->entindex;
+	pitch1 = args->iparam1;
+	pitch2 = args->iparam2;
+
+	VectorCopy( args->origin, origin );
+
+	if( GetClientVoiceMgr()->IsPlayerBlocked( iPlayer ) )
+	{
+		if( pitch2 )
+		{
+
+		}
+	}
 }
 
 void EV_GERVoice( struct event_args_s *args )
