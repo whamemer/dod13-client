@@ -1758,7 +1758,75 @@ void EV_BodyDamage( struct event_args_s *args )
 
 void EV_RoundReleaseSound( struct event_args_s *args )
 {
+	int idx, empty, pitch1, pitch2;
 
+	vec3_t origin;
+
+	idx = args->entindex;
+	empty = args->bparam1;
+	pitch1 = args->iparam1;
+	pitch2 = args->iparam2;
+
+	VectorCopy( args->origin, origin );
+
+	if( EV_IsLocal( idx ) && !g_iVuser1z )
+	{
+		char *m_cStartRoundSound;
+
+		if( empty && pitch1 == 1 )
+		{
+			if( pitch2 > 3 )
+				return;
+			
+			switch( gEngfuncs.pfnRandomLong( 1, 2 ) )
+			{
+				case 1:
+					m_cStartRoundSound = "player/britstartround.wav";
+					break;
+				case 2:
+					m_cStartRoundSound = "player/britstartround2.wav";
+					break;
+			}
+			
+			if( m_cStartRoundSound )
+				gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_STATIC, m_cStartRoundSound, 1.0f, ATTN_NORM, 0, 100 );
+		}
+
+		if( !empty && pitch1 == 1 )
+		{
+			if( pitch2 > 3 )
+				return;
+			
+			switch( gEngfuncs.pfnRandomLong( 1, 2 ) )
+			{
+				case 1:
+					m_cStartRoundSound = "player/usstartround.wav";
+					break;
+				case 2:
+					m_cStartRoundSound = "player/usstartround2.wav";
+					break;
+			}
+
+			if( m_cStartRoundSound )
+				gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_STATIC, m_cStartRoundSound, 1.0f, ATTN_NORM, 0, 100 );
+		}
+
+		if( pitch1 == 2 && pitch2 <= 3 )
+		{
+			switch( gEngfuncs.pfnRandomLong( 1, 2 ) )
+			{
+				case 1:
+					m_cStartRoundSound = "player/gerstartround.wav";
+					break;
+				case 2:
+					m_cStartRoundSound = "player/gerstartround2.wav";
+					break;
+			}
+
+			if( m_cStartRoundSound )
+				gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_STATIC, m_cStartRoundSound, 1.0f, ATTN_NORM, 0, 100 );
+		}
+	}
 }
 
 void EV_DoDCamera( struct event_args_s *args )
