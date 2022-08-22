@@ -1216,7 +1216,7 @@ void CHud::DoRecoil( int weapon_id )
 
 int CHud::GetCurrentWeaponId( void )
 {
-	return gHUDAmmo.GetCurrentWeaponId();
+	return gHUD.m_Ammo.GetCurrentWeaponId();
 }
 
 void CHud::GetMapBounds( int *x, int *y, int *w, int *h )

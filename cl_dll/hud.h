@@ -1279,8 +1279,6 @@ public:
 };
 
 extern CHud gHUD;
-extern CHudScope gHUDScope;
-extern CHudAmmo gHUDAmmo;
 
 extern int g_iPlayerClass;
 extern int g_iTeamNumber;

@@ -146,7 +146,7 @@ void SetScopeId( int id )
 {
 	if( g_iVuser1z )
 	{
-		gHUDScope.SetScope( id );
+		gHUD.m_Scope.SetScope( id );
 		gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
 	}
 }
@@ -474,12 +474,12 @@ int CBasePlayerWeapon::ChangeFOV( int fov )
 	{
 		g_lastFOV = fov;
 
-		gHUDScope.SetScope( m_iId );
+		gHUD.m_Scope.SetScope( m_iId );
 	}
 	else
 	{
 		g_lastFOV = 0.0f;
-		gHUDScope.SetScope( 0 );
+		gHUD.m_Scope.SetScope( 0 );
 	}
 
 	gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
@@ -656,7 +656,7 @@ int CBasePlayerWeapon::ZoomIn( void )
 	
 	if( g_iVuser1z )
 	{
-		gHUDScope.SetScope( m_iId );
+		gHUD.m_Scope.SetScope( m_iId );
 		gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
 	}
 	
@@ -676,7 +676,7 @@ int CBasePlayerWeapon::ZoomOut( void )
 	if( g_iVuser1z || m_pPlayer->pev->fuser2 != g_lastFOV )
 		return 0;
 	
-	gHUDScope.SetScope( m_iId );
+	gHUD.m_Scope.SetScope( m_iId );
 	gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
 	
 	g_lastFOV = 0.0f;
