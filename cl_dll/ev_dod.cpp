@@ -1857,7 +1857,7 @@ void EV_DoDCamera( struct event_args_s *args )
 
 			if( gViewPort )
 			{
-
+				// TODO: WHAMER
 			}
 		}
 	}
@@ -1865,7 +1865,33 @@ void EV_DoDCamera( struct event_args_s *args )
 
 void EV_PopHelmet( struct event_args_s *args )
 {
+	int pitch;
 
+	vec3_t origin, angles, endpos;
+
+	pitch = args->iparam1;
+
+	VectorCopy( args->origin, origin );
+	VectorCopy( args->angles, angles );
+
+	VectorClear( endpos );
+
+	endpos[1] = args->fparam1;
+
+	if( pitch <= 6 )
+	{
+		int model = gEngfuncs.pEventAPI->EV_FindModelIndex( sHelmetModels[pitch] );
+
+		if( model )
+		{
+			TEMPENTITY *p = gEngfuncs.pEfxAPI->R_TempModel( origin, angles, endpos, 5.0f, model, TE_BOUNCE_SHELL );
+
+			if( p )
+			{
+				p->flags |= FTENT_HITSOUND;
+			}
+		}
+	}
 }
 void EV_RoundReset( struct event_args_s *args )
 {
