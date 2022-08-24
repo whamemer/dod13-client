@@ -31,6 +31,10 @@
 
 static int g_tracerCount[32];
 
+TEMPENTITY *g_DeadPlayerModels[64];
+
+static cvar_t *r_decals;
+
 extern "C"
 {
 void EV_FireColt( struct event_args_s *args );
@@ -1895,7 +1899,28 @@ void EV_PopHelmet( struct event_args_s *args )
 }
 void EV_RoundReset( struct event_args_s *args )
 {
+	if( r_decals )
+	{
+		int decals = gEngfuncs.pfnGetCvarPointer( "r_decals" )->value;
 
+		if( decals > 0 )
+		{
+			for( int i = 0; i != decals; ++i )
+				gEngfuncs.pEfxAPI->R_DecalRemoveAll( i );
+		}
+	}
+
+	if( g_DeadPlayerModels[0] )
+	{
+		for( int j = 0; j != 64; ++j )
+		{
+			if( g_DeadPlayerModels[j] )
+			{
+				g_DeadPlayerModels[j]->die = 0.0f;
+				g_DeadPlayerModels[j] = 0;
+			}
+		}
+	}
 }
 
 void EV_Overheat( struct event_args_s *args )
