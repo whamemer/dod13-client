@@ -25,6 +25,10 @@
 
 #include "voice_status.h"
 
+#if USE_VGUI
+#include "vgui_TeamFortressViewport.h"
+#endif
+
 static int g_tracerCount[32];
 
 extern "C"
@@ -1831,7 +1835,32 @@ void EV_RoundReleaseSound( struct event_args_s *args )
 
 void EV_DoDCamera( struct event_args_s *args )
 {
+	int idx, empty, pitch;
 
+	idx = args->entindex;
+	empty = args->bparam1;
+	pitch = args->iparam1;
+
+	if( EV_IsLocal( idx ) )
+	{
+		if( pitch == 1 )
+		{
+			gHUD.m_Scope.SetScope( WEAPON_BINOC );
+		}
+		else if( pitch == 2 )
+		{
+			gHUD.m_Scope.SetScope( WEAPON_SPRING );
+		}
+		else
+		{
+			gHUD.m_Scope.SetScope( WEAPON_NONE );
+
+			if( gViewPort )
+			{
+
+			}
+		}
+	}
 }
 
 void EV_PopHelmet( struct event_args_s *args )
