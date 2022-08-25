@@ -272,7 +272,8 @@ void EV_RoundReset( struct event_args_s *args )
 
 void RemoveBody( TEMPENTITY *te, float frametime, float current_time )
 {
-
+	if( current_time >= gHUD.cl_corpsestay->value + te->entity.curstate.fuser2 )
+		te->entity.origin.z = te->entity.origin.z - frametime * 5.0;
 }
 
 void HitBody( TEMPENTITY *ent, pmtrace_s *ptr )
