@@ -292,7 +292,7 @@ void CreateCorpse( Vector *p_vOrigin, Vector *p_vAngles, const char *pModel, flo
 
 	TEMPENTITY *p;
 
-	p = gEngfuncs.pEfxAPI->R_TempModel( &p_vOrigin->x, fl, &p_vAngles->x, 100.0f ,gEngfuncs.pEventAPI->EV_FindModelIndex( pModel ), TE_BOUNCE_NULL );
+	p = gEngfuncs.pEfxAPI->R_TempModel( &p_vOrigin->x, fl, &p_vAngles->x, 100.0f, gEngfuncs.pEventAPI->EV_FindModelIndex( pModel ), TE_BOUNCE_NULL );
 
 	if( p )
 	{
