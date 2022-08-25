@@ -102,7 +102,14 @@ int EV_GetWeaponBody( void )
 
 void EV_ResetAnimationEvents( int index )
 {
+	cl_entity_s *ent;
 
+	ent = gEngfuncs.GetEntityByIndex( index );
+
+	ent->baseline.iuser1 = 0;
+	ent->baseline.iuser2 = 0;
+	ent->baseline.iuser3 = 0;
+	ent->baseline.iuser4 = 0;
 }
 
 // play a strike sound based on the texture that was hit by the attack traceline.  VecSrc/VecEnd are the
