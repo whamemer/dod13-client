@@ -284,7 +284,54 @@ void HitBody( TEMPENTITY *ent, pmtrace_s *ptr )
 
 void CreateCorpse( Vector *p_vOrigin, Vector *p_vAngles, const char *pModel, float flAnimTime, int iSequence, int iBody )
 {
+	float fl[6];
 
+	gEngfuncs.pEventAPI->EV_FindModelIndex( pModel );
+
+	memset( fl, 0, NUM_DMG_TYPES );
+
+	TEMPENTITY *p;
+
+	p = gEngfuncs.pEfxAPI->R_TempModel( &p_vOrigin->x, fl, &p_vAngles->x, 100.0f ,gEngfuncs.pEventAPI->EV_FindModelIndex( pModel ), TE_BOUNCE_NULL );
+
+	if( p )
+	{
+		p->flags |= FTENT_CLIENTCUSTOM;
+		p->entity.curstate.framerate = 1.0f;
+		p->frameMax = 255.0f;
+		p->entity.curstate.animtime = flAnimTime;
+		p->entity.curstate.frame = 0.0f;
+		p->entity.curstate.renderamt = 255;
+		p->entity.curstate.sequence = iSequence;
+		p->entity.curstate.fuser1 = gHUD.m_flTime + 1.0f;
+		p->entity.curstate.body = iBody;
+		p->entity.curstate.fuser2 = gHUD.m_flTime + 1.0f;
+		p->callback = RemoveBody;
+		p->hitcallback = HitBody;
+		p->bounceFactor = 0.0f;
+		p->die = gHUD.m_flTime + 1.0f + gHUD.cl_corpsestay->value + 5.0f;
+
+		char j = '\0';
+
+		for( int i = 0; i != 64; i++ )
+		{
+			if( !g_DeadPlayerModels[i] || p == g_DeadPlayerModels[i] )
+			{
+				g_DeadPlayerModels[i] = p;
+				return;
+			}
+
+			if( gEngfuncs.GetClientTime() > g_DeadPlayerModels[i]->die )
+			{
+				g_DeadPlayerModels[i]->die = 0.0f;
+				j = '\x01';
+				g_DeadPlayerModels[i] = p;
+			}
+		}
+
+		if( !j )
+			p->die = p->entity.curstate.fuser2 + 5.0f;
+	}
 }
 
 void EV_BasicPuff( pmtrace_t *pTrace, float scale )
