@@ -278,7 +278,8 @@ void RemoveBody( TEMPENTITY *te, float frametime, float current_time )
 
 void HitBody( TEMPENTITY *ent, pmtrace_s *ptr )
 {
-
+	if( ptr->plane.normal.z > 0.0f )
+		ent->flags |= FTENT_PLYRATTACHMENT;
 }
 
 void CreateCorpse( Vector *p_vOrigin, Vector *p_vAngles, const char *pModel, float flAnimTime, int iSequence, int iBody )
