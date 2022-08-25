@@ -35,6 +35,8 @@ TEMPENTITY *g_DeadPlayerModels[64];
 
 static cvar_t *r_decals;
 
+extern cvar_t *cl_particlefx;
+
 extern "C"
 {
 void EV_FireColt( struct event_args_s *args );
@@ -1925,7 +1927,36 @@ void EV_RoundReset( struct event_args_s *args )
 
 void EV_Overheat( struct event_args_s *args )
 {
+	int idx;
 
+	float lastOverheatTime;
+
+	vec3_t origin;
+
+	idx = args->entindex;
+
+	VectorCopy( args->origin, origin );
+
+	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_ITEM, "weapons/mgoverheat.wav", gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 98 + gEngfuncs.pfnRandomLong( 0, 3 ) );
+
+	float fl = gEngfuncs.GetClientTime() - lastOverheatTime;
+
+	lastOverheatTime = gEngfuncs.GetClientTime();
+
+	if( ( fl < 0.0f || fl >= 1.0f ) && cl_particlefx->value >= 2.0 )
+	{
+		TEMPENTITY *p = gEngfuncs.pEfxAPI->CL_TempEntAllocNoModel( origin );
+
+		if( gEngfuncs.pEfxAPI->CL_TempEntAllocNoModel( origin ) )
+		{
+			p->flags |=
+			p->callback = EV_OverheatCallback();
+			p->clientIndex = idx;
+			p->die = gEngfuncs.GetClientTime() + 2.5f;
+			p->entity.baseline.fuser1 = gEngfuncs.GetClientTime() + 0.5f;
+			p->entity.baseline.fuser2 = gEngfuncs.GetClientTime();
+		}
+	}
 }
 
 void EV_RocketTrail( struct event_args_s *args )
