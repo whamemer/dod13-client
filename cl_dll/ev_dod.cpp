@@ -7,6 +7,7 @@
 #include "usercmd.h"
 #include "pm_defs.h"
 #include "pm_materials.h"
+#include "pm_shared.h"
 
 #include "eventscripts.h"
 #include "ev_hldm.h"
@@ -112,12 +113,8 @@ void EV_ResetAnimationEvents( int index )
 	ent->baseline.iuser4 = 0;
 }
 
-// play a strike sound based on the texture that was hit by the attack traceline.  VecSrc/VecEnd are the
-// original traceline endpoints used by the attacker, iBulletType is the type of bullet that hit the texture.
-// returns volume of strike instrument (crowbar) to play
 float EV_HLDM_PlayTextureSound( int idx, pmtrace_t *ptr, float *vecSrc, float *vecEnd, int iBulletType )
 {
-	// hit the world, try to play sound based on texture material type
 	char chTextureType = CHAR_TEX_CONCRETE;
 	float fvol;
 	float fvolbar;
@@ -131,19 +128,14 @@ float EV_HLDM_PlayTextureSound( int idx, pmtrace_t *ptr, float *vecSrc, float *v
 
 	entity = gEngfuncs.pEventAPI->EV_IndexFromTrace( ptr );
 
-	// FIXME check if playtexture sounds movevar is set
-	//
 	chTextureType = 0;
 
-	// Player
 	if( entity >= 1 && entity <= gEngfuncs.GetMaxClients() )
 	{
-		// hit body
 		chTextureType = CHAR_TEX_FLESH;
 	}
 	else if( entity == 0 )
 	{
-		// get texture from entity or world (world is ent(0))
 		pTextureName = (char *)gEngfuncs.pEventAPI->EV_TraceTexture( ptr->ent, vecSrc, vecEnd );
 
 		if ( pTextureName )
@@ -151,7 +143,6 @@ float EV_HLDM_PlayTextureSound( int idx, pmtrace_t *ptr, float *vecSrc, float *v
 			strcpy( texname, pTextureName );
 			pTextureName = texname;
 
-			// strip leading '-0' or '+0~' or '{' or '!'
 			if( *pTextureName == '-' || *pTextureName == '+' )
 			{
 				pTextureName += 2;
@@ -162,16 +153,14 @@ float EV_HLDM_PlayTextureSound( int idx, pmtrace_t *ptr, float *vecSrc, float *v
 				pTextureName++;
 			}
 
-			// '}}'
 			strcpy( szbuffer, pTextureName );
 			szbuffer[CBTEXTURENAMEMAX - 1] = 0;
 
-			// get texture type
 			chTextureType = PM_FindTextureType( szbuffer );
 		}
 	}
 	
-	switch (chTextureType)
+	switch( chTextureType )
 	{
 	default:
 	case CHAR_TEX_CONCRETE:
@@ -237,7 +226,6 @@ float EV_HLDM_PlayTextureSound( int idx, pmtrace_t *ptr, float *vecSrc, float *v
 		cnt = 3;
 		break;
 	case CHAR_TEX_GLASS:
-	case CHAR_TEX_COMPUTER:
 		fvol = 0.8;
 		fvolbar = 0.2;
 		rgsz[0] = "debris/glass1.wav";
@@ -245,19 +233,8 @@ float EV_HLDM_PlayTextureSound( int idx, pmtrace_t *ptr, float *vecSrc, float *v
 		rgsz[2] = "debris/glass3.wav";
 		cnt = 3;
 		break;
-	case CHAR_TEX_FLESH:
-		if( iBulletType == BULLET_PLAYER_CROWBAR )
-			return 0.0; // crowbar already makes this sound
-		fvol = 1.0;
-		fvolbar = 0.2;
-		rgsz[0] = "weapons/bullet_hit1.wav";
-		rgsz[1] = "weapons/bullet_hit2.wav";
-		fattn = 1.0;
-		cnt = 2;
-		break;
 	}
 
-	// play material hit sound
 	gEngfuncs.pEventAPI->EV_PlaySound( 0, ptr->endpos, CHAN_STATIC, rgsz[gEngfuncs.pfnRandomLong( 0, cnt - 1 )], fvol, fattn, 0, 96 + gEngfuncs.pfnRandomLong( 0, 0xf ) );
 	return fvolbar;
 }
