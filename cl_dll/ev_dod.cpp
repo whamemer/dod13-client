@@ -91,7 +91,13 @@ void EV_MortarShell( struct event_args_s *args );
 
 int EV_GetWeaponBody( void )
 {
+	if( g_iUser1 == OBS_IN_EYE )
+		g_iTeamNumber = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
 
+	if( g_iTeamNumber == 1 )
+		return gHUD.m_bBritish;
+	
+	return g_iTeamNumber = 2;
 }
 
 void EV_ResetAnimationEvents( int index )
