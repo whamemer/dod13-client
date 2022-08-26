@@ -1,3 +1,6 @@
+[submodule "particleman"]
+	path = particleman
+	url = https://github.com/whamemer/particleman
 [submodule "vgui_support"]
 	path = vgui_support
 	url = https://github.com/whamemer/vgui_support

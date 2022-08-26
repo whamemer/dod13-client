@@ -605,7 +605,7 @@ struct p_wpninfo_s
     int ammo_maxclip;
     int ammo_give;
     int misc_weight;
-};
+} p_wpninfo_t;
 
 p_wpninfo_s P_WpnInfo[41];
 
