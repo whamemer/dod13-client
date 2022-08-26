@@ -17,6 +17,10 @@
 #include "cl_entity.h"
 #include "triangleapi.h"
 
+#include "tri.h"
+
+cldll_func_dst_t *g_pcldstAddrs;
+
 extern "C"
 {
 	void DLLEXPORT HUD_DrawNormalTriangles( void );
@@ -101,6 +105,7 @@ void DLLEXPORT HUD_DrawNormalTriangles( void )
 #if TEST_IT
 //	Draw_Triangles();
 #endif
+	g_pcldstAddrs->pDrawNormalTriangles();
 }
 
 /*
