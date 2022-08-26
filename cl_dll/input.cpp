@@ -82,6 +82,15 @@ cvar_t	*cl_vsmoothing;
 
 cvar_t	*cl_particlefx;
 
+// info for dod_fog.cpp
+cvar_t	*cl_fog;
+cvar_t	*cl_fog_blue;
+cvar_t	*cl_fog_density;
+cvar_t	*cl_fog_end;
+cvar_t	*cl_fog_green;
+cvar_t	*cl_fog_red;
+cvar_t	*cl_fog_start;
+
 /*
 ===============================================================================
 

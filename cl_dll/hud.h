@@ -853,6 +853,7 @@ public:
 	void SetVisible( int point, int visible );
 	void UpdateObjectiveIcons( void );
 	void DrawDigit( int digit, int x, int y );
+	void CalcIconLocations( void );
 
 private:
 	int m_Init;
@@ -1288,4 +1289,8 @@ extern int g_iUser3;
 
 extern int g_iVuser1x;
 extern int g_iVuser1z;
+extern int g_iOnlyClientDraw;
+
+// info for dod_fog.cpp
+void RenderDoDFog( void );
 #endif

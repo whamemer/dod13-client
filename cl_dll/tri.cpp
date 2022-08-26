@@ -19,7 +19,20 @@
 
 #include "tri.h"
 
+#include "r_studioint.h"
+
+#include "../particleman/particleman/src/particleman/particlefx_header/pman_frustum.h"
+
+#include "pm_defs.h"
+
 cldll_func_dst_t *g_pcldstAddrs;
+
+extern engine_studio_api_t IEngineStudio;
+
+extern cvar_t *cl_fog;
+extern cvar_t *cl_particlefx;
+
+struct ref_params_s *pparams;
 
 extern "C"
 {
@@ -120,4 +133,66 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 #if TEST_IT
 //	Draw_Triangles();
 #endif
+
+	g_pcldstAddrs->pDrawTransparentTriangles();
+
+	vec3_t v_angles;
+
+	VectorCopy( v_angles, pparams->viewangles );
+
+	if( g_iOnlyClientDraw )
+	{
+		if( g_iOnlyClientDraw == OBS_CHASE_LOCKED && gHUD.GetMinimapState() > 0 )
+		{
+			gHUD.m_ObjectiveIcons.CalcIconLocations();
+			gHUD.m_DoDMap.DrawOverview();
+		}
+	}
+	else
+	{
+		if( cl_fog->value != 0.0 )
+			RenderDoDFog();
+		
+		if( cl_particlefx->value >= 1.0 && IEngineStudio.IsHardware() )
+		{
+			if( g_iUser1 != OBS_ROAMING && g_iUser1 )
+				g_pParticleMan->SetVariables( g_flGravity, v_angles );
+			else
+				g_pParticleMan->SetVariables( g_flGravity, gHUD.m_vecAngles);
+			
+			g_pParticleMan->Update();
+
+			int g_iWeatherType;
+			float g_flWeatherTime;
+
+			if( gEngfuncs.GetClientTime() > g_flWeatherTime && cl_particlefx->value >= 2.0 )
+			{
+				if( g_iWeatherType == 1 )
+				{
+					UpdateRain();
+					g_flWeatherTime = gEngfuncs.GetClientTime() + 0.3f;
+				}
+				else if( g_iWeatherType == 2 )
+				{
+					UpdateSnow();
+					g_flWeatherTime = gEngfuncs.GetClientTime() + 0.7f;
+				}
+			}
+		}
+
+		if( gHUD.m_iFOV < 90 )
+			gHUD.m_Scope.DrawTriApiScope();
+		
+		gHUD.m_MortarHud.DrawPredictedMortarImpactSite();
+	}
+}
+
+void UpdateRain( void )
+{
+
+}
+
+void UpdateSnow( void )
+{
+
 }

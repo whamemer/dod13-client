@@ -36,7 +36,7 @@ project (dod13-client)
 #--------------
 # USER DEFINES \
 ################\
-option(USE_VGUI "Enable VGUI1." ON)
+option(USE_VGUI "Enable VGUI1." OFF)
 option(USE_VGUI2 "Enable VGUI2. UNDONE" OFF)
 option(BUILD_PMAN "Build particleman" ON)
 option(USE_NOVGUI_MOTD "Prefer non-VGUI MOTD when USE_VGUI is enabled" OFF)
