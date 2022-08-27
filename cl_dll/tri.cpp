@@ -187,6 +187,60 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 	}
 }
 
+CDoDParticle *CDoDParticle::Create( Vector org, Vector normal, model_s *sprite, float size, float brightness, const char *classname, bool bDistCull )
+{
+	cvar_t *cl_weatherdis;
+
+	CDoDParticle *pParticle;
+
+	if( sprite )
+	{
+		pParticle = 0;
+
+		if( cl_particlefx->value > 0.0f )
+		{
+			if( IEngineStudio.IsHardware() )
+			{
+				if( cl_weatherdis->value < 100.0f )
+					cl_weatherdis->value = 100.0f;
+
+				if( !bDistCull )
+					pParticle = (CDoDParticle *)g_pParticleMan->RequestNewMemBlock( 300 );
+					CBaseDoDParticle::InitializeSprite( org, normal, sprite, size, brightness );
+					pParticle->m_iPFlags = 0;
+					pParticle->m_iNumFrames = sprite->numframes;
+					strcpy( pParticle->m_szClassname, classname );
+				
+				pParticle = 0;
+
+				if( gEngfuncs.GetLocalPlayer() )
+				{
+					Vector vec = org - gEngfuncs.GetLocalPlayer()->curstate.origin;
+					float fl = VectorNormalize( vec );
+
+					pParticle = 0;
+
+					if( fl <= cl_weatherdis->value )
+					{
+						pParticle = (CDoDParticle *)g_pParticleMan->RequestNewMemBlock( 300 );
+						CBaseDoDParticle::InitializeSprite( org, normal, sprite, size, brightness );
+						pParticle->m_iPFlags = 0;
+						pParticle->m_iNumFrames = sprite->numframes;
+						strcpy( pParticle->m_szClassname, classname );
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		pParticle = 0;
+		gEngfuncs.Con_DPrintf( "CDoDParticle::Create called with a null sprite\n" );
+	}
+
+	return pParticle;
+}
+
 void UpdateRain( void )
 {
 

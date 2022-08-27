@@ -33,6 +33,7 @@ public:
     void Force( void );
     void Die( void );
     void Touch( Vector pos, Vector normal, int index );
+    CDoDParticle *CDoDParticle::Create( Vector org, Vector normal, model_s *sprite, float size, float brightness, const char *classname, bool bDistCull );
 
 private:
     bool m_bInsideSmoke;
