@@ -241,6 +241,81 @@ CDoDParticle *CDoDParticle::Create( Vector org, Vector normal, model_s *sprite, 
 	return pParticle;
 }
 
+void CDoDParticle::Touch( Vector pos, Vector normal, int index )
+{
+
+}
+
+void CDoDParticle::Die( void )
+{
+
+}
+
+void CDoDParticle::Think( float time )
+{
+
+}
+
+void CDoDParticle::Force( void )
+{
+
+}
+
+void CDoDParticle::SetGlobalWind( float *vecWind )
+{
+
+}
+
+void CDoDParticle::AddGlobalWind( void )
+{
+
+}
+
+void CreateExplosionSmoke( Vector *p_origin, Vector *p_vVelocity, bool bInsideSmoke, bool bSpawnInside, bool bBlowable )
+{
+
+}
+
+void CreateExplosionSmokeInside( Vector *p_origin )
+{
+
+}
+
+void CreateDebrisWallPuff( Vector *p_origin, Vector *p_vVelocity, Vector *p_vColor, int iPuff )
+{
+
+}
+
+void TriangleWallPuff::Think( float time )
+{
+
+}
+
+void CDoDRocketTrail::Think( float time )
+{
+
+}
+
+CDoDRocketTrail *CDoDRocketTrail::Create( Vector org, Vector normal, model_s *sprite, float size, float brightness, const char *classname )
+{
+
+}
+
+void CDoDDirtExploDust::Think( float )
+{
+
+}
+
+CDoDDirtExploDust *CDoDDirtExploDust::Create( Vector org, Vector normal, model_s *sprite, float size, float brightness, const char *classname )
+{
+	
+}
+
+Vector GetViewAngles( void )
+{
+
+}
+
 void UpdateRain( void )
 {
 
