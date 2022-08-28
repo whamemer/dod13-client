@@ -40,6 +40,8 @@ static cvar_t *r_decals;
 
 extern cvar_t *cl_particlefx;
 
+cvar_t *cl_numshotrubble;
+
 extern "C"
 {
 void EV_FireColt( struct event_args_s *args );
@@ -343,27 +345,51 @@ void EV_BasicPuff( pmtrace_t *pTrace, float scale )
 	p_vColor = 175.0f;
 	p_vVelocity = pTrace->plane.normal;
 	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
-	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 0 );
+	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 0 );
 
 	p_vColor = 175.0f;
 	p_vVelocity = pTrace->plane.normal;
 	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
-	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 1 );
+	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 1 );
 
 	p_vColor = 175.0f;
 	p_vVelocity = pTrace->plane.normal;
 	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
-	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 2 );
+	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 2 );
 
 	p_vColor = 175.0f;
 	p_vVelocity = pTrace->plane.normal;
 	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
-	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 3 );
+	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 3 );
 }
 
 void EV_CreteRubble( pmtrace_t *pTrace, float fScale )
 {
+	vec3_t origin;
 
+	VectorMA( pTrace->endpos, 2.0, pTrace->plane.normal, &origin );
+
+	if( cl_numshotrubble )
+	{
+		if( cl_numshotrubble->value > 0.0 )
+		{
+			if( gEngfuncs.pfnRandomLong( 0, cl_numshotrubble->value ) > 0 )
+			{
+				for( int i; i != gEngfuncs.pfnRandomLong( 0, cl_numshotrubble->value ); i++ )
+				{
+					if( g_pParticleMan )
+					{
+						if( g_RubbleQueue.count < g_RubbleQueue.maxelements )
+						{
+							vec3_t vec = 75.0f;
+
+							CreateFlyingRubble( origin, 0, pTrace->plane.normal, vec, fScale );
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void CreateSpark( Vector *p_origin, Vector *p_vNormal, const char *szSpriteName )
