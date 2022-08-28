@@ -1,6 +1,10 @@
 #include "../particleman/particleman/src/public/particleman.h"
 #include "vector.h"
 
+void CreateExplosionSmoke( Vector *p_origin, Vector *p_vVelocity, bool bInsideSmoke, bool bSpawnInside, bool bBlowable );
+void CreateExplosionSmokeInside( Vector *p_origin );
+void CreateDebrisWallPuff( Vector *p_origin, Vector *p_vVelocity, Vector *p_vColor, int iPuff );
+
 class CBaseDoDParticle : public CBaseParticle
 {
 public:

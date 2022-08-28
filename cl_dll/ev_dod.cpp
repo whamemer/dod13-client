@@ -30,6 +30,8 @@
 #include "vgui_TeamFortressViewport.h"
 #endif
 
+#include "tri.h"
+
 static int g_tracerCount[32];
 
 TEMPENTITY *g_DeadPlayerModels[64];
@@ -336,7 +338,27 @@ void CreateCorpse( Vector *p_vOrigin, Vector *p_vAngles, const char *pModel, flo
 
 void EV_BasicPuff( pmtrace_t *pTrace, float scale )
 {
+	vec3_t p_origin, p_vColor, p_vVelocity;
 
+	p_vColor = 175.0f;
+	p_vVelocity = pTrace->plane.normal;
+	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
+	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 0 );
+
+	p_vColor = 175.0f;
+	p_vVelocity = pTrace->plane.normal;
+	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
+	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 1 );
+
+	p_vColor = 175.0f;
+	p_vVelocity = pTrace->plane.normal;
+	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
+	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 2 );
+
+	p_vColor = 175.0f;
+	p_vVelocity = pTrace->plane.normal;
+	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
+	CreateDebrisWallPuff( &p_origin, &p_vVelocity, &p_vColor, 3 );
 }
 
 void EV_CreteRubble( pmtrace_t *pTrace, float fScale )
