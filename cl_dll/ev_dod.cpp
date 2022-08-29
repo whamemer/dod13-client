@@ -345,21 +345,10 @@ void EV_BasicPuff( pmtrace_t *pTrace, float scale )
 	p_vColor = 175.0f;
 	p_vVelocity = pTrace->plane.normal;
 	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
+	
 	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 0 );
-
-	p_vColor = 175.0f;
-	p_vVelocity = pTrace->plane.normal;
-	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
 	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 1 );
-
-	p_vColor = 175.0f;
-	p_vVelocity = pTrace->plane.normal;
-	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
 	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 2 );
-
-	p_vColor = 175.0f;
-	p_vVelocity = pTrace->plane.normal;
-	p_origin = gEngfuncs.pfnRandomLong( 1, 3 ) * pTrace->plane.normal + pTrace->endpos;
 	CreateDebrisWallPuff( p_origin, p_vVelocity, p_vColor, 3 );
 }
 
