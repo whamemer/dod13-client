@@ -8,6 +8,8 @@
 
 #include "r_studioint.h"
 
+#include "../exrernal/GL/gl.h"
+
 extern engine_studio_api_t IEngineStudio;
 
 extern cvar_t *cl_fog;
@@ -18,7 +20,6 @@ extern cvar_t *cl_fog_green;
 extern cvar_t *cl_fog_red;
 extern cvar_t *cl_fog_start;
 
-// TODO: WHAMER
 void RenderDoDFog( void )
 {
     int i;
@@ -43,13 +44,13 @@ void RenderDoDFog( void )
                         fl_fogFv[2] = 0.5f;
                         fl_fogFv[3] = 1.0f;
 
-                        /*glFogi( GL_FOG_MODE, GL_LINEAR );
+                        glFogi( GL_FOG_MODE, GL_LINEAR );
                         glFogfv( GL_FOG_COLOR, fl_fogFv );
                         glFogf( GL_FOG_DENSITY, cl_fog_density->value );
                         glHint( GL_FOG_HINT, GL_NICEST );
                         glFogf( GL_FOG_START, cl_fog_start->value );
                         glFogf( GL_FOG_END, cl_fog_end->value );
-                        glEnable( GL_FOG );*/
+                        glEnable( GL_FOG );
                     }
                 }
                 else if( cl_fog->value == 2 )
@@ -60,8 +61,8 @@ void RenderDoDFog( void )
                 {
                     gEngfuncs.pTriAPI->Fog( fl_fogColor, cl_fog_start->value, cl_fog_end->value, 0 );
 
-                    /*if( IEngineStudio.IsHardware() == 1 )
-                        glDisable( GL_FOG );*/
+                    if( IEngineStudio.IsHardware() == 1 )
+                        glDisable( GL_FOG );
                 }
             }
         }
