@@ -23,7 +23,7 @@ extern cvar_t *cl_fog_start;
 void RenderDoDFog( void )
 {
     int foglevel;
-    float fl_fogFv[4], fl_fogColor[3];
+    float fl_fogFv[4], fogColor[3];
 
 	if( gHUD.GetWaterLevel() < 3 )
     {
@@ -36,9 +36,9 @@ void RenderDoDFog( void )
         {
             if( cl_fog_end->value >= 0.0f )
             {
-                fl_fogColor[0] = cl_fog_red->value;
-                fl_fogColor[1] = cl_fog_green->value;
-                fl_fogColor[2] = cl_fog_blue->value;
+                fogColor[0] = cl_fog_red->value;
+                fogColor[1] = cl_fog_green->value;
+                fogColor[2] = cl_fog_blue->value;
 
                 if( foglevel == 1 )
                 {
@@ -58,13 +58,13 @@ void RenderDoDFog( void )
                         glEnable( GL_FOG );
                     }
                 }
-                else if( cl_fog->value == 2 )
+                else if( foglevel == 2 )
                 {
-                    gEngfuncs.pTriAPI->Fog( fl_fogColor, cl_fog_start->value, cl_fog_end->value, 1 );
+                    gEngfuncs.pTriAPI->Fog( fogColor, cl_fog_start->value, cl_fog_end->value, 1 );
                 }
                 else
                 {
-                    gEngfuncs.pTriAPI->Fog( fl_fogColor, cl_fog_start->value, cl_fog_end->value, 0 );
+                    gEngfuncs.pTriAPI->Fog( fogColor, cl_fog_start->value, cl_fog_end->value, 0 );
 
                     if( IEngineStudio.IsHardware() == 1 )
                         glDisable( GL_FOG );
