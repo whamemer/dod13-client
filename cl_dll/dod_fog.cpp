@@ -22,11 +22,16 @@ extern cvar_t *cl_fog_start;
 
 void RenderDoDFog( void )
 {
-    int i;
+    int foglevel;
     float fl_fogFv[4], fl_fogColor[3];
 
-	if( gHUD.GetWaterLevel() <= 2 )
+	if( gHUD.GetWaterLevel() < 3 )
     {
+        if( g_iOnlyClientDraw <= 0 && gHUD.GetMinimapState() )
+            foglevel = 0;
+        else
+            foglevel = cl_fog->value;
+        
         if( cl_fog_start->value >= 0.0f )
         {
             if( cl_fog_end->value >= 0.0f )
@@ -35,7 +40,7 @@ void RenderDoDFog( void )
                 fl_fogColor[1] = cl_fog_green->value;
                 fl_fogColor[2] = cl_fog_blue->value;
 
-                if( cl_fog->value == 1 )
+                if( foglevel == 1 )
                 {
                     if( IEngineStudio.IsHardware() == 1 )
                     {
