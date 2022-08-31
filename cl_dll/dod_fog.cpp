@@ -8,7 +8,7 @@
 
 #include "r_studioint.h"
 
-#include "../exrernal/GL/gl.h"
+#include <gl/GL.h>
 
 extern engine_studio_api_t IEngineStudio;
 
