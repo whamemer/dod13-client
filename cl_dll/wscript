@@ -1,0 +1,155 @@
+#! /usr/bin/env python
+# encoding: utf-8
+# a1batross, mittorn, 2018
+
+from waflib import Utils
+import os
+
+def options(opt):
+	# stub
+	return
+
+def configure(conf):
+	if conf.env.DEST_OS == 'win32':
+		conf.check_cxx(lib='user32')
+
+	if conf.env.GOLDSRC:
+		if conf.env.DEST_OS == 'win32':
+			conf.check_cxx(lib='winmm')
+		else:
+			conf.check_cc(lib='dl')
+
+def build(bld):
+	source = bld.path.parent.ant_glob([
+		'pm_shared/*.c'
+	])
+	source += bld.path.ant_glob([
+		'hl/*.cpp'
+	])
+	source += bld.path.parent.ant_glob([
+		'../dlls/wpn_shared/30cal.cpp',
+    	'../dlls/wpn_shared/amer_knife.cpp',
+    	'../dlls/wpn_shared/bar.cpp',
+    	'../dlls/wpn_shared/bazooka.cpp',
+    	'../dlls/wpn_shared/bipod.cpp',
+    	'../dlls/wpn_shared/bren.cpp',
+    	'../dlls/wpn_shared/colt.cpp',
+    	'../dlls/wpn_shared/enfield.cpp',
+    	'../dlls/wpn_shared/fg42.cpp',
+    	'../dlls/wpn_shared/garand.cpp',
+    	'../dlls/wpn_shared/ger_knife.cpp',
+    	'../dlls/wpn_shared/greasegun.cpp',
+    	'../dlls/wpn_shared/handgrenade_ex.cpp',
+    	'../dlls/wpn_shared/handgrenade.cpp',
+    	'../dlls/wpn_shared/k43.cpp',
+    	'../dlls/wpn_shared/kar.cpp',
+    	'../dlls/wpn_shared/knife.cpp',
+    	'../dlls/wpn_shared/luger.cpp',
+    	'../dlls/wpn_shared/m1carbine.cpp',
+    	'../dlls/wpn_shared/mg34.cpp',
+    	'../dlls/wpn_shared/mg42.cpp',
+    	'../dlls/wpn_shared/mp40.cpp',
+    	'../dlls/wpn_shared/mp44.cpp',
+    	'../dlls/wpn_shared/piat.cpp',
+    	'../dlls/wpn_shared/pistol.cpp',
+    	'../dlls/wpn_shared/pschreck.cpp',
+    	'../dlls/wpn_shared/scoped98k.cpp',
+    	'../dlls/wpn_shared/spade.cpp',
+    	'../dlls/wpn_shared/spring.cpp',
+    	'../dlls/wpn_shared/sten.cpp',
+    	'../dlls/wpn_shared/stickgrenade_ex.cpp',
+    	'../dlls/wpn_shared/stickgrenade.cpp',
+    	'../dlls/wpn_shared/thompson.cpp',
+    	'../dlls/wpn_shared/webley.cpp'
+	])
+	source += [
+		'ev_hldm.cpp',
+    	'ev_common.cpp',
+    	'events.cpp',
+		'ammo.cpp',
+		'CClientEncModel.cpp',
+    	'cdll_int.cpp',
+    	'com_weapons.cpp',
+    	'death.cpp',
+    	'demo.cpp',
+    	'DOD_Camera.cpp',
+    	'dod_common.cpp',
+    	'dod_crosshair.cpp',
+    	'dod_fog.cpp',
+    	'dod_icons.cpp',
+    	'dod_map.cpp',
+    	'dod_objectives.cpp',
+    	'../dlls/dod_shared.cpp',
+    	'entity.cpp',
+    	'GameStudioModelRenderer.cpp',
+    	'hud_msg.cpp',
+    	'hud_redraw.cpp',
+    	'hud_spectator.cpp',
+    	'hud_update.cpp',
+    	'hud_vgui2pring.cpp',
+    	'hud.cpp',
+    	'mortarhud.cpp',
+    	'scope.cpp',
+    	'in_camera.cpp,',
+    	'input.cpp',
+    	'inputw32.cpp',
+    	'menu.cpp',
+    	'message.cpp',
+    	'parsemsg.cpp',
+		'ParticleShooter.cpp',
+    	'saytext.cpp',
+    	'status_icons.cpp',
+    	'statusbar.cpp',
+    	'studio_util.cpp',
+    	'StudioModelRenderer.cpp',
+    	'text_message.cpp',
+    	'train.cpp',
+    	'tri.cpp',
+    	'view.cpp',
+    	'weather.cpp'
+	]
+
+	includes = [
+		'.',
+		'hl/',
+		'../dlls',
+		'../common',
+		'../engine',
+		'../pm_shared',
+		'../game_shared',
+		'../public',
+		'../utils/fake_vgui/include'
+	]
+
+	defines = ['CLIENT_DLL']
+	if bld.env.GOLDSRC:
+		defines += ['GOLDSOURCE_SUPPORT']
+
+	libs = []
+	if bld.env.DEST_OS == 'win32':
+		libs += ["USER32"]
+
+	if bld.env.GOLDSRC:
+		if bld.env.DEST_OS == 'win32':
+			libs += ["WINMM"]
+		else:
+			libs += ['DL']
+
+	if bld.env.DEST_OS not in ['android', 'dos']:
+		install_path = os.path.join(bld.env.GAMEDIR, bld.env.CLIENT_DIR)
+	else:
+		install_path = bld.env.PREFIX
+
+	bld.shlib(
+		source   = source,
+		target   = 'client' + bld.env.POSTFIX,
+		name     = 'client',
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx      = bld.get_taskgen_count()
+	)
+
