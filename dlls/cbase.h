@@ -375,7 +375,7 @@ public:
 	virtual	BOOL FVisible( CBaseEntity *pEntity );
 	virtual	BOOL FVisible( const Vector &vecOrigin );
 
-    void DecalThink( void ) { DecalGunShot( m_trDecalTrace, BULLET_PLAYER_CROWBAR ); };
+    void DecalThink( void );
 
     BOOL has_disconnected;
 	//We use this variables to store each ammo count.
@@ -430,6 +430,60 @@ public:
 #define ResetBlocked( ) m_pfnBlocked = static_cast <void (CBaseEntity::*)(CBaseEntity *)> (NULL)
 
 #endif
+
+class CPointEntity : public CBaseEntity
+{
+public:
+	void Spawn( void );
+	virtual int ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
+private:
+};
+
+typedef struct locksounds			// sounds that doors and buttons make when locked/unlocked
+{
+	string_t	sLockedSound;		// sound a door makes when it's locked
+	string_t	sLockedSentence;	// sentence group played when door is locked
+	string_t	sUnlockedSound;		// sound a door makes when it's unlocked
+	string_t	sUnlockedSentence;	// sentence group played when door is unlocked
+
+	int		iLockedSentence;		// which sentence in sentence group to play next
+	int		iUnlockedSentence;		// which sentence in sentence group to play next
+
+	float	flwaitSound;			// time delay between playing consecutive 'locked/unlocked' sounds
+	float	flwaitSentence;			// time delay between playing consecutive sentences
+	BYTE	bEOFLocked;				// true if hit end of list of locked sentences
+	BYTE	bEOFUnlocked;			// true if hit end of list of unlocked sentences
+} locksound_t;
+
+void PlayLockSounds( entvars_t *pev, locksound_t *pls, int flocked, int fbutton );
+
+//
+// MultiSouce
+//
+
+#define MAX_MULTI_TARGETS	16 // maximum number of targets a single multi_manager entity may be assigned.
+#define MS_MAX_TARGETS		32
+
+class CMultiSource : public CPointEntity
+{
+public:
+	void Spawn();
+	void KeyValue( KeyValueData *pkvd );
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	int ObjectCaps( void ) { return ( CPointEntity::ObjectCaps() | FCAP_MASTER ); }
+	BOOL IsTriggered( CBaseEntity *pActivator );
+	void EXPORT Register( void );
+
+	virtual int Save( CSave &save );
+	virtual int Restore( CRestore &restore );
+	static TYPEDESCRIPTION m_SaveData[];
+
+	EHANDLE m_rgEntities[MS_MAX_TARGETS];
+	int m_rgTriggered[MS_MAX_TARGETS];
+
+	int m_iTotal;
+	string_t m_globalstate;
+};
 
 //
 // generic Delay entity.
