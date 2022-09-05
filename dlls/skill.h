@@ -19,6 +19,8 @@
 #if !defined(SKILL_H)
 #define SKILL_H
 
+#include "util.h"
+
 struct skilldata_t
 {
 	int iSkillLevel; // game skill level
@@ -179,10 +181,10 @@ struct skilldata_t
 	float plrArm;
 };
 
-extern	DLL_GLOBAL	skilldata_t	gSkillData;
+extern DLL_GLOBAL skilldata_t gSkillData;
 float GetSkillCvar( const char *pName );
 
-extern DLL_GLOBAL int		g_iSkillLevel;
+extern DLL_GLOBAL int g_iSkillLevel;
 
 #define SKILL_EASY		1
 #define SKILL_MEDIUM	2
