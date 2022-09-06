@@ -19,6 +19,7 @@
 #define CL_UTIL_H
 #include "exportdef.h"
 #include "cvardef.h"
+#include "cl_dll.h"
 
 #if !defined(TRUE)
 #define TRUE 1
