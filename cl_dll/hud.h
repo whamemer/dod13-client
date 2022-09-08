@@ -89,11 +89,11 @@ typedef struct cvar_s cvar_t;
 #define HUD_ACTIVE	1
 #define HUD_INTERMISSION 2
 
-#define MAX_PLAYER_NAME_LENGTH		32
+#define MAX_PLAYER_NAME_LENGTH 32
 
-#define	MAX_MOTD_LENGTH				1536
+#define	MAX_MOTD_LENGTH 1536
 
-#define MAX_SERVERNAME_LENGTH	64
+#define MAX_SERVERNAME_LENGTH 64
 #define MAX_TEAMNAME_SIZE 32
 
 //
@@ -826,7 +826,6 @@ private:
 //
 //-----------------------------------------------------
 //
-// WHAMER: TODO
 struct env_model_t
 {
 	const char *szModel[64];
@@ -837,10 +836,10 @@ struct env_model_t
 	vec3_t vecOrigin, vecAngles;
 
 	int spawnflags;
-	int frame;
+	float frame;
 	int sequence;
 	int iModel;
-	int pModel;
+	model_t *pModel;
 };
 
 
