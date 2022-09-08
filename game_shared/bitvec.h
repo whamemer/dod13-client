@@ -23,26 +23,20 @@ private:
 	int m_iBit;
 };
 
-// CBitVec allows you to store a list of bits and do operations on them like they were 
-// an atomic type.
 template<int NUM_BITS>
 class CBitVec
 {
 public:
 	CBitVec();
 
-	// Set all values to the specified value (0 or 1..)
 	void Init( int val = 0 );
 
-	// Access the bits like an array.
 	CBitVecAccessor	operator[]( int i );
 
-	// Operations on other bit vectors.
 	CBitVec& operator=( CBitVec<NUM_BITS> const &other );
 	bool operator==( CBitVec<NUM_BITS> const &other );
 	bool operator!=( CBitVec<NUM_BITS> const &other );
 
-	// Get underlying dword representations of the bits.
 	int GetNumDWords();
 	unsigned long GetDWord( int i );
 	void SetDWord( int i, unsigned long val );
