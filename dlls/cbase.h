@@ -29,21 +29,19 @@ CBaseEntity
 				CBaseGroup
 */
 
-#define		MAX_PATH_SIZE	10 // max number of nodes available for a path.
+#define		MAX_PATH_SIZE	10
 
-// These are caps bits to indicate what an object's capabilities (currently used for save/restore and level transitions)
 #define		FCAP_CUSTOMSAVE				0x00000001
-#define		FCAP_ACROSS_TRANSITION			0x00000002		// should transfer between transitions
-#define		FCAP_MUST_SPAWN				0x00000004		// Spawn after restore
-#define		FCAP_DONT_SAVE				0x80000000		// Don't save this
-#define		FCAP_IMPULSE_USE			0x00000008		// can be used by the player
-#define		FCAP_CONTINUOUS_USE			0x00000010		// can be used by the player
-#define		FCAP_ONOFF_USE				0x00000020		// can be used by the player
-#define		FCAP_DIRECTIONAL_USE			0x00000040		// Player sends +/- 1 when using (currently only tracktrains)
-#define		FCAP_MASTER				0x00000080		// Can be used to "master" other entities (like multisource)
+#define		FCAP_ACROSS_TRANSITION			0x00000002
+#define		FCAP_MUST_SPAWN				0x00000004
+#define		FCAP_DONT_SAVE				0x80000000
+#define		FCAP_IMPULSE_USE			0x00000008
+#define		FCAP_CONTINUOUS_USE			0x00000010
+#define		FCAP_ONOFF_USE				0x00000020
+#define		FCAP_DIRECTIONAL_USE			0x00000040
+#define		FCAP_MASTER				0x00000080
 
-// UNDONE: This will ignore transition volumes (trigger_transition), but not the PVS!!!
-#define		FCAP_FORCE_TRANSITION		0x00000080		// ALWAYS goes across transitions
+#define		FCAP_FORCE_TRANSITION		0x00000080
 
 #include "saverestore.h"
 #include "schedule.h"
@@ -51,8 +49,6 @@ CBaseEntity
 #if !defined(MONSTEREVENT_H)
 #include "monsterevent.h"
 #endif
-
-// C functions for external declarations that call the appropriate C++ methods
 
 #include "exportdef.h"
 
@@ -106,16 +102,28 @@ typedef void(CBaseEntity::*USEPTR)( CBaseEntity *pActivator, CBaseEntity *pCalle
 #define CLASS_ALIEN_PREDATOR		9
 #define CLASS_INSECT			10
 #define CLASS_PLAYER_ALLY		11
-#define CLASS_PLAYER_BIOWEAPON		12 // hornets and snarks.launched by players
-#define CLASS_ALIEN_BIOWEAPON		13 // hornets and snarks.launched by the alien menace
-#define	CLASS_BARNACLE			99 // special because no one pays attention to it, and it eats a wide cross-section of creatures.
+#define CLASS_PLAYER_BIOWEAPON		12
+#define CLASS_ALIEN_BIOWEAPON		13
+#define	CLASS_BARNACLE			99
+
+// Day of Defeat Guns Classify
+#define	CLASS_NONE 				0
+#define CLASS_MELEE				1
+#define CLASS_GRENADE			2
+#define CLASS_GRENADE_EX		4
+#define CLASS_PISTOL			8
+#define CLASS_RIFLE				16 // CM1Carbine, CGarand, CKAR, CK43, CENFIELD
+#define CLASS_SCOPE_RIFLE		32 // CScopedKar, CSPRING, CFG42, CENFIELD
+#define CLASS_AUTO_RIFLE		64 // CThompson, CMP44, CMP40
+#define CLASS_MACHINEGUNS		256 // CBAR, CMG42, CMG34, C30CAL, CBREN, CFG42
+#define CLASS_ROCKET			512
 
 class CBaseEntity;
 class CBaseMonster;
 class CBasePlayerItem;
 class CSquadMonster;
 
-#define	SF_NORESPAWN	( 1 << 30 )// !!!set this bit on guns and stuff that should never respawn.
+#define	SF_NORESPAWN	( 1 << 30 )
 
 //
 // EHANDLE. Safe way to point to CBaseEntities who may die between frames
