@@ -84,6 +84,18 @@ struct ClipInfo
 	float subseqDrop;
 };
 
+struct pmodel_fx_t
+{
+	bool bSwitch;
+	int iSwitchSeq;
+	int iSwitchFrame;
+
+	bool bAnim;
+	int iAnimSeq;
+	int iAnimFrame;
+	int iAnimTargetSeq;
+};
+
 typedef struct cvar_s cvar_t;
 
 #define HUD_ACTIVE	1
@@ -1213,10 +1225,4 @@ public:
 };
 
 extern CHud gHUD;
-
-extern int g_iPlayerClass;
-extern int g_iTeamNumber;
-extern int g_iUser1;
-extern int g_iUser2;
-extern int g_iUser3;
 #endif
