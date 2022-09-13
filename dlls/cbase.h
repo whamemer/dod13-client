@@ -114,7 +114,7 @@ typedef void(CBaseEntity::*USEPTR)( CBaseEntity *pActivator, CBaseEntity *pCalle
 #define CLASS_PISTOL			8
 #define CLASS_RIFLE				16 // CM1Carbine, CGarand, CKAR, CK43, CENFIELD
 #define CLASS_SCOPE_RIFLE		32 // CScopedKar, CSPRING, CFG42, CENFIELD
-#define CLASS_AUTO_RIFLE		64 // CThompson, CMP44, CMP40
+#define CLASS_AUTO_RIFLE		64 // CThompson, CMP44, CMP40, CGreaseGun
 #define CLASS_MACHINEGUNS		256 // CBAR, CMG42, CMG34, C30CAL, CBREN, CFG42
 #define CLASS_ROCKET			512
 

@@ -1319,6 +1319,36 @@ private:
 	unsigned short m_usFireSten;
 };
 
+class CGreaseGun : public CBasePlayerWeapon
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	int GetItemInfo( ItemInfo *p );
+	int AddToPlayer( CBasePlayer *pPlayer );
+	void PrimaryAttack( void );
+	BOOL Deploy( void );
+	BOOL SpawnDeploy( void );
+	void Reload( void );
+	void WeaponIdle( void );
+
+	int iItemSlot( void ) { return 2; }
+	BOOL CanHolster( void ) { return TRUE; }
+	int Classify( void ) { return CLASS_AUTO_RIFLE; }
+
+	virtual BOOL UseDecrement( void )
+	{ 
+#if CLIENT_WEAPONS
+		return TRUE;
+#else
+		return FALSE;
+#endif
+	}
+
+private:
+	unsigned short m_usFireGreaseGun;
+};
+
 class CBazooka : public CRocketWeapon
 {
 public:
