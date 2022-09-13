@@ -270,7 +270,10 @@ typedef struct
 #define ITEM_FLAG_NOAUTORELOAD		2
 #define ITEM_FLAG_NOAUTOSWITCHEMPTY	4
 #define ITEM_FLAG_LIMITINWORLD		8
-#define ITEM_FLAG_EXHAUSTIBLE		16 // A player can totally exhaust their ammo supply and lose this weapon
+#define ITEM_FLAG_EXHAUSTIBLE		16
+
+// Day of Defeat item info flags
+#define ITEM_FLAG_PISTOL	64 // CCOLT, CWEBLEY, CLUGER
 
 #define WEAPON_IS_ONTARGET 0x40
 
@@ -576,6 +579,7 @@ public:
 	void Spawn( int weapon_id );
 	void PrimaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void WeaponIdle( void );
 	void Reload( void );
 
@@ -596,7 +600,7 @@ public:
 #endif
 	}
 
-private:
+protected:
 	unsigned short m_iFireEvent;
 };
 

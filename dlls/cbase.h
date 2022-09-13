@@ -290,8 +290,7 @@ public:
     void RifleMeleeAttack( CBasePlayer *m_pPlayer, int weapon_id );
     void FireTWalls( float flDamage, int iBulletType, entvars_t *pevAttacker, Vector vecDirShooting, Vector vecSrc, Vector vecRight, Vector vecUp, Vector vecDest );
 
-    // FireBulletsNC in dod decompile code
-	Vector FireBulletsPlayer( ULONG cShots, Vector  vecSrc, Vector	vecDirShooting,	Vector	vecSpread, float flDistance, int iBulletType, int iTracerFreq = 4, int iDamage = 0, entvars_t *pevAttacker = NULL, int shared_rand = 0 );
+	Vector FireBulletsNC( Vector *retstr, Vector vecSrc, Vector vecDirShooting, float flSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t *pevAttacker, int shared_rand );
 
 	virtual CBaseEntity *Respawn( void ) { return NULL; }
 

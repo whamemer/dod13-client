@@ -9,6 +9,9 @@
 #if !defined ( EV_HLDMH )
 #define EV_HLDMH
 
+#include "cl_util.h"
+#include "pmtrace.h"
+
 // bullet types
 typedef	enum
 {
@@ -44,7 +47,7 @@ typedef	enum
 	BULLET_MONSTER_9MM,
 	BULLET_MONSTER_MP5,
 	BULLET_MONSTER_12MM
-}Bullet;
+} Bullet;
 
 float EV_HLDM_PlayTextureSound( int idx, pmtrace_t *ptr, float *vecSrc, float *vecEnd, int iBulletType );
 void EV_HLDM_GunshotDecalTrace( pmtrace_t *pTrace, float *vecSrc, float *vecEnd, int iBulletType, char *decalName );
