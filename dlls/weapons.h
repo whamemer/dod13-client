@@ -382,7 +382,7 @@ public:
 	virtual BOOL PlayEmptySound( void );
 	virtual void ResetEmptySound( void );
 
-	virtual void SendWeaponAnim( int iAnim, int skiplocal = 1, int body = 0 );
+	virtual void SendWeaponAnim( int iAnim, int skiplocal = 1 );
 
     void PostMortarValue( float value );
     void SendMortarFireCommand( char *c );
@@ -390,7 +390,7 @@ public:
 	virtual BOOL CanDeploy( void );
 	virtual BOOL IsUseable( void );
 	BOOL DefaultDeploy( const char *szViewModel, const char *szWeaponModel, int iAnim, const char *szAnimExt, const char *szAnimReloadExt, int skiplocal );
-	int DefaultReload( int iClipSize, int iAnim, float fDelay, int body = 0 );
+	int DefaultReload( int iClipSize, int iAnim, float fDelay );
 
 	virtual void ItemPostFrame( void );
 
