@@ -66,7 +66,7 @@ int CAmerKnife::GetItemInfo( ItemInfo *p )
     p->iSlot = 0;
     p->iPosition = 0;
     p->iId = WEAPON_AMERKNIFE;
-    p->iWeight = AMER_KNIFE_WEIGHT;
+    p->iWeight = CROWBAR_WEIGHT;
     return 1;
 }
 

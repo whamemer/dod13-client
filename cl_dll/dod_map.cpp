@@ -29,7 +29,7 @@ extern int g_iTeamNumber;
 
 bool b_turnedoffmap;
 
-int flZoomLevels[3];
+int flZoomLevels[3] = { 1, 3, 8 };
 
 int CHudDoDMap::Draw( float flTime )
 {

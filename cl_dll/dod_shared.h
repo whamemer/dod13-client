@@ -20,7 +20,6 @@ struct p_wpninfo_s
     char pronereload[32];
     char szAnimExt[16];
     char szAnimReloadExt[16];
-
     float anim_reloadtime;
     float anim_firedelay;
     float anim_reloadtime2;
@@ -28,15 +27,14 @@ struct p_wpninfo_s
     float anim_drawtime;
     float anim_up2downtime;
     float anim_down2uptime;
-    float base_accuracy;
-    float accuracy_penalty;
-    float base_accuracy2;
-
     int ammo_default;
     int ammo_maxcarry;
     int ammo_maxclip;
     int ammo_give;
     int misc_weight;
+    float base_accuracy;
+    float accuracy_penalty;
+    float base_accuracy2;
 };
 
 enum HANDSIGNALS_e 
@@ -542,8 +540,6 @@ typedef struct DodClassInfo_s
     char selectcmd[32];
     char classname[128];
     char modelname[128];
-    char limitcvar[32];
-
     int team;
     int speed;
     int weapons;
@@ -555,6 +551,7 @@ typedef struct DodClassInfo_s
     int geargroup;
     int bodygroup;
     int hairgroup;
+    char limitcvar[32];
 } DodClassInfo_t;
 
 #endif // DOD_SHARED_H

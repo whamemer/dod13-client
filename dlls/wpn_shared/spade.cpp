@@ -64,7 +64,7 @@ int CSpade::GetItemInfo( ItemInfo *p )
     p->iSlot = 0;
     p->iPosition = 2;
     p->iId = WEAPON_SPADE;
-    p->iWeight = SPADE_WEIGHT;
+    p->iWeight = CROWBAR_WEIGHT;
     return 1;
 }
 

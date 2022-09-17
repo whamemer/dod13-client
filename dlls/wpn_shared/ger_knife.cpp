@@ -65,7 +65,7 @@ int CGerKnife::GetItemInfo( ItemInfo *p )
     p->iSlot = 0;
     p->iPosition = 0;
     p->iId = WEAPON_GERKNIFE;
-    p->iWeight = GERKNIFE_WEIGHT;
+    p->iWeight = CROWBAR_WEIGHT;
     return 1;
 }
 

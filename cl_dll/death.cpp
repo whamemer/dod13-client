@@ -51,7 +51,7 @@ float g_ColorRed[3]	= { 1.0, 0.25, 0.25 };
 float g_ColorGreen[3] = { 0.6, 1.0, 0.6 };
 float g_ColorYellow[3] = { 1.0, 0.7, 0.0 };
 float g_ColorGrey[3] = { 0.8, 0.8, 0.8 };
-float g_ColorDoDGreen[3] = {  }; // WHAMER: TODO
+float g_ColorDoDGreen[3] = { 0.3, 0.4, 0.3 };
 
 float *GetClientColor( int clientIndex )
 {
