@@ -110,38 +110,15 @@ public:
 #define WEAPON_BAZOOKA          29
 #define WEAPON_PSCHRECK         30
 #define WEAPON_PIAT             31
+#define WEAPON_MORTAR			32
 #define WEAPON_BINOC            33
-
-/*
-#define WEAPON_AMERKNIFE		1
-#define WEAPON_GERKNIFE			2
-#define WEAPON_GERPARAKNIFE		2
-#define WEAPON_COLT				3
-#define WEAPON_LUGER			4
-#define WEAPON_GARAND			5
-#define WEAPON_SCOPEDKAR		6
-#define WEAPON_THOMPSON			7
-#define WEAPON_MP44				8
-#define WEAPON_SPRING			9
-#define WEAPON_KAR				10
-#define WEAPON_BAR				11
-#define WEAPON_MP40				12
-#define WEAPON_MG42				17
-#define WEAPON_30CAL			18
-#define WEAPON_SPADE			19
-#define WEAPON_M1CARBINE		20
-#define WEAPON_MG34				21
-#define WEAPON_GREASEGUN		22
-#define WEAPON_FG42				23
-#define WEAPON_K43				24
-#define WEAPON_ENFIELD			25
-#define WEAPON_SCOPEDENFIELD	(0 ? 25 : -1)
-#define WEAPON_STEN				26
-#define WEAPON_BREN				27
-#define WEAPON_WEBLEY			28
-#define WEAPON_FOLDINGCARBINE	20
-#define WEAPON_SCOPED_FG42		65
-*/
+#define WEAPON_BINOCULARS		34
+#define WEAPON_GERPARAKNIFE		35
+#define WEAPON_MILLS			36
+#define WEAPON_SCOPED_FG42		37
+#define WEAPON_SCOPEDENFIELD	38
+#define WEAPON_FOLDINGCARBINE	39
+#define WEAPON_FAIRBAIRN		40
 
 #define WEAPON_ALLWEAPONS		(~(1<<WEAPON_SUIT))
 

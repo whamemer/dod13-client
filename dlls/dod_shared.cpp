@@ -191,7 +191,39 @@ char *s_GERVoiceFiles[29] =
     "player/gerpiat.wav"
 };
 
-int iVoiceToHandSignal[29];
+// WHAMER: TODO
+int iVoiceToHandSignal[29] =
+{
+    0,
+    10,
+    15,
+    1,
+    9,
+    11,
+    0,
+    13,
+    20,
+    25,
+    3,
+    2,
+    5,
+    8,
+    1,
+    4,
+    7,
+    6,
+    12,
+    20,
+    18,
+    21,
+    22,
+    23,
+    24,
+    5,
+    20,
+    4,
+    4
+};
 
 char *s_VoiceCommands[29][4] =
 {
@@ -316,46 +348,87 @@ DodClassInfo_t g_ClassInfo[28] =
 
 p_wpninfo_s P_WpnInfo[41] =
 {
+    // WEAPON_NONE 0
     { "", "", "", "", "", "", "", "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0 },
+    // WEAPON_AMERKNIFE 1
     { "models/p_amerk.mdl", "models/v_amerk.mdl", "models/w_amerk.mdl", "", "", "", "", "", "knife", "knife", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_GERKNIFE 2
     { "models/p_paraknife.mdl", "models/v_paraknife.mdl", "models/w_paraknife.mdl", "", "", "", "", "", "knife", "knife", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_COLT 3
     { "models/p_colt.mdl", "models/v_colt.mdl", "models/allied_ammo.mdl", "", "", "", "", "", "pistol", "pistol", 2.75f, 0.1f, 0.0, 0.0, 0.68f, 0.0, 0.0, 21, 21, 7, 21, 10, 0.035f, 0.1f, 0.0 },
+    // WEAPON_LUGER 4
     { "models/p_luger.mdl", "models/v_luger.mdl", "models/axis_ammo.mdl", "", "", "", "", "", "pistol", "pistol", 2.1f, 0.1f, 2.1f, 0.0, 0.68f, 0.0, 0.0, 24, 24, 8, 24, 10, 0.035f, 0.1f, 0.0 },
+    // WEAPON_GARAND 5
     { "models/p_garand.mdl", "models/v_garand.mdl", "models/w_garand.mdl", "models/p_garand_l.mdl", "", "", "", "", "rifle", "garand", 1.8f, 0.4f, 0.0, 0.0, 1.25f, 0.0, 0.0, 88, 88, 8, 88, 20, 0.016f, 0.1f, 0.0 },
+    // WEAPON_SCOPEDKAR 6
     { "models/p_k98s.mdl", "models/v_scoped98k.mdl", "models/w_scoped98k.mdl", "models/p_k98s_l.mdl", "", "", "", "", "bolt", "bolt", 3.12f, 1.61f, 0.0, 0.0, 1.0f, 0.0, 0.0, 65, 65, 5, 65, 20, 0.06f, 0.1f, 0.004f },
+    // WEAPON_THOMPSON 7
     { "models/p_tommy.mdl", "models/v_tommy.mdl", "models/w_tommy.mdl", "models/p_tommy_l.mdl", "", "", "", "", "tommy", "tommy", 2.8f, 0.085f, 0.0, 0.0, 1.1f, 0.0, 0.0, 210, 210, 30, 210, 20, 0.025f, 0.1f, 0.0 },
+    // WEAPON_MP44 8
     { "models/p_stg44.mdl", "models/v_mp44.mdl", "models/w_mp44.mdl", "", "", "", "", "", "stg44", "stg44", 3.13f, 0.09f, 0.0, 0.0, 1.0f, 0.0, 0.0, 210, 210, 30, 210, 20, 0.025f, 0.1f, 0.0 },
+    // WEAPON_SPRING 9
     { "models/p_spring.mdl", "models/v_spring.mdl", "models/w_spring.mdl", "models/p_spring_l.mdl", "", "", "", "", "bolt", "bolt", 2.7f, 1.85f, 0.0, 0.0, 1.33f, 0.0, 0.0, 55, 55, 5, 55, 20, 0.06f, 0.1f, 0.004f },
+    // WEAPON_KAR 10
     { "models/p_k98.mdl", "models/v_98k.mdl", "models/w_98k.mdl", "models/p_k98_l.mdl", "", "", "", "", "bolt", "bolt", 3.12f, 1.6f, 0.0, 0.0, 1.0f, 0.0, 0.0, 65, 65, 5, 65, 20, 0.014f, 0.15f, 0.0 },
+    // WEAPON_BAR 11
     { "models/p_barbu.mdl", "models/v_bar.mdl", "models/w_bar.mdl", "", "models/p_barbu.mdl", "models/p_barbd.mdl", "models/p_barbd.mdl", "models/p_barbd.mdl", "rifle", "bar", 3.72f, 0.12f, 3.86f, 0.0, 1.5f, 1.5f, 1.5f, 260, 260, 20, 20, 20, 0.025f, 0.1f, 0.02f },
+    // WEAPON_MP40 12
     { "models/p_mp40.mdl", "models/v_mp40.mdl", "models/w_mp40.mdl", "", "", "", "", "", "mp40", "mp40", 2.85f, 0.09f, 0.0, 0.0, 1.0f, 0.0, 0.0, 210, 210, 30, 210, 20, 0.025f, 0.1f, 0.0 },
+    // WEAPON_HANDGRENADE 13
     { "models/p_grenade.mdl", "models/v_grenade.mdl", "models/w_grenade.mdl", "", "", "", "", "", "gren", "gren", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_STICKGRENADE 14
     { "models/p_stick.mdl", "models/v_stick.mdl", "models/w_stick.mdl", "", "", "", "", "", "stick", "stick", 0.0, 0.0, 0.0, 0.0, 0.75f, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_STICKGRENADEX 15
     { "models/p_stick.mdl", "models/v_stick.mdl", "models/w_stick.mdl", "", "", "", "", "", "primstick", "gren", 0.0, 0.0, 0.0, 0.0, 0.75f, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_HANDGRENADEX 16
     { "models/p_grenade.mdl", "models/v_grenade.mdl", "models/w_grenade.mdl", "", "", "", "", "", "primgren", "gren", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_MG42 17
     { "models/p_mg42bu.mdl", "models/v_mg42.mdl", "models/w_mg42.mdl", "", "models/p_mg42bu.mdl", "models/p_mg42bd.mdl", "models/p_mg42sr.mdl", "models/p_mg42pr.mdl", "mg", "mg42", 6.5f, 0.1f, 0.0, 0.0, 0.0, 0.0, 0.6f, 500, 500, 250, 250, 40, 0.2f, 0.1f, 0.025f },
+    // WEAPON_CAL30 18
     { "models/p_30cal.mdl", "models/v_30cal.mdl", "models/w_30cal.mdl", "", "models/p_30cal.mdl", "models/p_30cal.mdl", "models/p_30calsr.mdl", "models/p_30calpr.mdl", "30cal", "30cal", 5.0f, 0.1f, 0.0, 0.0, 0.0, 0.0, 0.6f, 300, 300, 150, 150, 40, 0.2f, 0.1f, 0.02f },
+    // WEAPON_SPADE 19
     { "models/p_spade.mdl", "models/v_spade.mdl", "models/axis_ammo.mdl", "", "", "", "", "", "spade", "knife", 5.0f, 0.1f, 0.0, 0.0, 0.0, 0.0, 0.0, 300, 300, 150, 150, 40, 0.0, 0.1f, 0.0 },
+    // WEAPON_M1CARBINE 20
     { "models/p_m1carb.mdl", "models/v_m1carbine.mdl", "models/w_m1carb.mdl", "models/p_m1carb_l.mdl", "", "", "", "", "rifle", "m1carb", 3.14f, 0.1f, 0.0, 0.0, 0.0, 0.0, 0.0, 165, 165, 15, 165, 20, 0.019f, 0.1f, 0.0 },
+    // WEAPON_MG34 21
     { "models/p_mg34bu.mdl", "models/v_mg34.mdl", "models/w_mg34.mdl", "", "models/p_mg34bu.mdl", "models/p_mg34bd.mdl", "models/p_mg34sr.mdl", "models/p_mg34pr.mdl", "mg", "mg34", 5.7f, 0.1f, 0.0, 0.0, 0.0, 0.0, 0.6f, 450, 450, 75, 75, 40, 0.2f, 0.1f, 0.02f },
+    // WEAPON_GREASEGUN 22
     { "models/p_grease.mdl", "models/v_greasegun.mdl", "models/w_greasegun.mdl", "models/p_grease_l.mdl", "", "", "", "", "grease", "grease", 4.1f, 0.15f, 0.0, 0.0, 0.0, 0.0, 0.0, 210, 210, 30, 210, 20, 0.025f, 0.1f, 0.0 },
+    // WEAPON_FG42 23
     { "models/p_fg42bu.mdl", "models/v_fg42.mdl", "models/w_fg42.mdl", "", "models/p_fg42bu.mdl", "models/p_fg42bd.mdl", "models/p_fg42sr.mdl", "models/p_fg42pr.mdl", "tommy", "fg42", 3.85f, 0.085f, 3.71f, 0.0, 0.0, 0.0, 0.0, 180, 180, 20, 20, 20, 0.025f, 0.1f, 0.02f },
+    // WEAPON_K43 24
     { "models/p_k43.mdl", "models/v_k43.mdl", "models/w_k43.mdl", "", "", "", "", "", "rifle", "k43", 4.4f, 0.4f, 0.0, 0.0, 0.0, 0.0, 0.0, 80, 80, 10, 80, 20, 0.019f, 0.1f, 0.0 },
+    // WEAPON_ENFIELD 25
     { "models/p_enfield.mdl", "models/v_enfield.mdl", "models/w_enfield.mdl", "models/p_enfield_l.mdl", "", "", "", "", "bolt", "bolt", 3.66f, 1.65f, 0.0, 0.0, 0.8f, 0.0, 0.0, 60, 60, 5, 60, 20, 0.014f, 0.15f, 0.0 },
+    // WEAPON_STEN 26
     { "models/p_sten.mdl", "models/v_sten.mdl", "models/w_sten.mdl", "", "", "", "", "", "sten", "sten", 2.9f, 0.085f, 0.0, 0.0, 0.0, 0.0, 0.0, 210, 210, 30, 210, 20, 0.025f, 0.1f, 0.0 },
+    // WEAPON_BREN 27
     { "models/p_brenbu.mdl", "models/v_bren.mdl", "models/w_bren.mdl", "models/p_bren_l.mdl", "models/p_brenbu.mdl", "models/p_brenbd.mdl", "models/p_brensr.mdl", "models/p_brenbr.mdl", "bren", "bren", 3.6f, 0.12f, 4.2f, 0.3f, 1.0f, 1.29f, 1.575f, 180, 180, 30, 30, 20, 0.025f, 0.1f, 0.02f },
+    // WEAPON_WEBLEY 28
     { "models/p_webley.mdl", "models/v_webley.mdl", "models/allied_ammo.mdl", "", "", "", "", "", "pistol", "webley", 4.0f, 0.1f, 0.0, 0.0, 0.9f, 0.0, 0.0, 18, 18, 8, 18, 10, 0.035f, 0.1f, 0.0 },
+    // WEAPON_BAZOOKA 29
     { "models/p_bazooka.mdl", "models/v_bazooka.mdl", "models/w_bazooka.mdl", "models/p_bazooka_l.mdl", "", "", "", "", "bazooka", "bazooka", 3.0f, 1.0f, 0.0, 0.0, 1.0f, 1.0f, 0.8f, 5, 5, 1, 5, 20, 0.0, 0.1f, 0.0 },
+    // WEAPON_PSCHRECK 30
     { "models/p_pschreck.mdl", "models/v_panzerschreck.mdl", "models/w_pschreck.mdl", "models/p_pschreck_l.mdl", "", "", "", "", "pschreck", "pschreck", 3.0f, 1.0f, 0.0, 0.0, 1.0f, 1.0f, 0.8f, 5, 5, 1, 5, 20, 0.0, 0.1f, 0.0 },
+    // WEAPON_PIAT 31
     { "models/p_piat.mdl", "models/v_piat.mdl", "models/w_piat.mdl", "", "", "", "", "", "piat", "piat", 3.4f, 1.0f, 0.0, 0.0, 1.0f, 1.0f, 0.8f, 5, 5, 1, 5, 20, 0.0, 0.1f, 0.0 },
+    // WEAPON_MORTAR 32
     { "models/p_mortar.mdl", "models/v_mortar.mdl", "models/w_mortar.mdl", "", "", "", "", "", "piat", "mortar", 3.4f, 1.0f, 0.0, 0.0, 1.0f, 1.0f, 0.8f, 5, 5, 1, 5, 20, 0.0, 0.1f, 0.0 },
+    // WEAPON_BINOC 33
     { "models/p_spring.mdl", "models/v_binoculars.mdl", "models/w_spring.mdl", "models/p_spring_l.mdl", "", "", "", "", "bolt", "bolt", 1.0f, 0.5f, 0.0, 0.0, 1.33f, 0.0, 0.0, 55, 55, 5, 55, 5, 0.06f, 0.1f, 0.004f },
+    // WEAPON_BINOCULARS 34
     { "models/p_spring.mdl", "models/v_binoculars.mdl", "models/w_spring.mdl", "", "", "", "", "", "bolt", "bolt", 1.0f, 0.5f, 0.0, 0.0, 1.33f, 0.0, 0.0, 55, 55, 5, 55, 5, 0.0, 0.0, 0.0 },
+    // WEAPON_GERPARAKNIFE 35
     { "models/p_paraknife.mdl", "models/v_paraknife.mdl", "models/axis_ammo.mdl", "", "", "", "", "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_MILLS 36
     { "models/p_mills.mdl", "models/v_mills.mdl", "models/w_mills.mdl", "", "", "", "", "", "mills", "mills", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.1f, 0.0 },
+    // WEAPON_SCOPED_FG42 37
     { "models/p_fg42s.mdl", "models/v_scopedfg42.mdl", "models/w_fg42s.mdl", "", "", "", "", "", "tommy", "fg42", 3.85f, 0.3f, 3.71f, 0.0, 0.3f, 0.0, 0.0, 180, 180, 20, 20, 20, 0.025f, 0.1f, 0.017f },
+    // WEAPON_SCOPEDENFIELD 38
     { "models/p_enfields.mdl", "models/v_enfield_scoped.mdl", "models/w_enfield_scoped.mdl", "models/p_enfields_l.mdl", "", "", "", "", "bolt", "bolt", 3.54f, 1.65f, 0.0, 0.0, 0.8f, 0.0, 0.0, 60, 60, 5, 60, 20, 0.06f, 0.1f, 0.004f },
+    // WEAPON_FOLDINGCARBINE 39
     { "models/p_fcarb.mdl", "models/v_fcarb.mdl", "models/w_fcarb.mdl", "models/p_fcarb_l.mdl", "", "", "", "", "fcarb", "fcarb", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 20, 0.019f, 0.1f, 0.0 },
+    // WEAPON_FAIRBAIRN 40
     { "models/p_fairbairn.mdl", "models/v_fairbairn.mdl", "models/allied_ammo.mdl", "", "", "", "", "", "knife", "knife", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 20, 0.0, 0.1f, 0.0 },
 };
 
