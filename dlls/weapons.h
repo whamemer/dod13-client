@@ -195,6 +195,7 @@ typedef struct
 
 // Day of Defeat item info flags
 #define ITEM_FLAG_PISTOL	64 // CCOLT, CWEBLEY, CLUGER
+#define ITEM_FLAG_ROCKET	642 // BAZZOKA, PIAT, PSCHRECK
 
 #define WEAPON_IS_ONTARGET 0x40
 
@@ -531,6 +532,7 @@ public:
 	void Spawn( int weapon_id );
 	void Precache( void );
 	void PrimaryAttack( void );
+	void CoolThink( void );
 	void SecondaryAttack( void );
 	BOOL Deploy( void );
 	BOOL CanHolster( void );
@@ -538,6 +540,8 @@ public:
 	void WeaponIdle( void );
 	int AddToPlayer( CBasePlayer *pPlayer );
 	void Holster( int skiplocal );
+	bool IsDeployed( void );
+	float GetBipodSpread( void );
 	void ForceUndeploy( void );
 
 	int iItemSlot( void ) { return 2; }
@@ -1133,7 +1137,7 @@ public:
 	BOOL IsDeployed( void );
 
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return !m_pPlayer->IsInMGDeploy(); }
+	BOOL CanHolster( void ) { return !IsDeployed(); }
 	int Classify( void ) { return m_iWeaponState & 1 == CLASS_NONE ? CLASS_MACHINEGUNS : CLASS_SCOPE_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
@@ -1288,8 +1292,6 @@ public:
 	void UnSlow( void );
 	void ReSlow( void );
 
-	BOOL CanHolster( void ) { return !( m_iWeaponState & 1 ); }
-
 private:
 	unsigned short m_usFireBazooka;
 };
@@ -1312,8 +1314,6 @@ public:
 	void UnSlow( void );
 	void ReSlow( void );
 
-	BOOL CanHolster( void ) { return !( m_iWeaponState & 1 ); }
-
 private:
 	unsigned short m_usFirePschreck;
 };
@@ -1335,8 +1335,6 @@ public:
 	void Lower( void );
 	void UnSlow( void );
 	void ReSlow( void );
-
-	BOOL CanHolster( void ) { return !( m_iWeaponState & 1 ); }
 
 private:
 	unsigned short m_usFirePIAT;

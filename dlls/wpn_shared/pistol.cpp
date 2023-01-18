@@ -28,17 +28,15 @@
 
 #include "dod_shared.h"
 
-extern struct p_wpninfo_s P_WpnInfo[];
+extern struct p_wpninfo_s *P_WpnInfo;
 
 void CPistol::Spawn( int weapon_id )
 {
+    Precache();
     m_iId = weapon_id;
     SET_MODEL( ENT( pev ), P_WpnInfo[m_iId].wmodel );
-
     m_iDefaultAmmo = P_WpnInfo[m_iId].ammo_default;
-
     FallInit();
-    Precache();
 }
 
 BOOL CPistol::Deploy( void )
@@ -91,22 +89,18 @@ void CPistol::PrimaryAttack( void )
 
             float flSpread = 0.035f;
             int iBulletType;
-            entvars_t *pevAttacker = m_pPlayer->pev;
-            int shared_rand = m_pPlayer->random_seed;
-
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            vec3_t vecDirShooting = gpGlobals->v_forward;
 
-            CBaseEntity::FireBulletsNC( (Vector *)m_pPlayer, vecSrc, vecDirShooting, flSpread, 8192.0f, iBulletType, 3, 0, pevAttacker, shared_rand );
+            CBaseEntity::FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
-            HUD_PlaybackEvent( 1, ENT( m_pPlayer->pev ), m_iFireEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_iFireEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + P_WpnInfo[m_iId].anim_firedelay;
             m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + P_WpnInfo[m_iId].anim_firedelay;
             m_fInAttack = 1;
             m_flTimeWeaponIdle = UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
 
-            RemoveStamina( 0.0f, m_pPlayer );
+            RemoveStamina( m_pPlayer->GetStamina(), m_pPlayer );
         }
     }
 }

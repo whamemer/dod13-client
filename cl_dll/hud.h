@@ -108,6 +108,8 @@ typedef struct cvar_s cvar_t;
 #define MAX_SERVERNAME_LENGTH 64
 #define MAX_TEAMNAME_SIZE 32
 
+void ClientSetSensitivity( int level );
+
 //
 //-----------------------------------------------------
 //

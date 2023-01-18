@@ -89,27 +89,58 @@ cvar_t *cl_autoreload;
 
 int __MsgFunc_Logo( const char *pszName, int iSize, void *pbuf )
 {
-
+    BEGIN_READ( pbuf, iSize );
+    gHUD.m_iLogo = READ_BYTE();
+    return 1;
 }
 
 int __MsgFunc_ResetHUD( const char *pszName, int iSize, void *pbuf )
 {
-
+    return gHUD.MsgFunc_ResetHUD( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 {
-
+    return gHUD.MsgFunc_YouDied( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
-
+    gHUD.MsgFunc_InitHUD( pszName, iSize, pbuf );
+    return 1;
 }
 
 int __MsgFunc_SetFOV( const char *pszName, int iSize, void *pbuf )
 {
+    BEGIN_READ( pbuf, iSize );
+    if( g_iVuser1z )
+        return gHUD.m_iFOV;
 
+    g_lastFOV = READ_BYTE();
+
+    if( !g_lastFOV )
+    {
+        gHUD.m_iFOV = 90;
+        gHUD.m_flMouseSensitivity = 0.0f;
+        return 1;
+    }
+
+    if( g_lastFOV == 90 )
+    {
+        gHUD.m_flMouseSensitivity = 0.0f;
+        return 1;
+    }
+
+    float fl;
+
+    if( gHUD.zoom_sensitivity_ratio )
+        fl = gHUD.zoom_sensitivity_ratio->value;
+    else
+        fl = 1.0f;
+
+    gHUD.m_flMouseSensitivity = fl * ( g_lastFOV / 90.0f * sensitivity->value );
+
+    return 1;
 }
 
 int __MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
@@ -119,47 +150,84 @@ int __MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
 
 int __MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
 {
+    BEGIN_READ( pbuf, iSize );
 
+    if( READ_BYTE )
+        gEngfuncs.pfnPlaySoundByName( "common/wpn_select.wav", 0.5f );
+    else
+        gEngfuncs.pfnPlaySoundByName( "common/wpn_denyselect.wav", 0.5f );
+
+    return 1;
 }
 
 int __MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf )
 {
-
+    BEGIN_READ( pbuf, iSize );
+    gHUD.m_iRoundState = READ_BYTE();
+    return 1;
 }
 
 int __MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
 {
-
+    BEGIN_READ( pbuf, iSize );
+    gHUD.m_fRoundEndsTime = READ_SHORT() + gHUD.m_flTime;
+    return 1;
 }
 
 int __MsgFunc_BloodPuff( const char *pszName, int iSize, void *pbuf )
 {
+    BEGIN_READ( pbuf, iSize );
 
+    float org = READ_COORD();
+
+    if( !violence_hblood )
+    {
+        violence_hblood = gEngfuncs.pfnGetCvarPointer( "violence_hblood" );
+
+        if( !violence_hblood )
+            return 1;
+    }
+
+    if( violence_hblood->value != 1.0f )
+        return 1;
+
+    EV_BloodPuff( org );
+    return 1;
 }
 
 int __MsgFunc_HandSignal( const char *pszName, int iSize, void *pbuf )
 {
-
+    return EV_HandSignalMsg( pszName, iSize, pbuf );
 }
 
 void __CmdFunc_ShowCommandMenu( void )
 {
-
+    if( gViewPort )
+    {
+        gViewPort->ShowCommandMenu();
+    }
 }
 
 void __CmdFunc_HideCommandMenu( void )
 {
-
+    if( gViewPort )
+    {
+        gViewPort->HideCommandMenu();
+    }
 }
 
 int __MsgFunc_MOTD( const char *pszName, int iSize, void *pbuf )
 {
-
+    if( gViewPort )
+        return gViewPort->MsgFunc_MOTD( pszName, iSize, pbuf );
+    return 0;
 }
 
 int __MsgFunc_RandomPC( const char *pszName, int iSize, void *pbuf )
 {
-
+    if( gViewPort )
+        return gViewPort->MsgFunc_RandomPC( pszName, iSize, pbuf );
+    return 0;
 }
 
 int __MsgFunc_ServerName( const char *pszName, int iSize, void *pbuf )

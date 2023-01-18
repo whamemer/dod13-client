@@ -290,7 +290,7 @@ public:
     void RifleMeleeAttack( CBasePlayer *m_pPlayer, int weapon_id );
     void FireTWalls( float flDamage, int iBulletType, entvars_t *pevAttacker, Vector vecDirShooting, Vector vecSrc, Vector vecRight, Vector vecUp, Vector vecDest );
 
-	Vector FireBulletsNC( Vector *retstr, Vector vecSrc, Vector vecDirShooting, float flSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t *pevAttacker, int shared_rand );
+	Vector FireBulletsNC( Vector vecSrc, Vector vecDirShooting, float flSpread, float flDistance, int iBulletType, int iTracerFreq, int iDamage, entvars_t *pevAttacker, int shared_rand );
 
 	virtual CBaseEntity *Respawn( void ) { return NULL; }
 

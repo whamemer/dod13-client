@@ -32,7 +32,7 @@
 #define KNIFE_BODYHIT_VOLUME 128
 #define KNIFE_WALLHIT_VOLUME 512
 
-extern struct p_wpninfo_s P_WpnInfo[];
+extern struct p_wpninfo_s *P_WpnInfo;
 
 enum KNIFE_e 
 {
@@ -44,13 +44,11 @@ enum KNIFE_e
 
 void CMeleeWeapon::Spawn( int weapon_id )
 {
+	Precache();
     m_iId = weapon_id;
     SET_MODEL( ENT( pev ), P_WpnInfo[m_iId].wmodel );
-
+	FallInit();
     m_iDefaultAmmo = P_WpnInfo[m_iId].ammo_default;
-
-    FallInit();
-    Precache();
 }
 
 void CMeleeWeapon::Precache( void )
@@ -78,7 +76,7 @@ int CMeleeWeapon::AddToPlayer( CBasePlayer *pPlayer )
         if( pPlayer->pev->team == 2 )
         {
             if( pPlayer->IsParatrooper() && m_iId == WEAPON_GERKNIFE )
-                    SET_MODEL( ENT( pev ), P_WpnInfo[35].wmodel );
+                    SET_MODEL( ENT( pev ), P_WpnInfo[WEAPON_GERPARAKNIFE].wmodel );
             else
                     SET_MODEL( ENT( pev ), P_WpnInfo[m_iId].wmodel );
         }
@@ -163,7 +161,7 @@ void CMeleeWeapon::SwingAgain( void )
     Swing( FALSE );
 }
 
-int CMeleeWeapon::Swing(int fFirst)
+int CMeleeWeapon::Swing( int fFirst )
 {
 	BOOL fDidHit = FALSE;
 	UTIL_MakeVectors( m_pPlayer->pev->v_angle );

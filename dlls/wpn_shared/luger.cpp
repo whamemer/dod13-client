@@ -28,9 +28,9 @@
 
 #include "dod_shared.h"
 
-LINK_ENTITY_TO_CLASS( weapon_luger, CLUGER )
+extern struct p_wpninfo_s *P_WpnInfo;
 
-extern struct p_wpninfo_s P_WpnInfo[];
+LINK_ENTITY_TO_CLASS( weapon_luger, CLUGER )
 
 enum LUGER_e
 {
@@ -48,12 +48,9 @@ enum LUGER_e
 void CLUGER::Spawn( void )
 {
     Precache();
-
     m_iId = WEAPON_LUGER;
     SET_MODEL( ENT( pev ), P_WpnInfo[WEAPON_LUGER].wmodel );
-
     m_iDefaultAmmo = P_WpnInfo[WEAPON_LUGER].ammo_default;
-
     FallInit();
 }
 
@@ -107,22 +104,18 @@ void CLUGER::PrimaryAttack( void )
             GetItemInfo( sz );
 
             float flSpread;
-            entvars_t *pevAttacker = m_pPlayer->pev;
-            int shared_rand = m_pPlayer->random_seed;
-
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            vec3_t vecDirShooting = gpGlobals->v_forward;
 
-            CBaseEntity::FireBulletsNC( (Vector *)m_pPlayer, vecSrc, vecDirShooting, flSpread, 8192.0f, BULLET_PLAYER_LUGER, 3, 0, pevAttacker, shared_rand );
+            CBaseEntity::FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_LUGER, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
-            HUD_PlaybackEvent( 1, ENT( m_pPlayer->pev ), m_usFireLuger, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireLuger, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + P_WpnInfo[WEAPON_LUGER].anim_firedelay;
             m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.1f;
             m_fInAttack = 1;
             m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
             
-            RemoveStamina( 0.0f, m_pPlayer );
+            RemoveStamina( m_pPlayer->GetStamina(), m_pPlayer );
         }
     }
 }

@@ -28,9 +28,9 @@
 
 #include "dod_shared.h"
 
-LINK_ENTITY_TO_CLASS( weapon_amerknife, CGerKnife )
+extern struct p_wpninfo_s *P_WpnInfo;
 
-extern struct p_wpninfo_s P_WpnInfo[];
+LINK_ENTITY_TO_CLASS( weapon_amerknife, CGerKnife )
 
 enum KNIFE_e 
 {
@@ -49,7 +49,7 @@ void CGerKnife::Precache( void )
 {
     PRECACHE_MODEL( P_WpnInfo[WEAPON_GERKNIFE].vmodel );
     PRECACHE_MODEL( P_WpnInfo[WEAPON_GERKNIFE].wmodel );
-    PRECACHE_MODEL( P_WpnInfo[35].vmodel );
+    PRECACHE_MODEL( P_WpnInfo[WEAPON_GERPARAKNIFE].vmodel );
 
     CMeleeWeapon::Precache();
 }
@@ -71,11 +71,8 @@ int CGerKnife::GetItemInfo( ItemInfo *p )
 
 int CGerKnife::GetSlashAnim( int m_iSwing )
 {
-    if( m_iSwing % KNIFE_SLASH2 )
-    {
-        if( m_iSwing % KNIFE_SLASH2 == KNIFE_SLASH1 )
-            return KNIFE_SLASH2;
-    }
+    if( m_iSwing % KNIFE_SLASH2 == KNIFE_SLASH1 )
+        return KNIFE_SLASH2;
     
     return KNIFE_SLASH1;
 }

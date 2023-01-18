@@ -28,9 +28,9 @@
 
 #include "dod_shared.h"
 
-LINK_ENTITY_TO_CLASS( weapon_colt, CCOLT )
+extern struct p_wpninfo_s *P_WpnInfo;
 
-extern struct p_wpninfo_s P_WpnInfo[];
+LINK_ENTITY_TO_CLASS( weapon_colt, CCOLT )
 
 enum COLT_e
 {
