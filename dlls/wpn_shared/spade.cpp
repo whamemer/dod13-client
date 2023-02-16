@@ -1,17 +1,3 @@
-/***
-*
-*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
-*	
-*	This product contains software technology licensed from Id 
-*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
-*	All Rights Reserved.
-*
-*   Use, distribution, and modification of this source code and/or resulting
-*   object code is restricted to non-commercial enhancements to products from
-*   Valve LLC.  All other use, distribution, or modification is prohibited
-*   without written permission from Valve LLC.
-*
-****/
 //
 // spade.cpp
 //
@@ -30,7 +16,7 @@
 
 LINK_ENTITY_TO_CLASS( weapon_spade, CSpade )
 
-extern struct p_wpninfo_s P_WpnInfo[];
+extern struct p_wpninfo_s *WpnInfo;
 
 enum KNIFE_e 
 {
@@ -47,8 +33,8 @@ void CSpade::Spawn( void )
 
 void CSpade::Precache( void )
 {
-    PRECACHE_MODEL( P_WpnInfo[WEAPON_SPADE].vmodel );
-    PRECACHE_MODEL( P_WpnInfo[WEAPON_SPADE].wmodel );
+    PRECACHE_MODEL( WpnInfo[WEAPON_SPADE].vmodel );
+    PRECACHE_MODEL( WpnInfo[WEAPON_SPADE].wmodel );
 
     CMeleeWeapon::Precache();
 }
@@ -63,18 +49,15 @@ int CSpade::GetItemInfo( ItemInfo *p )
     p->iMaxClip = WEAPON_NOCLIP;
     p->iSlot = 0;
     p->iPosition = 2;
-    p->iId = WEAPON_SPADE;
+    p->iId = m_iId = WEAPON_SPADE;
     p->iWeight = CROWBAR_WEIGHT;
     return 1;
 }
 
 int CSpade::GetSlashAnim( int m_iSwing )
 {
-    if( m_iSwing % KNIFE_SLASH2 )
-    {
-        if( m_iSwing % KNIFE_SLASH2 == KNIFE_SLASH1 )
-            return KNIFE_SLASH2;
-    }
+    if( m_iSwing % KNIFE_SLASH2 == KNIFE_SLASH1 )
+        return KNIFE_SLASH2;
     
     return KNIFE_SLASH1;
 }

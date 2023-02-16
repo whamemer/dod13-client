@@ -1,17 +1,3 @@
-/***
-*
-*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
-*	
-*	This product contains software technology licensed from Id 
-*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
-*	All Rights Reserved.
-*
-*   Use, distribution, and modification of this source code and/or resulting
-*   object code is restricted to non-commercial enhancements to products from
-*   Valve LLC.  All other use, distribution, or modification is prohibited
-*   without written permission from Valve LLC.
-*
-****/
 //
 // pistol.cpp
 //
@@ -28,14 +14,14 @@
 
 #include "dod_shared.h"
 
-extern struct p_wpninfo_s *P_WpnInfo;
+extern struct p_wpninfo_s *WpnInfo;
 
 void CPistol::Spawn( int weapon_id )
 {
     Precache();
     m_iId = weapon_id;
-    SET_MODEL( ENT( pev ), P_WpnInfo[m_iId].wmodel );
-    m_iDefaultAmmo = P_WpnInfo[m_iId].ammo_default;
+    SET_MODEL( ENT( pev ), WpnInfo[m_iId].wmodel );
+    m_iDefaultAmmo = WpnInfo[m_iId].ammo_default;
     FallInit();
 }
 
@@ -46,10 +32,10 @@ BOOL CPistol::Deploy( void )
 
     m_pPlayer->CheckPlayerSpeed();
 
-    float idleTime = P_WpnInfo[m_iId].anim_drawtime;
+    float idleTime = WpnInfo[m_iId].anim_drawtime;
     int iAnim = GetDrawAnim();
 
-    return TimedDeploy( P_WpnInfo[m_iId].vmodel, P_WpnInfo[m_iId].pmodel, iAnim, P_WpnInfo[m_iId].szAnimExt, P_WpnInfo[m_iId].szAnimReloadExt, idleTime, idleTime, 0 );
+    return TimedDeploy( WpnInfo[m_iId].vmodel, WpnInfo[m_iId].pmodel, iAnim, WpnInfo[m_iId].szAnimExt, WpnInfo[m_iId].szAnimReloadExt, idleTime, idleTime, 0 );
 }
 
 BOOL CPistol::CanHolster( void )
@@ -59,10 +45,10 @@ BOOL CPistol::CanHolster( void )
 
 void CPistol::Reload( void )
 {
-    float fDelay = P_WpnInfo[m_iId].anim_reloadtime;
+    float fDelay = WpnInfo[m_iId].anim_reloadtime;
     int iAnim = GetReloadAnim();
 
-    DefaultReload( P_WpnInfo[m_iId].ammo_maxclip, iAnim, fDelay );
+    DefaultReload( WpnInfo[m_iId].ammo_maxclip, iAnim, fDelay );
 }
 
 void CPistol::PrimaryAttack( void )
@@ -74,11 +60,11 @@ void CPistol::PrimaryAttack( void )
     }
     else if( !m_fInAttack )
     {
-        if( m_iClip <= 0 )
+        if( m_iClip < 0 )
         {
             PlayEmptySound();
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.15f;
-            m_fInAttack = 1;
+            m_fInAttack = TRUE;
         }
         else
         {
@@ -87,20 +73,22 @@ void CPistol::PrimaryAttack( void )
             ItemInfo sz[40];
             GetItemInfo( sz );
 
-            float flSpread = 0.035f;
+            float flSpread;
+
+            if( m_pPlayer->pev->origin.Length() > 45.0f )
+                flSpread = flSpread + WpnInfo[m_iId].accuracy_penalty;
+
             int iBulletType;
             Vector vecSrc = m_pPlayer->GetGunPosition();
 
             CBaseEntity::FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
-
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_iFireEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
-
-            m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + P_WpnInfo[m_iId].anim_firedelay;
-            m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + P_WpnInfo[m_iId].anim_firedelay;
-            m_fInAttack = 1;
+            m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
+            m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
+            m_fInAttack = TRUE;
             m_flTimeWeaponIdle = UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
 
-            RemoveStamina( m_pPlayer->GetStamina(), m_pPlayer );
+            RemoveStamina( 1.0f, m_pPlayer );
         }
     }
 }

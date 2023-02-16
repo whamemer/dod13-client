@@ -114,7 +114,7 @@ public:
 #define WEAPON_BINOC            33
 #define WEAPON_BINOCULARS		34
 #define WEAPON_GERPARAKNIFE		35
-#define WEAPON_MILLS			36
+#define WEAPON_MILLSGRENADE		36
 #define WEAPON_SCOPED_FG42		37
 #define WEAPON_SCOPEDENFIELD	38
 #define WEAPON_FOLDINGCARBINE	39
@@ -194,8 +194,15 @@ typedef struct
 #define ITEM_FLAG_EXHAUSTIBLE		16
 
 // Day of Defeat item info flags
-#define ITEM_FLAG_PISTOL	64 // CCOLT, CWEBLEY, CLUGER
-#define ITEM_FLAG_ROCKET	642 // BAZZOKA, PIAT, PSCHRECK
+#define ITEM_FLAG_GRENADE	24
+#define ITEM_FLAG_PISTOL	64
+#define ITEM_FLAG_RIFLE		128
+#define ITEM_FLAG_66MM_BIPOD		130
+#define ITEM_FLAG_ROCKET	642
+#define ITEM_FLAG_66MM_GER_BIPOD	2178
+
+#define WPNSTATE_SCOPED (1<<0)
+#define WPNSTATE_ROCKET_SLOW	(2<<0)
 
 #define WEAPON_IS_ONTARGET 0x40
 
@@ -561,7 +568,7 @@ public:
 #endif
 	}
 
-private:
+protected:
 	unsigned short m_iFireEvent;
 	unsigned short m_iOverheatEvent;
 };
@@ -600,7 +607,7 @@ public:
 #endif
 	}
 
-private:
+protected:
 	float m_flStartThrow;
 	float m_flReleaseThrow;
 };
@@ -789,15 +796,15 @@ public:
 	int GetItemInfo( ItemInfo *p );
 	int AddToPlayer( CBasePlayer *pPlayer );
 	void PrimaryAttack( void );
+	void SecondaryAttack( void );
 	BOOL SpawnDeploy( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
 	int iItemSlot( void ) { return 2; }
-	void SecondaryAttack( void ) { ; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -822,12 +829,12 @@ public:
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -854,6 +861,7 @@ public:
 	BOOL Deploy( void );
 	void ThinkZoomOutIn( void );
 	void Reload( void );
+	void Holster( int skiplocal );
 	void WeaponIdle( void );
 
 	int iItemSlot( void ) { return 2; }
@@ -881,15 +889,15 @@ public:
 	int GetItemInfo( ItemInfo *p );
 	int AddToPlayer( CBasePlayer *pPlayer );
 	void PrimaryAttack( void );
+	void SecondaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
-	void SecondaryAttack( void ) { ; }
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_AUTO_RIFLE; }
-
+	
 	virtual BOOL UseDecrement( void )
 	{ 
 #if CLIENT_WEAPONS
@@ -911,14 +919,14 @@ public:
 	int GetItemInfo( ItemInfo *p );
 	int AddToPlayer( CBasePlayer *pPlayer );
 	void PrimaryAttack( void );
+	void SecondaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
-	void SecondaryAttack( void ) { ; }
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_AUTO_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -976,12 +984,12 @@ public:
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -1004,14 +1012,14 @@ public:
 	int GetItemInfo( ItemInfo *p );
 	int AddToPlayer( CBasePlayer *pPlayer );
 	void PrimaryAttack( void );
+	void SecondaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
-	void SecondaryAttack( void ) { ; }
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_AUTO_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -1129,16 +1137,16 @@ public:
 	int GetItemInfo( ItemInfo *p );
 	int AddToPlayer( CBasePlayer *pPlayer );
 	void Holster( int skiplocal );
+	BOOL CanHolster( void );
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	BOOL Deploy( void );
 	void Reload( void );
 	void WeaponIdle( void );
 	BOOL IsDeployed( void );
+	int Classify( void );
 
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return !IsDeployed(); }
-	int Classify( void ) { return m_iWeaponState & 1 == CLASS_NONE ? CLASS_MACHINEGUNS : CLASS_SCOPE_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -1163,12 +1171,12 @@ public:
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	BOOL Deploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -1197,10 +1205,10 @@ public:
 	void Holster( int skiplocal );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
 	int iItemSlot( void ) { return 2; }
 	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return m_iWeaponState & 1 == CLASS_NONE ? CLASS_RIFLE : CLASS_SCOPE_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 
@@ -1254,12 +1262,12 @@ public:
 	void PrimaryAttack( void );
 	BOOL Deploy( void );
 	BOOL SpawnDeploy( void );
+	BOOL CanHolster( void );
 	void Reload( void );
 	void WeaponIdle( void );
+	int Classify( void );
 
 	int iItemSlot( void ) { return 2; }
-	BOOL CanHolster( void ) { return TRUE; }
-	int Classify( void ) { return CLASS_AUTO_RIFLE; }
 
 	virtual BOOL UseDecrement( void )
 	{ 

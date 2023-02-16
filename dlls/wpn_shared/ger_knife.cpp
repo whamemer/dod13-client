@@ -1,17 +1,3 @@
-/***
-*
-*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
-*	
-*	This product contains software technology licensed from Id 
-*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
-*	All Rights Reserved.
-*
-*   Use, distribution, and modification of this source code and/or resulting
-*   object code is restricted to non-commercial enhancements to products from
-*   Valve LLC.  All other use, distribution, or modification is prohibited
-*   without written permission from Valve LLC.
-*
-****/
 //
 // ger_knife.cpp
 //
@@ -28,7 +14,7 @@
 
 #include "dod_shared.h"
 
-extern struct p_wpninfo_s *P_WpnInfo;
+extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_amerknife, CGerKnife )
 
@@ -47,9 +33,9 @@ void CGerKnife::Spawn( void )
 
 void CGerKnife::Precache( void )
 {
-    PRECACHE_MODEL( P_WpnInfo[WEAPON_GERKNIFE].vmodel );
-    PRECACHE_MODEL( P_WpnInfo[WEAPON_GERKNIFE].wmodel );
-    PRECACHE_MODEL( P_WpnInfo[WEAPON_GERPARAKNIFE].vmodel );
+    PRECACHE_MODEL( WpnInfo[WEAPON_GERKNIFE].vmodel );
+    PRECACHE_MODEL( WpnInfo[WEAPON_GERKNIFE].wmodel );
+    PRECACHE_MODEL( WpnInfo[WEAPON_GERPARAKNIFE].vmodel );
 
     CMeleeWeapon::Precache();
 }
@@ -64,7 +50,7 @@ int CGerKnife::GetItemInfo( ItemInfo *p )
     p->iMaxClip = WEAPON_NOCLIP;
     p->iSlot = 0;
     p->iPosition = 0;
-    p->iId = WEAPON_GERKNIFE;
+    p->iId = m_iId = WEAPON_GERKNIFE;
     p->iWeight = CROWBAR_WEIGHT;
     return 1;
 }

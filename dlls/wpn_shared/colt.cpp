@@ -1,17 +1,3 @@
-/***
-*
-*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
-*	
-*	This product contains software technology licensed from Id 
-*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
-*	All Rights Reserved.
-*
-*   Use, distribution, and modification of this source code and/or resulting
-*   object code is restricted to non-commercial enhancements to products from
-*   Valve LLC.  All other use, distribution, or modification is prohibited
-*   without written permission from Valve LLC.
-*
-****/
 //
 // colt.cpp
 //
@@ -28,7 +14,7 @@
 
 #include "dod_shared.h"
 
-extern struct p_wpninfo_s *P_WpnInfo;
+extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_colt, CCOLT )
 
@@ -51,8 +37,8 @@ void CCOLT::Spawn( void )
 
 void CCOLT::Precache( void )
 {
-    PRECACHE_MODEL( P_WpnInfo[WEAPON_COLT].vmodel );
-    PRECACHE_MODEL( P_WpnInfo[WEAPON_COLT].wmodel );
+    PRECACHE_MODEL( WpnInfo[WEAPON_COLT].vmodel );
+    PRECACHE_MODEL( WpnInfo[WEAPON_COLT].wmodel );
 
     PRECACHE_SOUND( "weapons/colt_shoot.wav" );
     PRECACHE_SOUND( "weapons/357_cock1.wav" );
@@ -67,23 +53,23 @@ int CCOLT::GetItemInfo( ItemInfo *p )
 {
     p->pszName = STRING( pev->classname );
     p->pszAmmo1 = "ammo_12mm";
-    p->iMaxAmmo1 = P_WpnInfo[WEAPON_COLT].ammo_maxcarry;
+    p->iMaxAmmo1 = WpnInfo[WEAPON_COLT].ammo_maxcarry;
     p->pszAmmo2 = NULL;
     p->iMaxAmmo2 = -1;
-    p->iMaxClip = P_WpnInfo[WEAPON_COLT].ammo_maxclip;
+    p->iMaxClip = WpnInfo[WEAPON_COLT].ammo_maxclip;
     p->iSlot = 1;
     p->iPosition = 0;
     p->iFlags = ITEM_FLAG_PISTOL;
-    p->iId = WEAPON_COLT;
+    p->iId = m_iId = WEAPON_COLT;
     p->iBulletId = BULLET_PLAYER_COLT;
     p->flSpread = 0.035f;
-    p->iWeight = P_WpnInfo[WEAPON_COLT].misc_weight;
+    p->iWeight = WpnInfo[WEAPON_COLT].misc_weight;
     return 1;
 }
 
 int CCOLT::GetReloadAnim( void )
 {
-    return COLT_RELOAD - m_iClip == 0;
+    return m_iClip == COLT_IDLE ? COLT_RELOAD_EMPTY : COLT_RELOAD;
 }
 
 int CCOLT::GetDrawAnim( void )
@@ -106,7 +92,7 @@ class CColtAmmoClip : public CBasePlayerAmmo
 
     BOOL AddAmmo( CBaseEntity *pOther )
     {
-		int bResult = ( pOther->GiveAmmo( P_WpnInfo[WEAPON_COLT].ammo_maxclip, "ammo_12mm", P_WpnInfo[WEAPON_COLT].ammo_maxcarry ) != -1 );
+		int bResult = ( pOther->GiveAmmo( WpnInfo[WEAPON_COLT].ammo_maxclip, "ammo_12mm", WpnInfo[WEAPON_COLT].ammo_maxcarry ) != -1 );
 		if( bResult )
 		{
 			EMIT_SOUND_DYN( ENT( pev ), CHAN_ITEM, "items/ammopickup.wav", 1, ATTN_NORM, 0, 100 );
