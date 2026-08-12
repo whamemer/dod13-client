@@ -62,6 +62,10 @@ if (USE_VGUI)
 	endif()
 endif()
 
+if (USE_PMAN)
+	add_definitions(-DUSE_PMAN)
+endif()
+
 set (CLDLL_SOURCES
 	../dlls/crossbow.cpp
 	../dlls/crowbar.cpp
@@ -162,6 +166,16 @@ else()
 		scoreboard.cpp)
 endif()
 
+if (USE_PMAN)
+	list(APPEND CLDLL_SOURCES
+		../3rdparty/particleman/particleman/particlefx_source/pman_main.cpp
+		../3rdparty/particleman/particleman/particlefx_source/pman_frustum.cpp
+		../3rdparty/particleman/particleman/particlefx_source/pman_math.cpp
+		../3rdparty/particleman/particleman/particlefx_source/pman_particlemem.cpp
+		../3rdparty/particleman/particleman/particlefx_source/pman_triangleeffect.cpp
+		)
+endif()
+
 if (HAVE_STRLCPY)
 	add_definitions(-DHAVE_STRLCPY)
 else()
@@ -184,8 +198,8 @@ endif()
 
 if (USE_VGUI)
 	SET(CMAKE_SKIP_RPATH TRUE)
-	link_directories(${CMAKE_SOURCE_DIR}/vgui_support/vgui-dev/lib)
-	include_directories(../vgui_support/vgui-dev/include)
+	link_directories(${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib)
+	include_directories(../3rdparty/vgui_support/vgui-dev/include)
 else()
 	include_directories(../utils/fake_vgui/include)
 endif()
@@ -207,11 +221,11 @@ endif()
 if (USE_VGUI)
 	if (WIN32)
 		add_library(vgui SHARED IMPORTED)
-		set_property(TARGET vgui PROPERTY IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/vgui_support/vgui-dev/lib/win32_vc6/vgui.dll")
-		set_property(TARGET vgui PROPERTY IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/vgui_support/vgui-dev/lib/win32_vc6/vgui.lib")
+		set_property(TARGET vgui PROPERTY IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib/win32_vc6/vgui.dll")
+		set_property(TARGET vgui PROPERTY IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib/win32_vc6/vgui.lib")
 		target_link_libraries(${CLDLL_LIBRARY} vgui)
 	elseif(APPLE)
-		target_link_libraries(${CLDLL_LIBRARY} "-Wl,--no-undefined -L${CMAKE_SOURCE_DIR}/vgui_support/vgui-dev/lib vgui.dylib")
+		target_link_libraries(${CLDLL_LIBRARY} "-Wl,--no-undefined -L${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib vgui.dylib")
 	else()
 		target_link_libraries(${CLDLL_LIBRARY} :vgui.so)
 	endif()

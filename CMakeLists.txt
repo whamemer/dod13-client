@@ -36,17 +36,18 @@ include(CheckCSourceCompiles)
 include(VSForceXPToolchain) # Force XP toolchain for Visual Studio
 include(CheckIPOSupported)
 
-project (HLSDK-PORTABLE)
+project (dod13-client)
 
 #--------------
 # USER DEFINES \
 ################\
 option(USE_VGUI "Enable VGUI1." OFF)
+option(USE_PMAN "Enable Particleman" OFF)
 option(USE_NOVGUI_MOTD "Prefer non-VGUI MOTD when USE_VGUI is enabled" OFF)
 option(USE_NOVGUI_SCOREBOARD "Prefer non-VGUI Scoreboard when USE_VGUI is enabled" OFF)
 option(USE_VOICEMGR "Enable VOICE MANAGER." OFF)
 option(BUILD_CLIENT "Build client dll" ON)
-option(BUILD_SERVER "Build server dll" ON)
+option(BUILD_SERVER "Build server dll" OFF)
 option(LTO "Enable interprocedural optimization" OFF)
 option(POLLY "Enable pollyhedral optimization" OFF)
 option(ANDROID_APK "Enable APK styled deploy" OFF)
