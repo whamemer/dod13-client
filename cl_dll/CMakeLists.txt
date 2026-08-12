@@ -67,20 +67,41 @@ if (USE_PMAN)
 endif()
 
 set (CLDLL_SOURCES
-	../dlls/crossbow.cpp
-	../dlls/crowbar.cpp
-	../dlls/egon.cpp
-	../dlls/gauss.cpp
-	../dlls/handgrenade.cpp
-	../dlls/hornetgun.cpp
-	../dlls/mp5.cpp
-	../dlls/python.cpp
-	../dlls/rpg.cpp
-	../dlls/satchel.cpp
-	../dlls/shotgun.cpp
-	../dlls/squeakgrenade.cpp
-	../dlls/tripmine.cpp
-	../dlls/glock.cpp
+	../dlls/wpn_shared/amer_knife.cpp
+	../dlls/wpn_shared/bar.cpp
+	../dlls/wpn_shared/bazooka.cpp
+	../dlls/wpn_shared/bipod.cpp
+	../dlls/wpn_shared/bren.cpp
+	../dlls/wpn_shared/colt.cpp
+	../dlls/wpn_shared/enfield.cpp
+	../dlls/wpn_shared/fg42.cpp
+	../dlls/wpn_shared/garand.cpp
+	../dlls/wpn_shared/ger_knife.cpp
+	../dlls/wpn_shared/greasegun.cpp
+	../dlls/wpn_shared/handgrenade.cpp
+	../dlls/wpn_shared/handgrenade_ex.cpp
+	../dlls/wpn_shared/kar.cpp
+	../dlls/wpn_shared/knife.cpp
+	../dlls/wpn_shared/k43.cpp
+	../dlls/wpn_shared/luger.cpp
+	../dlls/wpn_shared/mg34.cpp
+	../dlls/wpn_shared/mg42.cpp
+	../dlls/wpn_shared/mp40.cpp
+	../dlls/wpn_shared/mp44.cpp
+	../dlls/wpn_shared/m1carbine.cpp
+	../dlls/wpn_shared/piat.cpp
+	../dlls/wpn_shared/pistol.cpp
+	../dlls/wpn_shared/pschreck.cpp
+	../dlls/wpn_shared/scoped98k.cpp
+	../dlls/wpn_shared/spade.cpp
+	../dlls/wpn_shared/spring.cpp
+	../dlls/wpn_shared/sten.cpp
+	../dlls/wpn_shared/stickgrenade.cpp
+	../dlls/wpn_shared/stickgrenade_ex.cpp
+	../dlls/wpn_shared/thompson.cpp
+	../dlls/wpn_shared/webley.cpp
+	../dlls/wpn_shared/30cal.cpp
+	../dlls/dod_shared.cpp
 	ev_hldm.cpp
 	hl/hl_baseentity.cpp
 	hl/hl_events.cpp
@@ -89,23 +110,30 @@ set (CLDLL_SOURCES
 	ammo.cpp
 	ammo_secondary.cpp
 	ammohistory.cpp
-	battery.cpp
+	CClientEnvModel.cpp
 	cdll_int.cpp
 	com_weapons.cpp
 	death.cpp
 	demo.cpp
+	DMC_BSPFile.cpp
+	DOD_camera.cpp
+	dod_common.cpp
+	dod_crosshair.cpp
+	dod_fog.cpp
+	dod_icons.cpp
+	dod_map.cpp
+	dod_objectives.cpp
 	entity.cpp
 	ev_common.cpp
 	events.cpp
-	flashlight.cpp
 	GameStudioModelRenderer.cpp
-	geiger.cpp
 	health.cpp
 	hud.cpp
 	hud_msg.cpp
 	hud_redraw.cpp
 	hud_spectator.cpp
 	hud_update.cpp
+	hud_vgui2print.cpp
 	in_camera.cpp
 	input.cpp
 	input_goldsource.cpp
@@ -114,10 +142,13 @@ set (CLDLL_SOURCES
 	interpolation.cpp
 	menu.cpp
 	message.cpp
+	mortarhud.cpp
 	parsemsg.cpp
+	ParticleShooter.cpp
 	../pm_shared/pm_debug.c
 	../pm_shared/pm_math.c
 	../pm_shared/pm_shared.c
+	scope.cpp
 	saytext.cpp
 	status_icons.cpp
 	statusbar.cpp
@@ -153,6 +184,17 @@ if (USE_VGUI)
 		../game_shared/vgui_scrollbar2.cpp
 		../game_shared/vgui_slider2.cpp
 		../game_shared/voice_banmgr.cpp
+		vgui/dod_button.cpp
+		vgui/dodclientscoreboard.cpp
+		vgui/dodmotd.cpp
+		vgui/dodprogressbar.cpp
+		vgui/dodspectatorgui.cpp
+		vgui/dodteammenu.cpp
+		vgui/dodviewport.cpp
+		vgui/dodviewport_interface.cpp
+		vgui/hintpanel.cpp
+		vgui/mortarpanel.cpp
+		vgui/widescreenpanel.cpp
 		)
 	if (USE_NOVGUI_MOTD)
 		list(APPEND CLDLL_SOURCES MOTD.cpp)
