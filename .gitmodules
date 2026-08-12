@@ -1,7 +1,7 @@
 [submodule "3rdparty/vgui_support"]
-	path = vgui_support
+	path = 3rdparty/vgui_support
 	url = https://github.com/whamemer/vgui_support
 
 [submodule "3rdparty/particleman"]
-	path = particleman
+	path = 3rdparty/particleman
 	url = https://github.com/whamemer/particleman
