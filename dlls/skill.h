@@ -109,12 +109,48 @@ struct skilldata_t
 	float plrDmgHandGrenade;
 	float plrDmgSatchel;
 	float plrDmgTripmine;
+
+	float plrDmgCOLT;
+	float plrDmgLUGER;
+	float plrDmgGARAND;
+	float plrDmgSCOPEDKAR;
+	float plrDmgTHOMPSON;
+	float plrDmgCARBINE;
+	float plrDmgMP44;
+	float plrDmgSPRING;
+	float plrDmgKAR;
+	float plrDmgBAR;
+	float plrDmgMP40;
+	float plrDmgMG42;
+	float plrDmgMG34;
+	float plrDmg30CAL;
+	float plrDmgGREASEGUN;
+	float plrDmgFG42;
+	float plrDmgK43;
+	float plrDmgEnfield;
+	float plrDmgSten;
+	float plrDmgBren;
+	float plrDmgWebley;
+	float plrDmgBayonet;
+	float plrDmgGarandButt;
+	float plrDmgEnfieldButt;
+	float plrDmgK43Butt;
+	float plrDmgHandGrenade;
+	float plrDmgStickGrenade;
+	float plrDmgSatchel;
+	float plrDmgBazookaShell;
+	float plrDmgPiatShell;
+	float plrDmgPschreckShell;
+	float plrDmgMortarShell;
 	
 	// weapons shared by monsters
-	float monDmg9MM;
-	float monDmgMP5;
-	float monDmg12MM;
-	float monDmgHornet;
+	float monDmgLuger;
+	float monDmgColt;
+	float monDmgGarand;
+	float monDmgKar;
+	float monDmgMP40;
+	float monDmgMP44;
+	float monDmgGrenade;
 
 	// health/suit charge
 	float suitchargerCapacity;

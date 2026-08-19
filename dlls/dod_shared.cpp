@@ -15,7 +15,6 @@
 
 #include "cvardef.h"
 #include "dod_shared.h"
-#include "weapons.h"
 
 char weaponnames[64][64] =
 {

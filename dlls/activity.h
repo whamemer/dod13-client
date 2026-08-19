@@ -93,9 +93,21 @@ typedef enum {
 	ACT_FLINCH_LEFTARM,
 	ACT_FLINCH_RIGHTARM,
 	ACT_FLINCH_LEFTLEG,
-	ACT_FLINCH_RIGHTLEG
+	ACT_FLINCH_RIGHTLEG,
+	DOD_PRONE_GETUP,
+	DOD_PRONE_GETDOWN,
+	DOD_PRONE_IDLE,
+	DOD_PRONE_CRAWL,
+	DOD_CROUCH_HEADSHOT,
+	DOD_CROUCH_BACKWARD,
+	DOD_PRONE1,
+	DOD_EXPLOSION_BACK,
+	DOD_EXPLOSION_FORWARD,
+	DOD_SIMPLE,
+	DOD_BUTTSTOCK
 } Activity;
 
+#if !CLIENT_DLL
 typedef struct
 {
 	int type;
@@ -103,4 +115,6 @@ typedef struct
 } activity_map_t;
 
 extern activity_map_t activity_map[];
+#endif
+
 #endif	//ACTIVITY_H

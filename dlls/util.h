@@ -195,7 +195,14 @@ typedef enum
 	MONSTERSTATE_DEAD
 } MONSTERSTATE;
 
-
+typedef enum
+{
+	STATE_OFF = 0,
+	STATE_TURN_ON,
+	STATE_ON,
+	STATE_TURN_OFF,
+	STATE_IN_USE
+} STATE;
 
 // Things that toggle (buttons/triggers/doors) need this
 typedef enum

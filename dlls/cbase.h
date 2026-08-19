@@ -84,7 +84,12 @@ typedef enum
 	USE_OFF = 0,
 	USE_ON = 1,
 	USE_SET = 2,
-	USE_TOGGLE = 3
+	USE_TOGGLE = 3,
+	USE_KILL = 4,
+	USE_NOT = 6,
+	USE_START = 7,
+	USE_BREAK = 8,
+	USE_UPDATE = 9
 } USE_TYPE;
 
 extern void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
@@ -126,7 +131,7 @@ class EHANDLE
 {
 private:
 	edict_t *m_pent;
-	int m_serialnumber;
+	int m_serialnumber;	
 public:
 	edict_t *Get( void );
 	edict_t *Set( edict_t *pent );
@@ -142,25 +147,61 @@ public:
 //
 // Base Entity.  All entity types derive from this
 //
-class CBaseEntity 
+class CBaseEntity
 {
 public:
 	// Constructor.  Set engine to use C/C++ callback functions
 	// pointers to engine data
-	entvars_t *pev;		// Don't need to save/restore this pointer, the engine resets it
+	entvars_t* pev;		// Don't need to save/restore this pointer, the engine resets it
 
 	// path corners
-	CBaseEntity *m_pGoalEnt;// path corner we are heading towards
-	CBaseEntity *m_pLink;// used for temporary link-list operations. 
+	CBaseEntity* m_pGoalEnt;// path corner we are heading towards
+	CBaseEntity* m_pLink;// used for temporary link-list operations. 
+
+	Vector m_rrOrigin;
+	Vector m_rrMins;
+	Vector m_rrMax;
+	Vector m_rrAngles;
+	Vector m_rrMovedir;
+
+	int m_rrSpawnFlags;
+	int m_rrSolid;
+	int m_rrMoveType;
+	int m_rrEffects;
+	int m_rrFlags;
+	int m_rrFrags;
+
+	int m_rrRendermode;
+	int m_rrRenderamt;
+	Vector m_rrRendercolor;
+	int m_rrRenderfx;
+
+	float m_rrHealth;
+	float m_rrFrame;
+	float m_rrSpeed;
+
+	string_t m_rrTarget;
+	string_t m_rrTargetname;
+	string_t m_rrNetname;
+
+	float m_rrTakedamage;
+	float m_rrScale;
+	float m_rrGravity;
 
 	// initialization functions
+	virtual void RoundRespawn( void ) { return; }
+	virtual void RoundRespawnEnt( void );
+	virtual void RoundStore( void ); 
 	virtual void Spawn( void ) { return; }
 	virtual void Precache( void ) { return; }
 	virtual void KeyValue( KeyValueData* pkvd ) { pkvd->fHandled = FALSE; }
-	virtual int Save( CSave &save );
-	virtual int Restore( CRestore &restore );
+	virtual int Save( CSave& save );
+	virtual int Restore( CRestore& restore );
 	virtual int ObjectCaps( void ) { return FCAP_ACROSS_TRANSITION; }
 	virtual void Activate( void ) {}
+
+	virtual void area_SetIndex( int idx ) { return; }
+	virtual void area_SendStatus( CBasePlayer* p ) { return; }
 
 	// Setup the object->object collision box (pev->mins / pev->maxs is the object->world collision box)
 	virtual void SetObjectCollisionBox( void );
@@ -169,6 +210,9 @@ public:
 	// still realize that they are teammates. (overridden for monsters that form groups)
 	virtual int Classify( void ) { return CLASS_NONE; };
 	virtual void DeathNotice( entvars_t *pevChild ) {}// monster maker children use this to tell the monster maker that they have died.
+
+	virtual STATE GetState( void ) { return STATE_OFF; }
+	virtual STATE GetState( CBaseEntity* pEnt ) { return GetState(); }
 
 	static TYPEDESCRIPTION m_SaveData[];
 
@@ -344,6 +388,7 @@ public:
 	virtual	BOOL FVisible( const Vector &vecOrigin );
 
 	//We use this variables to store each ammo count.
+	BOOL has_disconnected;
 	int ammo_9mm;
 	int ammo_357;
 	int ammo_bolts;
@@ -352,6 +397,17 @@ public:
 	int ammo_uranium;
 	int ammo_hornets;
 	int ammo_argrens;
+	int ammo_12mm;
+	int ammo_16mm;
+	int ammo_22mm;
+	int ammo_44mm;
+	int ammo_55mm;
+	int ammo_66mm;
+	int ammo_agrens;
+	int ammo_agrensex;
+	int ammo_ggrens;
+	int ammo_ggrensex;
+
 	//Special stuff for grenades and satchels.
 	float m_flStartThrow;
 	float m_flReleaseThrow;
@@ -360,6 +416,7 @@ public:
 
 	enum EGON_FIRESTATE { FIRE_OFF, FIRE_CHARGE };
 	int m_fireState;
+	TraceResult m_trDecalTrace;
 };
 
 // Ugly technique to override base member functions
@@ -523,10 +580,12 @@ public:
 	float				m_flHeight;
 	EHANDLE				m_hActivator;
 	void (CBaseToggle::*m_pfnCallWhenMoveDone)(void);
-	Vector				m_vecFinalDest;
+	Vector				m_vecFinalDest;	
+	float				m_flLinearMoveSpeed;
 	Vector				m_vecFinalAngle;
 
 	int					m_bitsDamageInflict;	// DMG_ damage type that the door or tigger does
+	int					m_team;
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -534,10 +593,12 @@ public:
 	static	TYPEDESCRIPTION m_SaveData[];
 
 	virtual int		GetToggleState( void ) { return m_toggle_state; }
-	virtual float	GetDelay( void ) { return m_flWait; }
+	virtual STATE	GetState( void ) { return STATE_OFF; }
+	virtual float	GetDelay( void ) { return m_flWait; }	
 
 	// common member functions
 	void LinearMove( Vector	vecDest, float flSpeed );
+	void LinearMoveNow( void );
 	void EXPORT LinearMoveDone( void );
 	void AngularMove( Vector vecDestAngle, float flSpeed );
 	void EXPORT AngularMoveDone( void );
