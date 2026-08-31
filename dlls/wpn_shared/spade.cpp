@@ -8,23 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 LINK_ENTITY_TO_CLASS( weapon_spade, CSpade )
 
 extern struct p_wpninfo_s *WpnInfo;
-
-enum KNIFE_e 
-{
-    KNIFE_IDLE = 0,
-    KNIFE_SLASH1,
-    KNIFE_SLASH2,
-    KNIFE_DRAW
-};
 
 void CSpade::Spawn( void )
 {
@@ -50,7 +40,7 @@ int CSpade::GetItemInfo( ItemInfo *p )
     p->iSlot = 0;
     p->iPosition = 2;
     p->iId = m_iId = WEAPON_SPADE;
-    p->iWeight = CROWBAR_WEIGHT;
+    p->iWeight = WEAPON_NOWEIGHT;
     return 1;
 }
 

@@ -8,9 +8,7 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
@@ -18,20 +16,6 @@ extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_fg42, CFG42 )
 LINK_ENTITY_TO_CLASS( weapon_scopedfg42, CFG42 )
-
-enum FG42_e
-{
-    FG42_UP_IDLE = 0,
-    FG42_UP_RELOAD,
-    FG42_UP_DRAW,
-    FG42_UP_SHOOT,
-    FG42_UP_TO_DOWN,
-    FG42_DOWN_IDLE,
-    FG42_DOWN_RELOAD,
-    FG42_DOWN_SHOOT,
-    FG42_DOWN_TO_UP,
-    FG42_LOWER_FOR_ZOOM
-};
 
 void CFG42::Spawn( void )
 {
@@ -131,7 +115,7 @@ void CFG42::PrimaryAttack( void )
             m_pPlayer->GetGunPosition();
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_FG42, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_FG42, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireFG42, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, GetFOV() > 0 );
 
             if( GetFOV() >= 0)

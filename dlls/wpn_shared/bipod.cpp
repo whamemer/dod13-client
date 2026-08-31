@@ -8,12 +8,9 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
-#include "pm_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
@@ -43,7 +40,7 @@ BOOL CBipodWeapon::Deploy( void )
     m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.0f;
 
     int iAnim = GetDrawAnim();
-    return CBasePlayerWeapon::DefaultDeploy( WpnInfo[m_iId].vmodel, WpnInfo[m_iId].pmodel, iAnim, WpnInfo[m_iId].szAnimExt, WpnInfo[m_iId].szAnimReloadExt, 0 );
+    return CBasePlayerWeapon::DefaultDeploy( WpnInfo[m_iId].vmodel, WpnInfo[m_iId].pmodel, iAnim, WpnInfo[m_iId].szAnimExt, WpnInfo[m_iId].szAnimReloadExt, 0, 0 );
 }
 
 BOOL CBipodWeapon::CanHolster( void )
@@ -110,13 +107,13 @@ void CBipodWeapon::PrimaryAttack( void )
         int iBulletType;
         Vector vecSrc = m_pPlayer->GetGunPosition();
 
-        FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+        FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
         m_iClip -= 1;
 
         if( m_iId == WEAPON_MG42 )
         {
             m_iClip -= 2;
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed + 5 );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed + 5 );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_iFireEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;

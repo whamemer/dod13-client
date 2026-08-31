@@ -306,7 +306,7 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 		m_parms.y += gHUD.m_scrinfo.iCharHeight;
 	}
 }
-
+/*
 int CHudMessage::Draw( float fTime )
 {
 	int i, drawn;
@@ -405,8 +405,8 @@ int CHudMessage::Draw( float fTime )
 		m_iFlags &= ~HUD_ACTIVE;
 
 	return 1;
-}
-
+}*/
+/*
 void CHudMessage::MessageAdd( const char *pName, float time )
 {
 	int i, j;
@@ -469,7 +469,7 @@ void CHudMessage::MessageAdd( const char *pName, float time )
 			return;
 		}
 	}
-}
+}*/
 
 int CHudMessage::MsgFunc_HudText( const char *pszName,  int iSize, void *pbuf )
 {
@@ -504,6 +504,7 @@ int CHudMessage::MsgFunc_GameTitle( const char *pszName,  int iSize, void *pbuf 
 	return 1;
 }
 
+/*
 void CHudMessage::MessageAdd( client_textmessage_t * newMessage )
 {
 	m_parms.time = gHUD.m_flTime;
@@ -521,4 +522,4 @@ void CHudMessage::MessageAdd( client_textmessage_t * newMessage )
 			return;
 		}
 	}
-}
+}*/

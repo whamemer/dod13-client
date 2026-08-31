@@ -8,30 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_garand, CGarand )
-
-enum GARAND_e
-{
-    GARAND_IDLE = 0,
-    GARAND_SHOOT1,
-    GARAND_SHOOT2,
-    GARAND_SHOOT3,
-    GARAND_SHOOT_EMPTY,
-    GARAND_RELOAD,
-    GARAND_DRAW,
-    GARAND_IDLE_EMPTY,
-    GARAND_DRAW_EMPTY,
-    GARAND_SMASH,
-    GARAND_SMASH_EMPTY
-};
 
 void CGarand::Spawn( void )
 {
@@ -119,7 +102,7 @@ void CGarand::PrimaryAttack( void )
                 flSpread = WpnInfo[WEAPON_GARAND].base_accuracy + 0.1f;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_GARAND, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_GARAND, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireGarand, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_GARAND].anim_firedelay;

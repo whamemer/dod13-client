@@ -8,23 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_webley, CWEBLEY )
-
-enum WEBLEY_e
-{
-    WEBLEY_IDLE = 0,
-    WEBLEY_SHOOT,
-    WEBLEY_RELOAD,
-    WEBLEY_DRAW
-};
 
 void CWEBLEY::Spawn( void )
 {
@@ -90,7 +80,7 @@ void CWEBLEY::PrimaryAttack( void )
             float flSpread;
             Vector vecSrc = m_pPlayer->GetGunPosition();
 
-            CBaseEntity::FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_WEBLEY, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            CBaseEntity::FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_WEBLEY, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireWebley, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 

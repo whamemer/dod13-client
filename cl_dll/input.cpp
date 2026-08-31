@@ -914,7 +914,7 @@ Returns 1 if health is <= 0
 */
 int CL_IsDead( void )
 {
-	return ( gHUD.m_Health.m_iHealth <= 0 ) ? 1 : 0;
+	return gHUD.m_Icons.m_iHealth <= 0;;
 }
 
 /*

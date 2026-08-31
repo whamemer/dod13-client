@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================
 #pragma once
-#if !defined(HINTMESSAGE_H)
-#define HINTMESSAGE.H
+#ifndef HINTMESSAGE_H
+#define HINTMESSAGE_H
 
 #include "cbase.h"
 
@@ -27,4 +27,4 @@ public:
 	bool IsEmpty( void );
 };
 
-#endif // HINTMESSAGE.H
+#endif // HINTMESSAGE_H

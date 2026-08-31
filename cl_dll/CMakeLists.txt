@@ -127,7 +127,6 @@ set (CLDLL_SOURCES
 	ev_common.cpp
 	events.cpp
 	GameStudioModelRenderer.cpp
-	health.cpp
 	hud.cpp
 	hud_msg.cpp
 	hud_redraw.cpp

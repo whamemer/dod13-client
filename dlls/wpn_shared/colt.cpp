@@ -8,27 +8,12 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
-#include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_colt, CCOLT )
-
-enum COLT_e
-{
-    COLT_IDLE = 0,
-    COLT_SHOOT,
-    COLT_SHOOT2,
-    COLT_RELOAD_EMPTY,
-    COLT_RELOAD,
-    COLT_DRAW,
-    COLT_SHOOT_EMPTY,
-    COLT_IDLE_EMPTY
-};
 
 void CCOLT::Spawn( void )
 {

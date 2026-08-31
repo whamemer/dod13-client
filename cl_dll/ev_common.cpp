@@ -27,6 +27,9 @@
 #include "pm_shared.h"
 
 #define IS_FIRSTPERSON_SPEC ( g_iUser1 == OBS_IN_EYE || ( g_iUser1 && ( gHUD.m_Spectator.m_pip->value == INSET_IN_EYE ) ) )
+
+extern cvar_t *cl_dynamiclights;
+
 /*
 =================
 GetEntity
@@ -145,6 +148,29 @@ void EV_EjectBrass( float *origin, float *velocity, float rotation, int model, i
 
 /*
 =================
+EV_BazookaSmoke
+
+WHAMER: TODO: need Particleman and CDoDParticle class
+=================
+*/
+void EV_BazookaSmoke( cl_entity_t *ent )
+{
+
+}
+
+/*
+=================
+EV_PSchreckSmoke
+
+=================
+*/
+void EV_PSchreckSmoke( cl_entity_t *ent )
+{
+	EV_BazookaSmoke( ent );
+}
+
+/*
+=================
 EV_GetDefaultShellInfo
 
 Determine where to eject shells from
@@ -192,15 +218,49 @@ EV_MuzzleFlash
 Flag weapon/view model for muzzle flash
 =================
 */
-void EV_MuzzleFlash( void )
+void EV_MuzzleFlash( int idx, int guntype )
 {
-	// Add muzzle flash to current weapon model
-	cl_entity_t *ent = GetViewEntity();
-	if( !ent )
+
+	dlight_t *dl = gEngfuncs.pEfxAPI->CL_AllocDlight( 0 );
+	cl_entity_t *ent = gEngfuncs.GetEntityByIndex( idx );
+	cl_entity_t *entview = gEngfuncs.GetViewModel();
+
+	if ( EV_IsLocal( idx ) )
 	{
+		if ( cl_dynamiclights->value <= 0.0f )
+			return;
+
+		dl->origin = Vector( entview->attachment[NULL] );
+		dl->radius = ( 50 * guntype + 50 );
+		dl->color.r = -8;
+		dl->color.g = -1;
+		dl->color.b = 120;
+		dl->decay = ( 50 * guntype + 600 );
+		dl->die = gHUD.m_flTime + 1.0f;
 		return;
 	}
 
-	// Or in the muzzle flash
-	ent->curstate.effects |= EF_MUZZLEFLASH;
+	if ( ent )
+	{
+		if ( ent->curstate.messagenum >= gEngfuncs.GetLocalPlayer()->curstate.messagenum )
+		{
+			ent->curstate.origin = Vector( entview->attachment[NULL] );
+
+			if ( cl_dynamiclights->value > 0.0f )
+			{
+				dl->origin = Vector( entview->attachment[NULL] );
+				dl->radius = ( 50 * guntype + 50 );
+				dl->color.r = -8;
+				dl->color.g = -1;
+				dl->color.b = 120;
+				dl->decay = ( 50 * guntype + 600 );
+				dl->die = gHUD.m_flTime + 1.0f;
+				return;
+			}
+		}
+	}
+
+	cl_entity_t *thisent = GetViewEntity();
+	if ( !thisent )
+		thisent->curstate.effects |= EF_MUZZLEFLASH;
 }

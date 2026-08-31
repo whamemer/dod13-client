@@ -8,23 +8,12 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
-#include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_amerknife, CAmerKnife )
-
-enum KNIFE_e 
-{
-    KNIFE_IDLE = 0,
-    KNIFE_SLASH1,
-    KNIFE_SLASH2,
-    KNIFE_DRAW
-};
 
 void CAmerKnife::Spawn( void )
 {
@@ -52,7 +41,7 @@ int CAmerKnife::GetItemInfo( ItemInfo *p )
     p->iSlot = 0;
     p->iPosition = 0;
     p->iId = m_iId = WEAPON_AMERKNIFE;
-    p->iWeight = CROWBAR_WEIGHT;
+    p->iWeight = WEAPON_NOWEIGHT;
     return 1;
 }
 

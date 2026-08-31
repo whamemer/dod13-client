@@ -8,9 +8,7 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
@@ -19,25 +17,6 @@ extern float flBoltHideXHair;
 
 LINK_ENTITY_TO_CLASS( weapon_enfield, CENFIELD )
 LINK_ENTITY_TO_CLASS( weapon_scopedenfield, CENFIELD )
-
-enum ENFIELD_e
-{
-    ENFIELD_IDLE = 0,
-    ENFIELD_SHOOT,
-    ENFIELD_RELOAD,
-    ENFIELD_DRAW,
-    ENFIELD_RELOADLONG,
-    ENFIELD_SWING
-};
-
-enum SCOPEDENFIELD_e
-{
-    SCOPEDENFIELD_IDLE = 0,
-    SCOPEDENFIELD_SHOOT,
-    SCOPEDENFIELD_RELOAD,
-    SCOPEDENFIELD_DRAW,
-    SCOPEDENFIELD_RELOADLONG
-};
 
 void CENFIELD::Spawn( void )
 {
@@ -114,11 +93,6 @@ BOOL CENFIELD::Deploy( void )
     }
 }
 
-BOOL CENFIELD::CanHolster( void )
-{
-    return TRUE;
-}
-
 void CENFIELD::PrimaryAttack( void )
 {
     float flSpread;
@@ -155,7 +129,7 @@ void CENFIELD::PrimaryAttack( void )
                 flSpread += WpnInfo[WEAPON_ENFIELD].accuracy_penalty;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_ENFIELD, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_ENFIELD, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
             if( m_iWeaponState & WPNSTATE_SCOPED )
             {

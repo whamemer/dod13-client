@@ -11,8 +11,8 @@
 #define EVENTSCRIPTSH
 
 // defaults for clientinfo messages
-#define	DEFAULT_VIEWHEIGHT	28
-#define VEC_DUCK_VIEW 12
+#define	DEFAULT_VIEWHEIGHT	22
+#define VEC_DUCK_VIEW 18
 
 #define FTENT_FADEOUT			0x00000080
 
@@ -26,5 +26,5 @@ void EV_CreateTracer( float *start, float *end );
 
 struct cl_entity_s *GetEntity( int idx );
 struct cl_entity_s *GetViewEntity( void );
-void EV_MuzzleFlash( void );
+void EV_MuzzleFlash( int idx, int guntype );
 #endif // EVENTSCRIPTSH

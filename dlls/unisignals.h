@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================
 #pragma once
-#if !defined(UNISIGNALS_H)
-#define UNISIGNALS.H
+#ifndef UNISIGNALS_H
+#define UNISIGNALS_H
 
 class CUnifiedSignals 
 {

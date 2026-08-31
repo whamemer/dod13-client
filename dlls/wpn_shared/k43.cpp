@@ -8,26 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_k43, CK43 )
-
-enum K43_e
-{
-    K43_IDLE,
-    K43_SHOOT1,
-    K43_SHOOT2,
-    K43_RELOAD,
-    K43_DRAW,
-    K43_SHOOT_EMPTY,
-    K43_SMASH
-};
 
 void CK43::Spawn( void )
 {
@@ -72,7 +59,7 @@ int CK43::GetItemInfo( ItemInfo *p )
     return 1;
 }
 
-BOOL CGreaseGun::Deploy( void )
+BOOL CK43::Deploy( void )
 {
     m_pPlayer->m_iFOV = ZoomOut();
     UpdateZoomSpeed();
@@ -111,7 +98,7 @@ void CK43::PrimaryAttack( void )
                 flSpread = WpnInfo[WEAPON_K43].base_accuracy + 0.1f;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_K43, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_K43, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireK43, 0.0f, g_vecZero, g_vecZero, 0, 0, m_pPlayer->pev->punchangle.x, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_K43].anim_firedelay;

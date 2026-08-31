@@ -8,23 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_sten, CSTEN )
-
-enum STEN_e
-{
-    STEN_IDLE = 0,
-    STEN_RELOAD,
-    STEN_DRAW,
-    STEN_SHOOT
-};
 
 void CSTEN::Spawn( void )
 {
@@ -79,11 +69,6 @@ BOOL CSTEN::Deploy( void )
     return DefaultDeploy( WpnInfo[WEAPON_STEN].vmodel, WpnInfo[WEAPON_STEN].pmodel, STEN_DRAW, WpnInfo[WEAPON_STEN].szAnimExt, WpnInfo[WEAPON_STEN].szAnimReloadExt, 0 );
 }
 
-BOOL CSTEN::CanHolster( void )
-{
-    return TRUE;
-}
-
 void CSTEN::PrimaryAttack( void )
 {
     float flSpread;
@@ -111,7 +96,7 @@ void CSTEN::PrimaryAttack( void )
                 flSpread = WpnInfo[WEAPON_STEN].base_accuracy + 0.1f;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_STEN, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_STEN, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireSten, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_STEN].anim_firedelay;
@@ -136,11 +121,6 @@ void CSTEN::WeaponIdle( void )
         SendWeaponAnim( STEN_IDLE, UseDecrement() != FALSE );
         m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
     }
-}
-
-int CSTEN::Classify( void )
-{
-    return CLASS_AUTO_RIFLE;
 }
 
 class CSTENAmmoClip : public CBasePlayerAmmo

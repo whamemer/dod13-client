@@ -8,24 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
-#include "skill.h"
 
 #define KNIFE_WALLHIT_VOLUME 512
 
 extern struct p_wpninfo_s *WpnInfo;
-
-enum KNIFE_e 
-{
-    KNIFE_IDLE = 0,
-    KNIFE_SLASH1,
-    KNIFE_SLASH2,
-    KNIFE_DRAW
-};
 
 void CMeleeWeapon::Spawn( int weapon_id )
 {
@@ -133,6 +122,7 @@ void CMeleeWeapon::SwingAgain( void )
     Swing( FALSE );
 }
 
+// WHAMER: TODO
 int CMeleeWeapon::Swing( int fFirst )
 {
 	TraceResult tr;
@@ -180,12 +170,11 @@ int CMeleeWeapon::Swing( int fFirst )
 	return FALSE;
 }
 
-// TODO: WHAMER
+// WHAMER: TODO
 int CMeleeWeapon::Stab( int fFirst )
 {
-	//Full Copy CMeleeWeapon::Swing() on CLIENT part, idk why;
+	return 0;
 }
-
 
 void CMeleeWeapon::WeaponIdle( void )
 {

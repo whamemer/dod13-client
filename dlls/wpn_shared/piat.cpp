@@ -8,9 +8,7 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 #include "hud.h"
@@ -18,23 +16,6 @@
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_piat, CPIAT )
-
-enum PIAT_e
-{
-    PIAT_IDLE = 0,
-    PIAT_IDLE_EMPTY,
-    PIAT_DRAW,
-    PIAT_DRAW_EMPTY,
-    PIAT_AIMED,
-    PIAT_AIMED_EMPTY,
-    PIAT_FIRE,
-    PIAT_RAISE,
-    PIAT_RAISE_EMPTY,
-    PIAT_LOWER,
-    PIAT_LOWER_EMPTY,
-    PIAT_RELOAD_IDLE,
-    PIAT_RELOAD_AIMED
-};
 
 void CPIAT::Reload( void )
 {
@@ -116,7 +97,7 @@ BOOL CPIAT::CanHolster( void )
 
 void CPIAT::Holster( int skiplocal )
 {
-    ClientSetSensitivity( 0 );
+    gHUD.m_iSensLevel = 0;
     m_iWeaponState & WPNSTATE_ROCKET_SLOW;
     m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5f;
     CBasePlayerWeapon::Holster( skiplocal );
@@ -213,13 +194,13 @@ void CPIAT::Lower( void )
 void CPIAT::UnSlow( void )
 {
     m_iWeaponState & WPNSTATE_ROCKET_SLOW;
-    ClientSetSensitivity( 0 );
+    gHUD.m_iSensLevel = 0;
 }
 
 void CPIAT::ReSlow( void )
 {
     m_iWeaponState &= ~WPNSTATE_ROCKET_SLOW;
-    ClientSetSensitivity( 1 );
+    gHUD.m_iSensLevel = 1;
 }
 
 class CPIATAmmo : public CBasePlayerAmmo

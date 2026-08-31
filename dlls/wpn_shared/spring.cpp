@@ -8,9 +8,7 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
@@ -18,17 +16,6 @@ extern struct p_wpninfo_s *WpnInfo;
 extern float flBoltHideXHair;
 
 LINK_ENTITY_TO_CLASS( weapon_spring, CSPRING )
-
-enum SPRING_e
-{
-    SPRING_IDLE = 0,
-    SPRING_SHOOT1,
-    SPRING_SHOOT2,
-    SPRING_RELOAD,
-    SPRING_DRAW,
-    SPRING_xxx,
-    SPRING_LOWER_FOR_ZOOM
-};
 
 void CSPRING::Spawn( void )
 {
@@ -80,11 +67,6 @@ BOOL CSPRING::Deploy( void )
     return DefaultDeploy( WpnInfo[WEAPON_SPRING].vmodel, WpnInfo[WEAPON_SPRING].pmodel, SPRING_DRAW, WpnInfo[WEAPON_SPRING].szAnimExt, WpnInfo[WEAPON_SPRING].szAnimReloadExt, 0 );
 }
 
-BOOL CSPRING::CanHolster( void )
-{
-    return TRUE;
-}
-
 void CSPRING::PrimaryAttack( void )
 {
     float flSpread;
@@ -113,7 +95,7 @@ void CSPRING::PrimaryAttack( void )
                 flSpread += WpnInfo[WEAPON_SPRING].accuracy_penalty;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_SPRING, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_SPRING, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireSpring, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_SPRING].anim_firedelay;
@@ -182,11 +164,6 @@ void CSPRING::WeaponIdle( void )
         SendWeaponAnim( SPRING_IDLE );
         m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
     }
-}
-
-int CSPRING::Classify( void )
-{
-    return CLASS_SCOPE_RIFLE;
 }
 
 class CSpringAmmoClip : public CBasePlayerAmmo

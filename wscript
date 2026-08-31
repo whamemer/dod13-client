@@ -65,7 +65,7 @@ def options(opt):
 	grp.add_option('--enable-msvcdeps', action='store_true', dest='MSVCDEPS', default=False, help='')
 	grp.add_option('--enable-wafcache', action='store_true', dest='WAFCACHE', default=False, help='')
 
-	opt.add_subproject('cl_dll dlls')
+	opt.add_subproject('cl_dll')
 
 def configure(conf):
 	conf.env.EXPORT_DEFINES_LIST = []
@@ -289,7 +289,7 @@ def configure(conf):
 			conf.env.cxxshlib_PATTERN = conf.env.cxxshlib_PATTERN[3:]
 
 	conf.load('library_naming')
-	conf.add_subproject('game_shared dlls cl_dll')
+	conf.add_subproject('game_shared cl_dll')
 
 def build(bld):
 	if bld.env.WAFCACHE:
@@ -303,4 +303,4 @@ def build(bld):
 		excl='*.user configuration.py .lock* *conf_check_*/** config.log %s/*' % Build.CACHE_DIR,
 		quiet=True, generator=True)
 
-	bld.add_subproject('game_shared dlls cl_dll')
+	bld.add_subproject('game_shared cl_dll')

@@ -8,28 +8,12 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
-#include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_bar, CBAR )
-
-enum BAR_e 
-{
-    BAR_UP_IDLE = 0,
-    BAR_UP_RELOAD,
-    BAR_UP_DRAW,
-    BAR_UP_SHOOT,
-    BAR_UP_TO_DOWN,
-    BAR_DOWN_IDLE,
-    BAR_DOWN_RELOAD,
-    BAR_DOWN_SHOOT,
-    BAR_DOWN_TO_UP
-};
 
 void CBAR::Spawn( void )
 {

@@ -23,6 +23,7 @@
 #include "const.h"
 #include "entity_state.h"
 #include "r_efx.h"
+#include "pm_shared.h"
 
 // g_runfuncs is true if this is the first time we've "predicated" a particular movement/firing
 //  command.  If it is 1, then we should play events/sounds etc., otherwise, we just will be
@@ -80,16 +81,27 @@ HUD_SendWeaponAnim
 Change weapon model animation
 =====================
 */
-void HUD_SendWeaponAnim( int iAnim, int body, int force )
+void HUD_SendWeaponAnim( int iAnim, int force )
 {
+	int team = g_iTeamNumber;
+	int m_bBritish = 2;
+
 	// Don't actually change it.
 	if( !g_runfuncs && !force )
 		return;
+	else
+	{
+		g_currentanim = iAnim;
 
-	g_currentanim = iAnim;
+		if( g_iUser1 == OBS_IN_EYE )
+			team = gEngfuncs.GetEntityByIndex( g_iUser2 )->curstate.team;
+
+		if( team == 1 )
+			m_bBritish = gHUD.m_bBritish;
+	}
 
 	// Tell animation system new info
-	gEngfuncs.pfnWeaponAnim( iAnim, body );
+	gEngfuncs.pfnWeaponAnim( iAnim, m_bBritish );
 }
 
 /*

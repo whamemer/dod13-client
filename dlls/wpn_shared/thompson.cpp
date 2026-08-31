@@ -8,28 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_thompson, CThompson )
-
-enum THOMPSON_e
-{
-    THOMPSON_IDLE = 0,
-    THOMPSON_RELOAD,
-    THOMPSON_DRAW,
-    THOMPSON_SHOOT1,
-    THOMPSON_SHOOT2,
-    THOMPSON_IDLE_EMPTY,
-    THOMPSON_PRONE_BACK,
-    THOMPSON_PRONE_FORWARD,
-    THOMPSON_PRONE_STILL
-};
 
 void CThompson::Spawn( void )
 {
@@ -117,7 +102,7 @@ void CThompson::PrimaryAttack( void )
                 flSpread = WpnInfo[WEAPON_THOMPSON].base_accuracy + 0.1f;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_THOMPSON, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_THOMPSON, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireThompson, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_THOMPSON].anim_firedelay;

@@ -232,10 +232,6 @@ public:
 	int			m_iNextClass;
 	bool		m_bIsRandomClass;
 
-	EHANDLE		m_hObserverTarget;
-	float		m_flNextObserverInput;
-	int			m_iObserverWeapon;
-	int			m_iObserverLastMode;
 	int			m_bIsObserver;
 
 	BOOL		HasObject;
@@ -418,7 +414,6 @@ public:
 	int			m_iObjectAreaIndex;
 	float		m_fHandleSignalsTime;
 	int			m_iObjScore;
-	int			m_iDeaths;
 	int			m_iNumTKs;
 	BOOL		m_bBazookaDeployed;
 	int			m_iMinimap;
@@ -435,7 +430,7 @@ public:
 
 	Vector m_vecLastViewAngles;
 
-	CBasePlayerWeapon* GetPrimaryWeapon( void );
+	//CBasePlayerWeapon *GetPrimaryWeapon( void );
 	void DelayedSpawn( void );
 	void SpawnThink( void );
 	void ServerSpawnCheck( void );

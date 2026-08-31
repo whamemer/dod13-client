@@ -10,6 +10,8 @@ def options(opt):
 
 	grp.add_option('--enable-vgui', action = 'store_true', dest = 'USE_VGUI', default = False,
 		help = 'Enable VGUI1')
+	grp.add_option('--enable-pman', action = 'store_true', dest = 'USE_PMAN', default = False,
+		help = 'Enable Particleman')
 	grp.add_option('--enable-novgui-motd', action = 'store_true', dest = 'USE_NOVGUI_MOTD', default = False,
 		help = 'Prefer non-VGUI MOTD when USE_VGUI is enabled')
 	grp.add_option('--enable-novgui-scoreboard', action = 'store_true', dest = 'USE_NOVGUI_SCOREBOARD', default = False,
@@ -22,6 +24,7 @@ def options(opt):
 def configure(conf):
 	conf.options.VGUI_DEV = os.path.join('vgui_support', 'vgui-dev') # vgui is in submodule
 	conf.env.USE_VGUI = conf.options.USE_VGUI
+	conf.env.USE_PMAN= conf.options.USE_PMAN
 	conf.env.USE_NOVGUI_MOTD = conf.options.USE_NOVGUI_MOTD
 	conf.env.USE_NOVGUI_SCOREBOARD = conf.options.USE_NOVGUI_SCOREBOARD
 	conf.env.USE_VOICEMGR = conf.options.USE_VOICEMGR
@@ -58,6 +61,7 @@ def build(bld):
 	if bld.env.USE_VGUI:
 		defines += ['USE_VGUI']
 		libs += ['VGUI']
+		excluded_files += ['vgui/*.cpp']
 		if bld.env.USE_NOVGUI_MOTD:
 			defines += ['USE_NOVGUI_MOTD']
 		else:
@@ -74,25 +78,26 @@ def build(bld):
 			'game_shared/vgui_*.cpp',
 			'game_shared/voice_banmgr.cpp']
 
+	if bld.env.USE_PMAN:
+		defines += ['USE_PMAN']
+		libs += ['Particleman']
+		includes['../3rdparty/particleman',
+		   '../3rdparty/particleman/common',
+		   '../3rdparty/particleman/dlls',
+		   '../3rdparty/particleman/engine',
+		   '../3rdparty/particleman/particleman/particlefx_header',
+		   '../3rdparty/particleman/particleman/pm_shared',
+		   '../3rdparty/particleman/pm_shared',
+		   '../3rdparty/particleman/public']
+		excluded_files += ['../3rdparty/particleman/particleman/particlefx_source/*.cpp']
+
 	source = bld.path.ant_glob('**/*.cpp', excl=excluded_files)
 	source += bld.path.parent.ant_glob('game_shared/*.cpp', excl=excluded_files)
 	source += bld.path.parent.ant_glob([
 		'public/safe_snprintf.c',
 		'pm_shared/*.c',
-		'dlls/crossbow.cpp',
-		'dlls/crowbar.cpp',
-		'dlls/egon.cpp',
-		'dlls/gauss.cpp',
-		'dlls/glock.cpp',
-		'dlls/handgrenade.cpp',
-		'dlls/hornetgun.cpp',
-		'dlls/mp5.cpp',
-		'dlls/python.cpp',
-		'dlls/rpg.cpp',
-		'dlls/satchel.cpp',
-		'dlls/shotgun.cpp',
-		'dlls/squeakgrenade.cpp',
-		'dlls/tripmine.cpp'
+		'dlls/wpn_shared/*.cpp',
+		'dlls/dod_shared.cpp'
 	])
 
 

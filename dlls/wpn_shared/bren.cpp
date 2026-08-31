@@ -8,28 +8,12 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
-#include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_bren, CBREN )
-
-enum BREN_e 
-{
-    BREN_UP_IDLE = 0,
-    BREN_UP_RELOAD,
-    BREN_UP_DRAW,
-    BREN_UP_SHOOT,
-    BREN_UP_TO_DOWN,
-    BREN_DOWN_IDLE,
-    BREN_DOWN_RELOAD,
-    BREN_DOWN_SHOOT,
-    BREN_DOWN_TO_UP
-};
 
 void CBREN::Spawn( void )
 {

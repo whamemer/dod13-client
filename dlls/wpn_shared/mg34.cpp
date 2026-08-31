@@ -8,32 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_mg34, CMG34 )
-
-enum MG34_e
-{
-    MG34_DOWNIDLE = 0,
-    MG34_DOWNIDLEEMPTY,
-    MG34_DOWNTOUP,
-    MG34_DOWNTOUPEMPTY,
-    MG34_DOWNSHOOT,
-    MG34_DOWNSHOOTEMPTY,
-    MG34_UPIDLE,
-    MG34_UPIDLEEMPTY,
-    MG34_UPTODOWN,
-    MG34_UPTODOWNEMPTY,
-    MG34_UPSHOOT,
-    MG34_UPSHOOTEMPTY,
-    MG34_RELOAD
-};
 
 void CMG34::Spawn( void )
 {

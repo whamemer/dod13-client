@@ -26,7 +26,6 @@
 #include <string.h>
 #include <stdio.h>
 
-DECLARE_MESSAGE( m_StatusBar, StatusText )
 DECLARE_MESSAGE( m_StatusBar, StatusValue )
 
 #define STATUSBAR_ID_LINE		1
@@ -38,7 +37,6 @@ int CHudStatusBar::Init( void )
 {
 	gHUD.AddHudElem( this );
 
-	HOOK_MESSAGE( StatusText );
 	HOOK_MESSAGE( StatusValue );
 
 	Reset();
@@ -70,7 +68,7 @@ void CHudStatusBar::Reset( void )
 		m_pflNameColors[i] = g_ColorYellow;
 }
 
-void CHudStatusBar::ParseStatusString( int line_num )
+/*void CHudStatusBar::ParseStatusString(int line_num)
 {
 	// localise string first
 	char szBuffer[MAX_STATUSTEXT_LENGTH] = {0};
@@ -169,7 +167,7 @@ void CHudStatusBar::ParseStatusString( int line_num )
 				src++;
 		}
 	}
-}
+}*/
 
 int CHudStatusBar::Draw( float fTime )
 {
@@ -178,7 +176,7 @@ int CHudStatusBar::Draw( float fTime )
 		for( int i = 0; i < MAX_STATUSBAR_LINES; i++ )
 		{
 			m_pflNameColors[i] = g_ColorYellow;
-			ParseStatusString( i );
+			//ParseStatusString( i );
 		}
 		m_bReparseString = FALSE;
 	}
@@ -206,39 +204,6 @@ int CHudStatusBar::Draw( float fTime )
 
 		DrawConsoleString( x, y, m_szStatusBar[i] );
 	}
-
-	return 1;
-}
-
-// Message handler for StatusText message
-// accepts two values:
-//		byte: line number of status bar text 
-//		string: status bar text
-// this string describes how the status bar should be drawn
-// a semi-regular expression:
-// ( slotnum ([a..z] [%pX] [%iX])*)*
-// where slotnum is an index into the Value table (see below)
-// if slotnum is 0, the string is always drawn
-// if StatusValue[slotnum] != 0, the following string is drawn, upto the next newline - otherwise the text is skipped upto next newline
-// %pX, where X is an integer, will substitute a player name here, getting the player index from StatusValue[X]
-// %iX, where X is an integer, will substitute a number here, getting the number from StatusValue[X]
-int CHudStatusBar::MsgFunc_StatusText( const char *pszName, int iSize, void *pbuf )
-{
-	BEGIN_READ( pbuf, iSize );
-
-	int line = READ_BYTE();
-
-	if( line < 0 || line >= MAX_STATUSBAR_LINES )
-		return 1;
-
-	strlcpy( m_szStatusText[line], READ_STRING(), MAX_STATUSTEXT_LENGTH );
-
-	if( m_szStatusText[0] == 0 )
-		m_iFlags &= ~HUD_ACTIVE;
-	else
-		m_iFlags |= HUD_ACTIVE;  // we have status text, so turn on the status bar
-
-	m_bReparseString = TRUE;
 
 	return 1;
 }

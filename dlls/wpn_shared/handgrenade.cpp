@@ -10,26 +10,12 @@
 #include "weapons.h"
 #include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_handgrenade, CHandGrenade )
-
-enum handgrenade_e
-{
-    HANDGRENADE_IDLE = 0,
-    HANDGRENADE_DRAW,
-    HANDGRENADE_PINPULL,
-    HANDGRENADE_HOLSTER,
-    HANDGRENADE_THROW,
-    HANDGRENADE_EX_IDLE,
-    HANDGRENADE_EX_DRAW,
-    HANDGRENADE_EX_PINPULL,
-    HANDGRENADE_EX_THROW
-};
 
 void CHandGrenade::Spawn( void )
 {
@@ -80,6 +66,7 @@ BOOL CHandGrenade::CanHolster( void )
     return m_flStartThrow == 0.0f;
 }
 
+// WHAMER: TODO
 void CHandGrenade::DropGren( void )
 {
     if( m_flStartThrow != 0.0f && m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] )
@@ -92,27 +79,16 @@ void CHandGrenade::DropGren( void )
             m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
         
         TraceResult tr;
-
-        /* WHAMER: TODO
-        m_pPlayer = this->m_pPlayer;
-        p_classname = &m_pPlayer->pev->classname;
-        v5 = p_classname[4] + p_classname[95];
-        v6 = p_classname[3] + p_classname[94];
-        v7 = p_classname[2] + p_classname[93];
-        vecStart.x = v7;
-        v8 = v7;
-        vecStart.y = v6;
-        vecStart.z = v5;
-        v9 = v5 + gpGlobals->v_forward.z * 16.0;
-        v10 = v6 + gpGlobals->v_forward.y * 16.0;
-        vecEnd.x = v8 + 16.0 * gpGlobals->v_forward.x;
-        vecEnd.y = v10;
-        vecEnd.z = v9;
-        UTIL_TraceLine(&vecStart, &vecEnd, ignore_monsters, m_pPlayer->pev->pContainingEntity, &ptr);
-        if ( ptr.flFraction < 1.0 )
-            vecEnd = ptr.vecEndPos;*/
+        Vector vecSrc, vecThrow;
         
-        --m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType];
+        float fl = m_pPlayer->pev->classname;
+
+        UTIL_TraceLine( vecSrc, vecThrow + Vector(0,0,0), ignore_monsters, ENT(pev), &tr);
+
+        if ( tr.flFraction < 1.0f )
+            tr.vecEndPos = vecSrc;
+        
+        m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType]--;
         m_flStartThrow = 0.0f;
         m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5f;
         m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.5f;

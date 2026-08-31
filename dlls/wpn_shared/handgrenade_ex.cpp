@@ -8,28 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_handgrenade_ex, CHandGrenadeEx )
-
-enum handgrenade_e
-{
-    HANDGRENADE_IDLE = 0,
-    HANDGRENADE_DRAW,
-    HANDGRENADE_PINPULL,
-    HANDGRENADE_HOLSTER,
-    HANDGRENADE_THROW,
-    HANDGRENADE_EX_IDLE,
-    HANDGRENADE_EX_DRAW,
-    HANDGRENADE_EX_PINPULL,
-    HANDGRENADE_EX_THROW
-};
 
 void CHandGrenadeEx::Spawn( void )
 {
@@ -69,16 +54,6 @@ BOOL CHandGrenadeEx::Deploy( void )
     return FALSE;
 }
 
-BOOL CHandGrenadeEx::CanHolster( void )
-{
-    return FALSE;
-}
-
-void CHandGrenadeEx::Holster( int skiplocal )
-{
-    // Nothing.
-}
-
 void CHandGrenadeEx::PrimaryAttack( void )
 {
     StartThrow( FALSE );
@@ -110,11 +85,6 @@ void CHandGrenadeEx::StartThrow( BOOL bUnderhand )
 void CHandGrenadeEx::DropGren( void )
 {
 
-}
-
-void CHandGrenadeEx::SetDmgTime( float time )
-{
-    m_flTimeToExplode = time;
 }
 
 void CHandGrenadeEx::WeaponIdle( void )

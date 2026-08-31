@@ -8,28 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_luger, CLUGER )
-
-enum LUGER_e
-{
-    LUGER_IDLE = 0,
-    LUGER_IDLE2,
-    LUGER_IDLE3,
-    LUGER_SHOOT,
-    LUGER_SHOOT_EMPTY,
-    LUGER_RELOAD_EMPTY,
-    LUGER_RELOAD,
-    LUGER_DRAW,
-    LUGER_IDLE_EMPTY
-};
 
 void CLUGER::Spawn( void )
 {
@@ -92,7 +77,7 @@ void CLUGER::PrimaryAttack( void )
             float flSpread;
             Vector vecSrc = m_pPlayer->GetGunPosition();
 
-            CBaseEntity::FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_LUGER, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            CBaseEntity::FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_LUGER, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireLuger, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 

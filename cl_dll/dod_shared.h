@@ -5,8 +5,53 @@
 // $NoKeywords: $
 //=============================================================================
 #pragma once
-#if !defined(DOD_SHARED_H)
+#ifndef DOD_SHARED_H
 #define DOD_SHARED_H
+
+#define WPNSTATE_SCOPED			1
+#define WPNSTATE_ROCKET_SLOW	2
+
+#define WEAPON_NONE				0
+#define WEAPON_AMERKNIFE		1
+#define WEAPON_GERKNIFE			2
+#define WEAPON_COLT             3
+#define WEAPON_LUGER            4
+#define WEAPON_GARAND           5
+#define WEAPON_SCOPEDKAR        6
+#define WEAPON_THOMPSON         7
+#define WEAPON_MP44             8
+#define WEAPON_SPRING           9
+#define WEAPON_KAR              10
+#define WEAPON_BAR              11
+#define WEAPON_MP40             12
+#define WEAPON_HANDGRENADE      13
+#define WEAPON_STICKGRENADE     14
+#define WEAPON_STICKGRENADEX    15
+#define WEAPON_HANDGRENADEX     16
+#define WEAPON_MG42             17
+#define WEAPON_CAL30            18
+#define	WEAPON_SPADE			19
+#define WEAPON_M1CARBINE        20
+#define WEAPON_MG34             21
+#define WEAPON_GREASEGUN        22
+#define WEAPON_FG42             23
+#define WEAPON_K43              24
+#define WEAPON_ENFIELD          25
+#define WEAPON_STEN             26
+#define WEAPON_BREN             27
+#define WEAPON_WEBLEY           28
+#define WEAPON_BAZOOKA          29
+#define WEAPON_PSCHRECK         30
+#define WEAPON_PIAT             31
+#define WEAPON_MORTAR			32
+#define WEAPON_BINOC            33
+#define WEAPON_BINOCULARS		34
+#define WEAPON_GERPARAKNIFE		35
+#define WEAPON_MILLSGRENADE		36
+#define WEAPON_SCOPED_FG42		37
+#define WEAPON_SCOPEDENFIELD	38
+#define WEAPON_FOLDINGCARBINE	39
+#define WEAPON_FAIRBAIRN		40
 
 struct p_wpninfo_s
 {
@@ -533,6 +578,19 @@ enum PSCHRECK_e
     PSCHRECK_LOWER,
     PSCHRECK_RELOAD_AIMED,
     PSCHRECK_RELOAD_IDLE
+};
+
+enum MORTAR_e
+{
+    MORTAR_DEPLOYED_ROUND_UP = 0,
+    MORTAR_DEPLOYED_ROUND_DOWN,
+    MORTAR_DEPLOYED_ROUND_READY,
+    MORTAR_DEPLOYED_FIRE,
+    MORTAR_IDLE,
+    MORTAR_DEPLOY,
+    MORTAR_DEPLOYED_IDLE,
+    MORTAR_UNDEPLOY,
+    MORTAR_DRAW
 };
 
 typedef struct DodClassInfo_s

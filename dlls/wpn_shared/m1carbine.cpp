@@ -8,24 +8,13 @@
 #include "util.h"
 #include "cbase.h"
 #include "weapons.h"
-#include "nodes.h"
 #include "player.h"
-#include "dod_gamerules.h"
 
 #include "dod_shared.h"
 
 extern struct p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_m1carbine, CM1Carbine )
-
-enum M1CARBINE_e
-{
-    M1CARBINE_IDLE = 0,
-    M1CARBINE_RELOAD,
-    M1CARBINE_DRAW,
-    M1CARBINE_SHOOT,
-    M1CARBINE_FAST_DRAW
-};
 
 void CM1Carbine::Spawn( void )
 {
@@ -127,7 +116,7 @@ void CM1Carbine::PrimaryAttack( void )
                 flSpread = WpnInfo[WEAPON_M1CARBINE].base_accuracy + 0.1f;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_M1CARBINE, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_M1CARBINE, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireM1Carbine, 0.0f, g_vecZero, g_vecZero, 0, 0, m_pPlayer->pev->punchangle.x, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_M1CARBINE].anim_firedelay;

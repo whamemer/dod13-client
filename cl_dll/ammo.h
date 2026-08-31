@@ -34,6 +34,7 @@ struct WEAPON
 	int		iFlags;
 	int		iId;
 	int		iClip;
+	int		iClipMax;
 
 	int		iCount;		// # of itesm in plist
 
@@ -53,6 +54,8 @@ struct WEAPON
 	wrect_t rcZoomedCrosshair;
 	HSPRITE hZoomedAutoaim;
 	wrect_t rcZoomedAutoaim;
+
+	int		iLastWeaponState;
 };
 
 typedef int AMMO;

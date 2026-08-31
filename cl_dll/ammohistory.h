@@ -32,6 +32,14 @@ private:
 	WEAPON*		rgSlots[MAX_WEAPON_SLOTS + 1][MAX_WEAPON_POSITIONS + 1];	// The slots currently in use by weapons.  The value is a pointer to the weapon;  if it's NULL, no weapon is there
 	int			riAmmo[MAX_AMMO_TYPES];					// count of each ammo type
 
+	WEAPON		scoped_fg42;
+	WEAPON		folding_carbine;
+	WEAPON		gravity_knife;
+	WEAPON		scoped_enfield;
+	WEAPON		brit_knife;
+	WEAPON		brit_grenade;
+	WEAPON		ger_binoculars;
+
 public:
 	void Init( void )
 	{
@@ -41,13 +49,13 @@ public:
 
 	void Reset( void )
 	{
-		iOldWeaponBits = 0;
+		iOldWeaponBits = 0, iOldWeaponBits2 = 0;
 		memset( rgSlots, 0, sizeof rgSlots );
 		memset( riAmmo, 0, sizeof riAmmo );
 	}
 
 ///// WEAPON /////
-	int			iOldWeaponBits;
+	int			iOldWeaponBits, iOldWeaponBits2;
 
 	WEAPON *GetWeapon( int iId ) { return &rgWeapons[iId]; }
 	void AddWeapon( WEAPON *wp ) 

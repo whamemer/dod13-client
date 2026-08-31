@@ -117,7 +117,7 @@ int CHudScoreboard::Draw( float fTime )
 	int FAR_RIGHT;
 	gHUD.m_iNoConsolePrint &= ~( 1 << 0 );
 
-	if( !m_iShowscoresHeld && gHUD.m_Health.m_iHealth > 0 && !gHUD.m_iIntermission )
+	if( !m_iShowscoresHeld && !gHUD.m_iIntermission )
 		return 1;
 	
 	gHUD.m_iNoConsolePrint |= 1 << 0;

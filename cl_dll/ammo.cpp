@@ -26,6 +26,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "dod_shared.h"
+
 #include "ammohistory.h"
 #if USE_VGUI
 #include "vgui_TeamFortressViewport.h"
@@ -40,6 +42,8 @@ client_sprite_t *GetSpriteList(client_sprite_t *pList, const char *psz, int iRes
 WeaponsResource gWR;
 
 int g_weaponselect = 0;
+int g_iWeaponFlags = 0;
+float g_flWeaponHeat = 0.0f;
 
 void WeaponsResource::LoadAllWeaponSprites( void )
 {
@@ -96,6 +100,15 @@ void WeaponsResource::LoadWeaponSprites( WEAPON *pWeapon )
 
 	if( !pList )
 		return;
+
+	int index = gHUD.GetSpriteIndex( pWeapon->szName );
+
+	if( index > 0 )
+		pWeapon->hActive = gHUD.m_rghSprites[index];
+	else
+		pWeapon->hActive = 0;
+
+	pWeapon->rcActive = gHUD.m_rgrcRects[index];
 
 	client_sprite_t *p;
 
@@ -228,11 +241,13 @@ HSPRITE ghsprBuckets;					// Sprite for top row of weapons menu
 
 DECLARE_MESSAGE( m_Ammo, CurWeapon )	// Current weapon and clip
 DECLARE_MESSAGE( m_Ammo, WeaponList )	// new weapon type
+DECLARE_MESSAGE( m_Ammo, AmmoShort )
 DECLARE_MESSAGE( m_Ammo, AmmoX )		// update known ammo type's count
 DECLARE_MESSAGE( m_Ammo, AmmoPickup )	// flashes an ammo pickup record
 DECLARE_MESSAGE( m_Ammo, WeapPickup )    // flashes a weapon pickup record
 DECLARE_MESSAGE( m_Ammo, HideWeapon )	// hides the weapon, ammo, and crosshair displays temporarily
 DECLARE_MESSAGE( m_Ammo, ItemPickup )
+DECLARE_MESSAGE( m_Ammo, ReloadDone )
 
 DECLARE_COMMAND( m_Ammo, Slot1 )
 DECLARE_COMMAND( m_Ammo, Slot2 )
@@ -265,6 +280,8 @@ int CHudAmmo::Init( void )
 	HOOK_MESSAGE( ItemPickup );
 	HOOK_MESSAGE( HideWeapon );
 	HOOK_MESSAGE( AmmoX );
+	HOOK_MESSAGE( AmmoShort );
+	HOOK_MESSAGE( ReloadDone );
 
 	HOOK_COMMAND( "slot1", Slot1 );
 	HOOK_COMMAND( "slot2", Slot2 );
@@ -497,6 +514,18 @@ int CHudAmmo::MsgFunc_AmmoX( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+int CHudAmmo::MsgFunc_AmmoShort( const char *pszName, int iSize, void *pbuf )
+{
+	BEGIN_READ( pbuf, iSize );
+
+	int iIndex = READ_BYTE();
+	int iCount = READ_SHORT();
+
+	gWR.SetAmmo( iIndex, abs( iCount ) );
+
+	return 1;
+}
+
 int CHudAmmo::MsgFunc_AmmoPickup( const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
@@ -555,6 +584,19 @@ int CHudAmmo::MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+int CHudAmmo::MsgFunc_ReloadDone( const char *pszName, int iSize, void *pbuf )
+{
+	BEGIN_READ( pbuf, iSize );
+	gHUD.m_bAutoReloadComplete = 1;
+	return 1;
+}
+
+void CHudAmmo::PlayerDied( void )
+{
+	gHUD.m_fPlayerDead = TRUE;
+	gpActiveSel = NULL;
+}
+
 // 
 //  CurWeapon: Update hud state with the current weapon and clip count. Ammo
 //  counts are updated with AmmoX. Server assures that the Weapon ammo type 
@@ -590,8 +632,7 @@ int CHudAmmo::MsgFunc_CurWeapon( const char *pszName, int iSize, void *pbuf )
 		// Is player dead???
 		if( ( iId == -1 ) && ( iClip == -1 ) )
 		{
-			gHUD.m_fPlayerDead = TRUE;
-			gpActiveSel = NULL;
+			PlayerDied();
 			return 1;
 		}
 		gHUD.m_fPlayerDead = FALSE;
@@ -638,9 +679,19 @@ int CHudAmmo::MsgFunc_CurWeapon( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+int CHudAmmo::GetCurrentWeaponId( void )
+{
+	if( m_pWeapon )
+		return m_pWeapon->iId;
+	else
+		return WEAPON_NONE;
+}
+
 //
 // WeaponList -- Tells the hud about a new weapon type.
 //
+extern char weaponnames[35][64];
+
 int CHudAmmo::MsgFunc_WeaponList( const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
@@ -662,9 +713,11 @@ int CHudAmmo::MsgFunc_WeaponList( const char *pszName, int iSize, void *pbuf )
 
 	Weapon.iSlot = READ_CHAR();
 	Weapon.iSlotPos = READ_CHAR();
-	Weapon.iId = READ_CHAR();
+	Weapon.iId = READ_SHORT();
 	Weapon.iFlags = READ_BYTE();
 	Weapon.iClip = 0;
+	Weapon.iLastWeaponState = 0;
+	Weapon.iClipMax = READ_BYTE();
 
 	if( Weapon.iId < 0 || Weapon.iId >= MAX_WEAPONS )
 		return 0;
@@ -676,11 +729,8 @@ int CHudAmmo::MsgFunc_WeaponList( const char *pszName, int iSize, void *pbuf )
 		return 0;
 	if( Weapon.iAmmo2Type < -1 || Weapon.iAmmo2Type >= MAX_AMMO_TYPES )
 		return 0;
-	/*if( Weapon.iAmmoType >= 0 && Weapon.iMax1 == 0 )
-		return 0;
-	if( Weapon.iAmmo2Type >= 0 && Weapon.iMax2 == 0 )
-		return 0;*/
 
+	strncpy( Weapon.szName, weaponnames[64 * MAX_WEAPONS], 128 );
 	gWR.AddWeapon( &Weapon );
 
 	return 1;
@@ -845,8 +895,24 @@ void CHudAmmo::UserCmd_PrevWeapon( void )
 	gpActiveSel = NULL;
 }
 
+ClipInfo *CHudAmmo::GetCurrentGun( WEAPON *pw )
+{
+	ClipInfo *Clip;
+
+	for( int i = 0; i < MAX_WEAPONS; i++ )
+	{
+		if( pw->iId == Clip->weapon_id )
+			return &Clip[i];
+
+		Clip++;
+	}
+
+	return NULL;
+}
+
 //-------------------------------------------------------------------------
 // Drawing code
+// WHAMER: TODO: rework
 //-------------------------------------------------------------------------
 int CHudAmmo::Draw( float flTime )
 {
@@ -1170,6 +1236,11 @@ int CHudAmmo::DrawWList( float flTime )
 		}
 	}
 
+	return 1;
+}
+
+int CHudAmmo::DrawWeaponList( float flTime )
+{
 	return 1;
 }
 

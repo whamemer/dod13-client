@@ -71,6 +71,69 @@ typedef struct cvar_s cvar_t;
 //
 //-----------------------------------------------------
 //
+class Element
+{
+public:
+	float flTimeCreated;
+	Element *next;
+	Element *previous;
+
+	Element( float flTime );
+};
+
+class Queue
+{
+public:
+	int count;
+	int maxelemets;
+	float m_flDuration;
+	Element *first;
+	Element *last;
+	Element *current;
+
+	Queue( void );
+	~Queue( void )
+	{
+		if( last )
+		{
+			while( last->flTimeCreated + m_flDuration < 99999.0f )
+			{
+				delete[] last;
+				--count;
+				last = last->previous;
+				current = last->previous;
+
+				if( !last->previous )
+				{
+					first = nullptr;
+					current = nullptr;
+					return;
+				}
+
+				last = last->previous;
+			}
+		}
+	}
+
+	bool Full( void );
+	bool Add( float flDuration );
+	void Update( float flDuration );
+};
+
+struct pmodel_fx_t
+{
+	bool bSwitch;
+	int iSwitchSeq;
+	int iSwitchFrame;
+	bool bAnim;
+	int iAnimSeq;
+	int iAnimFrame;
+	int iAnimTargetSeq;
+};
+
+//
+//-----------------------------------------------------
+//
 class CHudBase
 {
 public:
@@ -205,10 +268,6 @@ private:
 	int m_iAmmoAmounts[MAX_SEC_AMMO_VALUES];
 	float m_fFade;
 };
-
-
-#include "health.h"
-
 
 #define FADE_TIME 100
 
@@ -487,19 +546,6 @@ private:
 	cvar_t *hud_deathnotice_time;
 };
 
-struct DeathNoticeItem
-{
-	char szKiller[64];
-	char szVictim[64];
-	int iId;
-	int iSuicide;
-	int iTeamKill;
-	int iNonPlayerKill;
-	float flDisplayTime;
-	float *KillerColor;
-	float *VictimColor;
-};
-
 //
 //-----------------------------------------------------
 //
@@ -548,6 +594,25 @@ private:
 //
 //-----------------------------------------------------
 //
+struct control_point_t
+{
+	int entindex;
+	bool valid;
+	int visible;
+	int owner;
+	int nextOwner;
+	float animtime;
+	float totaltime;
+	int numplayers;
+	int requiredplayers;
+	int occupyingteam;
+	int m_iIcons[3];
+	rect_s m_rAreas[3];
+	vec3_t m_rOrigin;
+	int m_iMapXPos;
+	int m_iMapYPos;
+};
+
 class CObjectiveIcons : public CHudBase
 {
 public:
@@ -603,27 +668,7 @@ private:
 	wrect_t m_topwrect;
 	wrect_t m_bottomwrect;
 	HSPRITE m_TopNumber;
-	HSPRITE m_TopNumber;
 	bool m_bWarmupMode;
-};
-
-struct control_point_t
-{
-	int entindex;
-	bool valid;
-	int visible;
-	int owner;
-	int nextOwner;
-	float animtime;
-	float totaltime;
-	int numplayers;
-	int requiredplayers;
-	int occupyingteam;
-	int m_iIcons[3];
-	rect_s m_rAreas[3];
-	vec3_t m_rOrigin;
-	int m_iMapXPos;
-	int m_iMapYPos;
 };
 
 //
@@ -1025,7 +1070,6 @@ private:
 	client_sprite_t				*m_pSpriteList;
 	int							m_iSpriteCount;
 	int							m_iSpriteCountAllRes;
-	float						m_flMouseSensitivity;
 	int							m_iConcussionEffect; 
 
 public:
@@ -1035,6 +1079,8 @@ public:
 	double m_flTimeDelta; // the difference between flTime and fOldTime
 	Vector	m_vecOrigin;
 	Vector	m_vecAngles;
+	Vector	m_vecVelocity;
+	float	m_flMouseSensitivity;
 	int		m_iKeyBits;
 	int		m_iHideHUDDisplay;
 	int		m_iFOV;
@@ -1059,9 +1105,6 @@ public:
 	int		m_iSensLevel;
 	int		m_iFontHeight;
 	int		m_iFontEngineHeight;
-	HSPRITE *m_rghSprites;
-	wrect_t *m_rgrcRects;
-	char	*m_rgszSpriteNames;
 	char	m_szTeamNames[5][32];
 	int		m_iMapX;
 	int		m_iMapY;
@@ -1072,7 +1115,6 @@ public:
 	int		m_iSmallMapWidth;
 	int		m_iSmallMapHeight;
 
-	int m_iFontHeight;
 	int DrawHudNumber( int x, int y, int iFlags, int iNumber, int r, int g, int b );
 	int DrawHudString( int x, int y, int iMaxX, const char *szString, int r, int g, int b );
 	int DrawHudStringReverse( int xpos, int ypos, int iMinX, const char *szString, int r, int g, int b );
@@ -1085,7 +1127,6 @@ public:
 	int DrawHudStringLen( const char *szIt );
 	void DrawDarkRectangle( int x, int y, int wide, int tall );
 
-private:
 	// the memory for these arrays are allocated in the first call to CHud::VidInit(), when the hud.txt and associated sprites are loaded.
 	// freed in ~CHud()
 	HSPRITE *m_rghSprites;	/*[HUD_SPRITE_COUNT]*/			// the sprites loaded from hud.txt
@@ -1135,8 +1176,6 @@ public:
 	CHudVGUI2Print	m_VGUI2Print;
 	CMortarHud		m_MortarHud;
 	CHudAmmoSecondary	m_AmmoSecondary;
-	CHudTextMessage m_TextMessage;
-	CHudStatusIcons m_StatusIcons;
 #if !USE_VGUI || USE_NOVGUI_SCOREBOARD
 	CHudScoreboard	m_Scoreboard;
 #endif
@@ -1256,7 +1295,6 @@ public:
 	void SetRecoilAmount( float flPitchRecoil, float flYawRecoil );
 	void PopRecoil( float frametime, float &flPitchRecoil, float &flYawRecoil );
 
-	float GetSensitivity();
 	void GetAllPlayersInfo( void );
 };
 
@@ -1267,4 +1305,5 @@ extern int g_iTeamNumber;
 extern int g_iUser1;
 extern int g_iUser2;
 extern int g_iUser3;
+extern int g_iVuser1x, g_iVuser1z;
 #endif

@@ -75,6 +75,47 @@ public:
 };
 
 #define WEAPON_NONE				0
+#define WEAPON_AMERKNIFE		1
+#define WEAPON_GERKNIFE			2
+#define WEAPON_COLT             3
+#define WEAPON_LUGER            4
+#define WEAPON_GARAND           5
+#define WEAPON_SCOPEDKAR        6
+#define WEAPON_THOMPSON         7
+#define WEAPON_MP44             8
+#define WEAPON_SPRING           9
+#define WEAPON_KAR              10
+#define WEAPON_BAR              11
+#define WEAPON_MP40             12
+#define WEAPON_HANDGRENADE      13
+#define WEAPON_STICKGRENADE     14
+#define WEAPON_STICKGRENADEX    15
+#define WEAPON_HANDGRENADEX     16
+#define WEAPON_MG42             17
+#define WEAPON_CAL30            18
+#define	WEAPON_SPADE			19
+#define WEAPON_M1CARBINE        20
+#define WEAPON_MG34             21
+#define WEAPON_GREASEGUN        22
+#define WEAPON_FG42             23
+#define WEAPON_K43              24
+#define WEAPON_ENFIELD          25
+#define WEAPON_STEN             26
+#define WEAPON_BREN             27
+#define WEAPON_WEBLEY           28
+#define WEAPON_BAZOOKA          29
+#define WEAPON_PSCHRECK         30
+#define WEAPON_PIAT             31
+#define WEAPON_MORTAR			32
+#define WEAPON_BINOC            33
+#define WEAPON_BINOCULARS		34
+#define WEAPON_GERPARAKNIFE		35
+#define WEAPON_MILLSGRENADE		36
+#define WEAPON_SCOPED_FG42		37
+#define WEAPON_SCOPEDENFIELD	38
+#define WEAPON_FOLDINGCARBINE	39
+#define WEAPON_FAIRBAIRN		40
+
 #define WEAPON_ALLWEAPONS		(~(1<<WEAPON_SUIT))
 #define WEAPON_SUIT				63
 #define WEAPON_NOWEIGHT			-1
@@ -98,9 +139,6 @@ public:
 #define ITEM_FLAG_66MM_BIPOD		130
 #define ITEM_FLAG_ROCKET			642
 #define ITEM_FLAG_66MM_GER_BIPOD	2178
-
-#define WPNSTATE_SCOPED				(1<<0)
-#define WPNSTATE_ROCKET_SLOW		(2<<0)
 
 #define WEAPON_IS_ONTARGET 0x40
 
@@ -251,21 +289,21 @@ public:
 
 	virtual void SendWeaponAnim( int iAnim, int skiplocal = 1, int body = 0 );  // skiplocal is 1 if client is predicting weapon animations
 
-	void PostMortarValue( float value ) { return; }
-	void SendMortarFireCommand( char *c ) { return; }
+	void PostMortarValue( float value );
+	void SendMortarFireCommand( char *c );
 
 	virtual BOOL CanDeploy( void );
 	virtual BOOL IsUseable( void );
-	BOOL DefaultDeploy( const char *szViewModel, const char *szWeaponModel, int iAnim, const char *szAnimExt, int skiplocal = 0, int body = 0 );
+	BOOL DefaultDeploy( const char *szViewModel, const char *szWeaponModel, int iAnim, const char *szAnimExt, const char *szAnimReloadExt, int skiplocal = 0, int body = 0 );
 	int DefaultReload( int iClipSize, int iAnim, float fDelay, int body = 0 );
 
 	virtual Vector Aim( float accuracyFactor, CBasePlayer *pOther, unsigned int shared_rand );
-	virtual float flAim( float accuracyFactor, CBasePlayer *pOther ) { return accuracyFactor; }
+	virtual float flAim( float accuracyFactor, CBasePlayer *pOther );
 	virtual void RemoveStamina( float removeAmount, CBasePlayer *pother ) { return; }
 	virtual int ChangeFOV( int fov );
 	virtual int ZoomOut( void );
 	virtual int ZoomIn( void );
-	virtual int GetFOV( void ) { return (int)g_lastFOV; }
+	virtual int GetFOV( void );
 	virtual bool PlayerIsWaterSniping( void );
 	void ThinkZoomOut( void );
 	void ThinkZoomIn( void );
@@ -290,8 +328,8 @@ public:
 	void PrintState( void );
 
 	virtual CBasePlayerItem *GetWeaponPtr( void ) { return (CBasePlayerItem *)this; };
-	BOOL TimedDeploy( char *szViewModel, char *szWeaponModel, int iAnim, char *szAnimExt, char *szAnimReloadExtm, float idleTime,
-					float attackTime, int skiplocal = 0 );
+	BOOL TimedDeploy( const char *szViewModel, const char *szWeaponModel, int iAnim, const char *szAnimExt, const char *szAnimReloadExtm, 
+		float idleTime, float attackTime, int skiplocal = 0 );
 	virtual int Classify( void ) { return 0; }
 	int GetRoundState( void ) { return gHUD.m_iRoundState; }
 	float GetNextAttackDelay( float delay );
@@ -309,8 +347,6 @@ public:
 	int		m_fInReload;										// Are we in the middle of a reload;
 
 	int		m_iDefaultAmmo;// how much ammo you get when you pick up this weapon as placed by a level designer.
-	int		m_fInReload;
-	int		m_iDefaultAmmo;
 	int		m_fInAttack;
 	int		*current_ammo;
 	int		m_iWeaponState;
@@ -504,7 +540,7 @@ public:
 #endif
 	}
 
-private:
+	protected:
 	unsigned short m_iFireEvent;
 };
 
@@ -535,7 +571,7 @@ public:
 #endif
 	}
 
-private:
+protected:
 	unsigned short m_iFireEvent;
 };
 
@@ -574,7 +610,7 @@ public:
 #endif
 	}
 
-private:
+protected:
 	unsigned short m_iFireEvent;
 	unsigned short m_iOverheatEvent;
 };
@@ -613,7 +649,7 @@ public:
 #endif
 	}
 
-private:
+protected:
 	float m_flStartThrow;
 	float m_flReleaseThrow;
 };
