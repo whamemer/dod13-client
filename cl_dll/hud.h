@@ -91,7 +91,6 @@ public:
 	Element *last;
 	Element *current;
 
-	Queue( void );
 	~Queue( void )
 	{
 		if( last )
@@ -105,8 +104,8 @@ public:
 
 				if( !last->previous )
 				{
-					first = nullptr;
-					current = nullptr;
+					first = NULL;
+					current = NULL;
 					return;
 				}
 
@@ -295,9 +294,9 @@ class CHudDoDCrossHair : CHudBase
 public:
 	int Init( void );
 	int VidInit( void );
-	void SetDoDCrosshair( void );
+	//void SetDoDCrosshair( void );
 	int Draw( float flTime );
-	void Reset( void );
+	void Reset( void ) { return; }
 	int MsgFunc_ClanTimer( const char *pszName, int iSize, void *pbuf );
 	bool ShouldDrawCrossHair( void );
 	float GetCurrentWeaponAccuracy( void );
@@ -347,7 +346,7 @@ class CHudDoDMap : public CHudBase
 {
 public:
 	int VidInit( void );
-	void InitHUDData( void );
+	void InitHUDData( void ) { return; }
 	int Draw( float flTime );
 	int Init( void );
 	void DrawOverview( void );
@@ -451,9 +450,9 @@ public:
 	int Draw( float flTime );
 	void Reset( void );
 	int MsgFunc_StatusValue( const char *pszName, int iSize, void *pbuf );
-	int GetTargetHealth( void );
-	int GetTargetIndex( void );
-	int GetTargetTeam( void );
+	//int GetTargetHealth( void );
+	//int GetTargetIndex( void );
+	//int GetTargetTeam( void );
 	char *GetTargetName( void );
 	void CreateEntities( void );
 	void DrawEntitiesOverTeam( void );
@@ -789,7 +788,7 @@ public:
 	int Init( void );
 	void InitHUDData( void );
 	int MsgFunc_GameRules( const char *pszName, int iSize, void *pbuf );
-	int MsgFunc_ParaLand( const char *pszName, int iSize, void *pbuf );
+	//int MsgFunc_ParaLand( const char *pszName, int iSize, void *pbuf );
 	int MsgFunc_ResetSens( const char *pszName, int iSize, void *pbuf );
 	int Draw( float flTime );
 	int VidInit( void );
@@ -823,8 +822,8 @@ public:
 	void StartDrawingCredits( void );
 	void DrawCredits( float flTime );
 	void DrawMarkerIcon( HSPRITE pSpr );
-	void DrawObjectiveTimer( void );
-	void UpdateReinforcementTimer( void );
+	//void DrawObjectiveTimer( void );
+	//void UpdateReinforcementTimer( void );
 
 	int m_iHealth;
 	char *m_szObjectIcon;
@@ -915,7 +914,7 @@ public:
 	int VidInit( void );
 	void Think( void );
 	void AddParticleSystem( particle_shooter_t *pShooter );
-	int MsgFunc_PReg( const char *pszName, int iSize, void *pbuf );
+	//int MsgFunc_PReg( const char *pszName, int iSize, void *pbuf );
 	int MsgFunc_PShoot( const char *pszName, int iSize, void *pbuf );
 
 private:
@@ -965,14 +964,14 @@ public:
 	int VidInit( void );
 	void CreateRainParticle( float *origin );
 	void CreateSnowParticle( float *origin );
-	void SetRainSprite( model_s *pModel );
-	void SetSnowSprite( model_s *pModel );
-	void SetSplashSprite( model_s *pModel );
-	void SetRippleSprite( model_s *pModel );
-	model_s *GetRainSprite( void );
-	model_s *GetSnowSprite( void );
-	model_s *GetSplashSprite( void );
-	model_s *GetRippleSprite( void );
+	//void SetRainSprite( model_s *pModel );
+	//void SetSnowSprite( model_s *pModel );
+	//void SetSplashSprite( model_s *pModel );
+	//void SetRippleSprite( model_s *pModel );
+	//model_s *GetRainSprite( void );
+	//model_s *GetSnowSprite( void );
+	//model_s *GetSplashSprite( void );
+	//model_s *GetRippleSprite( void );
 
 private:
 	model_s *m_pRainSprite;
@@ -1048,14 +1047,48 @@ private:
 //
 //-----------------------------------------------------
 //
+struct trajectory_t
+{
+	float vTargetPos[3];
+	float fPitch1;
+	float fPitch2;
+	float fYaw;
+	float fLastUsedTime;
+};
+
+class CTrajectoryList
+{
+public:
+	CTrajectoryList( void );
+	~CTrajectoryList( void );
+	void GetTrajectory( vec3_t *launchPos, vec3_t *targetPos, float *pitch1, float *pitch2, float *yaw );
+	void CalculateTrajectory( vec3_t *launchPos, vec3_t *targetPos, float *pitch1, float *pitch2, float *yaw );
+	trajectory_t *AddTrajectory( vec3_t *p_targetPos );
+	void InvalidateAllTrajectories( void );
+
+	enum
+	{
+		MAX_TRAJECTORIES = 32,
+		TRAJECTORY_LIFETIME = 30
+	};
+
+private:
+	vec3_t m_vecLaunchPos;
+	trajectory_t m_Trajectories[32];
+};
+
 class CMortarHud : public CHudBase
 {
 public:
+	CMortarHud( void );
+	~CMortarHud( void );
 	int Init( void );
 	int VidInit( void );
 	int Draw( float flTime );
 	void CalculateFireAngle( float *pitch, float *yaw );
-	float DrawPredictedMortarImpactSite( void );
+	void DrawPredictedMortarImpactSite( void );
+
+	CTrajectoryList *m_TrajectoryList;
 };
 	
 //
@@ -1203,7 +1236,7 @@ public:
 	int  _cdecl MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf );
 
 	int _cdecl MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf );
-	int _cdecl MsgFunc_ZoomStatus( const char *pszName, int iSize, void *pbuf );
+	//int _cdecl MsgFunc_ZoomStatus( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_RoundState( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf );

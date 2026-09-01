@@ -14,7 +14,7 @@
 
 #define KNIFE_WALLHIT_VOLUME 512
 
-extern struct p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s *WpnInfo;
 
 void CMeleeWeapon::Spawn( int weapon_id )
 {

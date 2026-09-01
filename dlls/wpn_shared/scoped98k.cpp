@@ -12,7 +12,7 @@
 
 #include "dod_shared.h"
 
-extern struct p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s *WpnInfo;
 extern float flBoltHideXHair;
 
 LINK_ENTITY_TO_CLASS( weapon_scopedkar, CScopedKar )

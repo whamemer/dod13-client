@@ -32,6 +32,9 @@ DECLARE_MESSAGE( m_StatusBar, StatusValue )
 
 float *GetClientColor( int clientIndex );
 extern float g_ColorYellow[3];
+extern cvar_t *cl_identiconmode;
+extern float g_lastFOV;
+extern int g_iAlive;
 
 int CHudStatusBar::Init( void )
 {
@@ -68,106 +71,20 @@ void CHudStatusBar::Reset( void )
 		m_pflNameColors[i] = g_ColorYellow;
 }
 
-/*void CHudStatusBar::ParseStatusString(int line_num)
+extern vec3_t v_angles;
+extern int g_iDeadFlag;
+
+bool CHudStatusBar::InDeathCamMode( void )
 {
-	// localise string first
-	char szBuffer[MAX_STATUSTEXT_LENGTH] = {0};
-	gHUD.m_TextMessage.LocaliseTextString( m_szStatusText[line_num], szBuffer, MAX_STATUSTEXT_LENGTH );
+	return false;
+}
 
-	// parse m_szStatusText & m_iStatusValues into m_szStatusBar
-	memset( m_szStatusBar[line_num], 0, MAX_STATUSTEXT_LENGTH );
-	char *src = szBuffer;
-	char *dst = m_szStatusBar[line_num];
+void CHudStatusBar::Think( void )
+{
 
-	char *src_start = src, *dst_start = dst;
+}
 
-	while( *src != 0 )
-	{
-		while( *src == '\n' )
-			src++;  // skip over any newlines
 
-		if( ( ( src - src_start ) >= MAX_STATUSTEXT_LENGTH ) || ( ( dst - dst_start ) >= MAX_STATUSTEXT_LENGTH ) )
-			break;
-
-		int index = atoi( src );
-		// should we draw this line?
-		if( ( index >= 0 && index < MAX_STATUSBAR_VALUES ) && ( m_iStatusValues[index] != 0 ) )
-		{
-			// parse this line and append result to the status bar
-			while ( *src >= '0' && *src <= '9' )
-				src++;
-
-			if( *src == '\n' || *src == 0 )
-				continue; // no more left in this text line
-
-			// copy the text, char by char, until we hit a % or a \n
-			while( *src != '\n' && *src != 0 )
-			{
-				if( *src != '%' )
-				{
-					// just copy the character
-					*dst = *src;
-					dst++, src++;
-				}
-				else
-				{
-					// get the descriptor
-					char valtype = *(++src); // move over %
-
-					// if it's a %, draw a % sign
-					if ( valtype == '%' )
-					{
-						*dst = valtype;
-						dst++, src++;
-						continue;
-					}
-
-					// move over descriptor, then get and move over the index
-					index = atoi( ++src ); 
-					while( *src >= '0' && *src <= '9' )
-						src++;
-
-					if( index >= 0 && index < MAX_STATUSBAR_VALUES )
-					{
-						int indexval = m_iStatusValues[index];
-
-						// get the string to substitute in place of the %XX
-						char szRepString[MAX_PLAYER_NAME_LENGTH];
-						switch( valtype )
-						{
-						case 'p':  // player name
-							GetPlayerInfo( indexval, &g_PlayerInfoList[indexval] );
-							if( g_PlayerInfoList[indexval].name != NULL )
-							{
-								strlcpy( szRepString, g_PlayerInfoList[indexval].name, MAX_PLAYER_NAME_LENGTH );
-								m_pflNameColors[line_num] = GetClientColor( indexval );
-							}
-							else
-							{
-								strcpy( szRepString, "******" );
-							}
-							break;
-						case 'i':  // number
-							sprintf( szRepString, "%d", indexval );
-							break;
-						default:
-							szRepString[0] = 0;
-						}
-
-						for( char *cp = szRepString; *cp != 0 && ( ( dst - dst_start ) < MAX_STATUSTEXT_LENGTH ); cp++, dst++ )
-							*dst = *cp;
-					}
-				}
-			}
-		}
-		else
-		{
-			// skip to next line of text
-			while( *src != 0 && *src != '\n' )
-				src++;
-		}
-	}
-}*/
 
 int CHudStatusBar::Draw( float fTime )
 {
@@ -225,4 +142,24 @@ int CHudStatusBar::MsgFunc_StatusValue( const char *pszName, int iSize, void *pb
 	m_bReparseString = TRUE;
 
 	return 1;
+}
+
+char *CHudStatusBar::GetTargetName( void )
+{
+	return "";
+}
+
+void CHudStatusBar::CreateEntities( void )
+{
+
+}
+
+void CHudStatusBar::DrawEntitiesOverTeam( void )
+{
+
+}
+
+void CHudStatusBar::DrawEntitiesOverTarget( void )
+{
+
 }

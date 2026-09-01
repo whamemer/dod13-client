@@ -190,8 +190,8 @@ public:
 
 	// initialization functions
 	virtual void RoundRespawn( void ) { return; }
-	virtual void RoundRespawnEnt( void );
-	virtual void RoundStore( void ); 
+	virtual void RoundRespawnEnt( void ) { return; }
+	virtual void RoundStore( void ) { return; }
 	virtual void Spawn( void ) { return; }
 	virtual void Precache( void ) { return; }
 	virtual void KeyValue( KeyValueData* pkvd ) { pkvd->fHandled = FALSE; }

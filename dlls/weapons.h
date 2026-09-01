@@ -219,7 +219,7 @@ public:
 
 	virtual void Drop( void );
 	virtual void Kill( void );
-	virtual void SpawnReplacement( void );
+	virtual void SpawnReplacement( void ) { return; }
 	virtual void AttachToPlayer ( CBasePlayer *pPlayer );
 
 	virtual int PrimaryAmmoIndex() { return -1; };
@@ -931,7 +931,7 @@ public:
 	int GetItemInfo( ItemInfo *p );
 	int AddToPlayer( CBasePlayer *pPlayer );
 	void PrimaryAttack( void );
-	void SecondaryAttack( void );
+	void SecondaryAttack( void ) { return; }
 	BOOL Deploy( void );
 	BOOL CanHolster( void );
 	void Reload( void );

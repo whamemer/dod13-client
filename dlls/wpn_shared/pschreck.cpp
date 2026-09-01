@@ -13,7 +13,7 @@
 #include "dod_shared.h"
 #include "hud.h"
 
-extern struct p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s *WpnInfo;
 
 LINK_ENTITY_TO_CLASS( weapon_pschreck, CPschreck )
 

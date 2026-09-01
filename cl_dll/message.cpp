@@ -1,4 +1,4 @@
-/***
+	/***
 *
 *	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
@@ -51,6 +51,8 @@ int CHudMessage::VidInit( void )
 
 	return 1;
 }
+
+//vgui2::HFont CHudMessage::GetFont( void );
 
 void CHudMessage::Reset( void )
 {
@@ -306,9 +308,10 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 		m_parms.y += gHUD.m_scrinfo.iCharHeight;
 	}
 }
-/*
+
 int CHudMessage::Draw( float fTime )
 {
+/*
 	int i, drawn;
 	client_textmessage_t *pMessage;
 	float endTime = 0.0f;
@@ -404,11 +407,12 @@ int CHudMessage::Draw( float fTime )
 	if( !drawn )
 		m_iFlags &= ~HUD_ACTIVE;
 
-	return 1;
-}*/
-/*
+	*/return 1;
+}
+
 void CHudMessage::MessageAdd( const char *pName, float time )
 {
+	/*
 	int i, j;
 	client_textmessage_t *tempMessage;
 
@@ -469,7 +473,8 @@ void CHudMessage::MessageAdd( const char *pName, float time )
 			return;
 		}
 	}
-}*/
+	*/
+}
 
 int CHudMessage::MsgFunc_HudText( const char *pszName,  int iSize, void *pbuf )
 {
@@ -504,9 +509,10 @@ int CHudMessage::MsgFunc_GameTitle( const char *pszName,  int iSize, void *pbuf 
 	return 1;
 }
 
-/*
+
 void CHudMessage::MessageAdd( client_textmessage_t * newMessage )
 {
+	/*
 	m_parms.time = gHUD.m_flTime;
 
 	// Turn on drawing
@@ -522,4 +528,10 @@ void CHudMessage::MessageAdd( client_textmessage_t * newMessage )
 			return;
 		}
 	}
-}*/
+	*/
+}
+
+void CHudMessage::HintMessageAdd( const char *pText )
+{
+
+}

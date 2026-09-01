@@ -101,7 +101,7 @@ public:
 	bool	GetDirectorCamera( vec3_t &position, vec3_t &angle );
 	void	SetWayInterpolation( cameraWayPoint_t *prev, cameraWayPoint_t *start, cameraWayPoint_t *end, cameraWayPoint_t *next );
 
-	void AddVoiceIconToPlayerEnt( int index );
+	void AddVoiceIconToPlayerEnt( int index ) { return; }
 
 
 	int m_iDrawCycle;

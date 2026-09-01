@@ -323,3 +323,13 @@ void CHudSayText::EnsureTextFitsInOneLineAndWrapIfHaveTo( int line )
 		}
 	}
 }
+
+void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex, char *sstr1, char *sstr2, char *sstr3, char *sstr4 )
+{
+
+}
+
+int CHudSayText::GetTextPrintY( void )
+{
+	return 1;
+}

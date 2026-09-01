@@ -345,7 +345,7 @@ extern DodClassInfo_t g_ClassInfo[28] =
     { "cls_random", "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "" }
 };
 
-extern p_wpninfo_s P_WpnInfo[41] =
+extern p_wpninfo_s WpnInfo[41] =
 {
     // WEAPON_NONE 0
     { "", "", "", "", "", "", "", "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0 },

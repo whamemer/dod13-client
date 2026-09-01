@@ -12,9 +12,9 @@
 
 #include "dod_shared.h"
 
-LINK_ENTITY_TO_CLASS( weapon_spade, CSpade )
+extern p_wpninfo_s *WpnInfo;
 
-extern struct p_wpninfo_s *WpnInfo;
+LINK_ENTITY_TO_CLASS( weapon_spade, CSpade )
 
 void CSpade::Spawn( void )
 {

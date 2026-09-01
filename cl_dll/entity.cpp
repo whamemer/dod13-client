@@ -25,6 +25,7 @@ void Game_AddObjects( void );
 extern vec3_t v_origin;
 
 int g_iAlive = 1;
+int g_iDeadFlag = 0;
 
 extern "C"
 {

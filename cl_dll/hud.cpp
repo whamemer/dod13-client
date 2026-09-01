@@ -111,14 +111,14 @@ extern cvar_t *sensitivity;
 cvar_t *cl_lw = NULL;
 cvar_t *cl_viewbob = NULL;
 
-extern cvar_t *cl_dmsmallmap;
-extern cvar_t *cl_dmshowmarkers;
-extern cvar_t *cl_dmshowplayers;
-extern cvar_t *cl_dmshowflags;
-extern cvar_t *cl_dmshowobjects;
-extern cvar_t *cl_dmshowgrenades;
+cvar_t *cl_dmsmallmap;
+cvar_t *cl_dmshowmarkers;
+cvar_t *cl_dmshowplayers;
+cvar_t *cl_dmshowflags;
+cvar_t *cl_dmshowobjects;
+cvar_t *cl_dmshowgrenades;
 extern cvar_t *cl_numshotrubble;
-extern cvar_t *cl_weatherdis;
+cvar_t *cl_weatherdis;
 cvar_t *cl_autoreload;
 
 void ShutdownInput( void );
@@ -1229,6 +1229,11 @@ int CHud::MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
 }
 
 int CHud::MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
+{
+	return 1;
+}
+
+int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 {
 	return 1;
 }

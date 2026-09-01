@@ -32,7 +32,11 @@
 #include "in_defs.h"
 
 #include "dod_shared.h"
-#include "pm_shared.h"
+
+extern "C"
+{
+	#include "pm_shared.h"
+}
 
 #include <string.h>
 
@@ -2147,32 +2151,40 @@ void EV_BaseExplosion( event_args_t *args )
 
 }
 
-#ifdef USE_PMAN
 void EV_WaterExplosion( event_args_t *args )
 {
+#ifdef USE_PMAN
 
+#endif // USE_PMAN
 }
 
 void EV_DirtTrailCallback( tempent_s *ent, float frametime, float currenttime )
 {
+#ifdef USE_PMAN
 
+#endif // USE_PMAN
 }
 
 void EV_DirtRubble( event_args_t *args )
 {
+#ifdef USE_PMAN
 
+#endif // USE_PMAN
 }
 
 void EV_DirtExplosion( event_args_t *args )
 {
+#ifdef USE_PMAN
 
+#endif // USE_PMAN
 }
 
 void EV_Explosion( event_args_t *args )
 {
+#ifdef USE_PMAN
 
-}
 #endif // USE_PMAN
+}
 
 void EV_Bubbles( event_args_t *args )
 {
@@ -2242,12 +2254,12 @@ void EV_BloodSprite( event_args_t *args )
 	gEngfuncs.pEfxAPI->R_BloodSprite( origin, args->iparam2, args->iparam1, args->fparam1, args->fparam2 );
 }
 
-#ifdef USE_PMAN
 void EV_Smoke( event_args_t *args )
 {
+#ifdef USE_PMAN
 
-}
 #endif // USE_PMAN
+}
 
 void EV_Pain( event_args_t *args )
 {
@@ -2266,13 +2278,13 @@ void EV_Pain( event_args_t *args )
 	gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_VOICE, szSound, 1.0f, 2.0f, 0, 100 );
 }
 
-#ifdef USE_VGUI
 extern char *s_USVoiceFiles[];
 extern char *s_BRITVoiceFiles[];
 extern char *s_VoiceCommands[][4];
 
 void EV_USVoice( event_args_t *args )
 {
+#ifdef USE_VGUI
 	int iPlayer, pitch1, pitch2;
 
 	vec3_t origin;
@@ -2322,12 +2334,14 @@ void EV_USVoice( event_args_t *args )
 			}
 		}
 	}
+#endif // USE_VGUI
 }
 
 extern char *s_GERVoiceFiles[];
 
 void EV_GERVoice( event_args_t *args )
 {
+#ifdef USE_VGUI
 int iPlayer, pitch1;
 
 	vec3_t origin;
@@ -2378,8 +2392,8 @@ int iPlayer, pitch1;
 			}
 		}
 	}
-}
 #endif // USE_VGUI
+}
 
 void EV_BodyDamage( event_args_t *args )
 {
@@ -2557,22 +2571,26 @@ char EV_TexNameToType( char *pTextureName )
 	return 0;
 }
 
-#ifdef USE_PMAN
 void CreateFlyingRubble( vec3_t origin, bool bLargeRubble, float vVelocityx, float vVelocityy, float vVelocityz, float fSize, int iTextureType, vec3_t vNormal )
 {
+#ifdef USE_PMAN
 
+#endif // USE_PMAN
 }
 
 void EV_RocketTrailCallback( tempent_s *ent, float frametime, float currenttime )
 {
+#ifdef USE_PMAN
 
+#endif // USE_PMAN
 }
 
 void EV_RocketTrail( event_args_t *args )
 {
+#ifdef USE_PMAN
 
-}
 #endif // USE_PMAN
+}
 
 void EV_MortarShellCallback( tempent_s *ent, float frametime, float currenttime )
 {
@@ -2584,14 +2602,16 @@ void EV_MortarShell( event_args_t *args )
 
 }
 
-#ifdef USE_PMAN
 void EV_OverheatCallback( tempent_s *ent, float frametime, float currenttime )
 {
+#ifdef USE_PMAN
 
+#endif // USE_PMAN
 }
 
 void EV_Overheat( event_args_t *args )
 {
+#ifdef USE_PMAN
 	int idx;
 
 	float lastOverheatTime;
@@ -2622,5 +2642,5 @@ void EV_Overheat( event_args_t *args )
 			p->entity.baseline.fuser2 = gEngfuncs.GetClientTime();
 		}
 	}
-}
 #endif // USE_PMAN
+}

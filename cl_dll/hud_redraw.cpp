@@ -38,6 +38,7 @@ extern int g_iVisibleMouse;
 
 float HUD_GetFOV( void );
 
+int i_dodmusic;
 extern cvar_t *sensitivity;
 
 // Think

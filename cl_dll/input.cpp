@@ -80,6 +80,8 @@ cvar_t	*cl_pitchspeed;
 cvar_t	*cl_anglespeedkey;
 cvar_t	*cl_vsmoothing;
 
+cvar_t *cl_dynamiclights;
+
 /*
 ===============================================================================
 
