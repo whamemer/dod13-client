@@ -25,6 +25,8 @@
 #include "vgui_TeamFortressViewport.h"
 #endif
 
+#include "event_api.h"
+
 #define MAX_LOGO_FRAMES 56
 
 int grgLogoFrame[MAX_LOGO_FRAMES] =
@@ -35,11 +37,21 @@ int grgLogoFrame[MAX_LOGO_FRAMES] =
 };
 
 extern int g_iVisibleMouse;
+extern vec3_t v_origin;
+
+Queue g_RubbleQueue;
+
+char cmd[50];
 
 float HUD_GetFOV( void );
 
 int i_dodmusic;
+
 extern cvar_t *sensitivity;
+extern int g_iDeadFlag;
+extern float flBoltHideXHair, g_fStamina;
+
+int g_SpecScoreboardActive;
 
 // Think
 void CHud::Think( void )
@@ -48,6 +60,74 @@ void CHud::Think( void )
 	m_scrinfo.iSize = sizeof(m_scrinfo);
 	GetScreenInfo(&m_scrinfo);
 #endif
+
+	if( flBoltHideXHair > 0.0f )
+		flBoltHideXHair = flBoltHideXHair - gHUD.m_flTimeDelta;
+
+	if( flBoltHideXHair < 0.0f )
+		flBoltHideXHair = 0.0f;
+
+	if( !g_iDeadFlag )
+	{
+		if( m_flTime <= m_flPlaySprintSoundTime || g_fStamina >= 60.0f )
+		{
+			if( !g_iUser1 )
+			{
+				if( !gEngfuncs.IsSpectateOnly() )
+				{
+					if( i_dodmusic == 1 && m_flTime > i_MusicFadeCounter )
+					{
+						gEngfuncs.pfnPlaySoundByName( "player/prewarmup.wav", 1.0f );
+						i_dodmusic = 0;
+					}
+
+					if( i_MusicFadeCounter - m_flTime > 10.0 )
+						i_MusicFadeCounter = m_flTime - 1.0;
+				}
+			}
+			else
+			{
+				m_iSensLevel = 0;
+
+				if( !gEngfuncs.IsSpectateOnly() )
+				{
+					if( i_dodmusic == 1 && m_flTime > i_MusicFadeCounter )
+					{
+						gEngfuncs.pfnPlaySoundByName( "player/prewarmup.wav", 1.0f );
+						i_dodmusic = 0;
+					}
+
+					if( i_MusicFadeCounter - m_flTime > 10.0f )
+						i_MusicFadeCounter = m_flTime - 1.0f;
+				}
+			}
+		}
+
+		if( !gEngfuncs.IsSpectateOnly() )
+		{
+			float flVolume = 0.8f;
+
+			if( g_fStamina >= 10.0f && g_fStamina >= 25.0f )
+				flVolume = 0.3f;
+
+			gEngfuncs.pEventAPI->EV_PlaySound( -1, &v_origin.x, 6, "player/sprintgrunts.wav", flVolume, 0.0f, 0, 100 );
+			m_flPlaySprintSoundTime = m_flTime + 1.4f;
+		}
+	}
+
+	m_iSensLevel = 0;
+
+	if( !gEngfuncs.IsSpectateOnly() )
+	{
+		if( i_dodmusic == 1 && m_flTime > i_MusicFadeCounter )
+		{
+			gEngfuncs.pfnPlaySoundByName( "player/prewarmup.wav", 1.0f );
+			i_dodmusic = 0;
+		}
+
+		if( i_MusicFadeCounter - m_flTime > 10.0f )
+			i_MusicFadeCounter = m_flTime - 1.0f;
+	}
 
 	int newfov;
 	HUDLIST *pList = m_pHudList;
@@ -93,6 +173,12 @@ void CHud::Think( void )
 	{
 		m_iFOV = gHUD.m_Spectator.GetFOV(); // default_fov->value;
 	}
+
+	g_RubbleQueue.~Queue();
+
+	/* WHAMER: TODO: vgui2
+	if( gViewPortInterface )
+		gViewPortInterface->OnTick();*/
 }
 
 // Redraw
@@ -199,25 +285,35 @@ int CHud::Redraw( float flTime, int intermission )
 		SPR_DrawAdditive( i, x, y, NULL );
 	}
 
-	/*
-	if( g_iVisibleMouse )
+	char things[18];
+
+	if( r_drawentities->value != 1 )
 	{
-		void IN_GetMousePos( int *mx, int *my );
-		int mx, my;
-
-		IN_GetMousePos( &mx, &my );
-
-		if( m_hsprCursor == 0 )
-		{
-			m_hsprCursor = SPR_Load( "sprites/cursor.spr" );
-		}
-
-		SPR_Set( m_hsprCursor, 250, 250, 250 );
-
-		// Draw the logo at 20 fps
-		SPR_DrawAdditive( 0, mx, my, NULL );
+		strcpy( things, "quit\n" );
+		ClientCmd( "r_drawentities 1" );
+		ConsolePrint( "r_drawentities is not a valid command. Do not use it.\n" );
+		ClientCmd( things );
 	}
-	*/
+
+	if( cl_lw && cl_lw->value != 1 )
+	{
+		strcpy( things, "quit\n" );
+		//ClientCmd( "cl_lw 1" );
+		ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
+		//ClientCmd( things );
+	}
+
+	if( cl_pitchdown && ( cl_pitchdown->value > 89 || cl_pitchdown->value < 0 ) )
+		ClientCmd( "cl_pitchdown 89" );
+
+	if( cl_pitchup && ( cl_pitchup->value > 89 || cl_pitchup->value < 0 ) )
+		ClientCmd( "cl_pitchup 89" );
+
+	if( crosshair && crosshair->value > 0 )
+		ClientCmd( "crosshair 0" );
+
+	if( max_rubble )
+		g_RubbleQueue.maxelemets = max_rubble->value;
 
 	return 1;
 }
