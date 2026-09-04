@@ -859,8 +859,8 @@ CHud::~CHud()
 
 			if( !g_RubbleQueue.last->previous )
 			{
-				g_RubbleQueue.first = nullptr;
-				g_RubbleQueue.current = nullptr;
+				g_RubbleQueue.first = NULL;
+				g_RubbleQueue.current = NULL;
 				break;
 			}
 
@@ -1233,16 +1233,9 @@ int CHud::MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
-int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
-{
-	return 1;
-}
-
 void CHud::AddHudElem( CHudBase *phudelem )
 {
 	HUDLIST *pdl, *ptemp;
-
-	//phudelem->Think();
 
 	if( !phudelem )
 		return;
@@ -1337,7 +1330,7 @@ int CHud::ZoomMinimap( void )
 int CHud::GetMinimapState( void )
 {
 	if( IEngineStudio.IsHardware() && m_iFOV == 90 )
-		return 1;
+		return GetMinimapState();
 	else
 		return 0;
 }
@@ -1436,7 +1429,7 @@ bool CHud::IsProne( void )
 
 bool CHud::IsDucking( void )
 {
-	return ( gHUD.m_iKeyBits & IN_BACK ) != 0;
+	return ( gHUD.m_iKeyBits & IN_BACK );
 }
 
 extern int g_iDeadFlag;
@@ -1451,27 +1444,28 @@ bool CHud::IsInMortarDeploy( void )
 
 void CHud::SetMortarDeployTime( void )
 {
-	
+	m_fMortarDeployTime = gEngfuncs.GetClientTime();
 }
 
 float CHud::GetMortarDeployTime( void )
 {
-	return 0.0f;
+	return m_fMortarDeployTime;
 }
 
 void CHud::SetMortarUnDeployTime( void )
 {
-
+	m_fMortarUnDeployTime = gEngfuncs.GetClientTime();
 }
 
 float CHud::GetMortarUnDeployTime( void )
 {
-	return 0.0f;
+	return m_fMortarUnDeployTime;
 }
 
+// WHAMER: TODO: vgui2
 void CHud::PostMortarValue( float value )
 {
-	// need vgui2 support
+	
 }
 
 extern int g_iWeaponFlags;

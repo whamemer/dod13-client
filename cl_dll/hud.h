@@ -1139,6 +1139,7 @@ public:
 	int		m_iFontHeight;
 	int		m_iFontEngineHeight;
 	char	m_szTeamNames[5][32];
+
 	int		m_iMapX;
 	int		m_iMapY;
 	int		m_iMapWidth;
