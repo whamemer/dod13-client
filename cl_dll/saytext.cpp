@@ -47,7 +47,17 @@ static float flScrollTime = 0;  // the time at which the lines next scroll up
 static int Y_START = 0;
 static int line_height = 0;
 
+float ColorBlue[3];
+
 DECLARE_MESSAGE( m_SayText, SayText )
+
+void HudSayTextToggle( void )
+{
+	if( gHUD.m_SayText.m_HUD_saytext->value == 0.0f )
+		gHUD.m_SayText.m_HUD_saytext->value = 1.0f;
+	else
+		gHUD.m_SayText.m_HUD_saytext->value = 0.0f;
+}
 
 int CHudSayText::Init( void )
 {
@@ -57,7 +67,8 @@ int CHudSayText::Init( void )
 
 	InitHUDData();
 
-	m_HUD_saytext =		gEngfuncs.pfnRegisterVariable( "hud_saytext", "1", 0 );
+	gEngfuncs.pfnAddCommand( "hud_saytext", HudSayTextToggle );
+	m_HUD_saytext =		gEngfuncs.pfnRegisterVariable( "hud_saytext_internal", "1", 0 );
 	m_HUD_saytext_time =	gEngfuncs.pfnRegisterVariable( "hud_saytext_time", "5", 0 );
 
 	m_iFlags |= HUD_INTERMISSION; // is always drawn during an intermission
@@ -149,6 +160,7 @@ int CHudSayText::Draw( float flTime )
 		}
 
 		y += line_height;
+		// WHAMER: TODO
 	}
 
 	return 1;
@@ -159,12 +171,29 @@ int CHudSayText::MsgFunc_SayText( const char *pszName, int iSize, void *pbuf )
 	BEGIN_READ( pbuf, iSize );
 
 	int client_index = READ_BYTE();		// the client who spoke the message
-	SayTextPrint( READ_STRING(), iSize - 1,  client_index );
-
+	SayTextPrint( READ_STRING(), iSize - 1,  client_index, '\0', '\0', '\0', '\0' );
 	return 1;
 }
 
-void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex )
+int CHudSayText::GetTextPrintY( void )
+{
+	int iRetVal = 0;
+
+	if( !g_iUser1 )
+	{
+		if( !gEngfuncs.IsSpectateOnly() )
+		{
+			iRetVal = gHUD.m_scrinfo.iHeight - ( gHUD.m_iFontHeight * 2.75f );
+			return iRetVal - 5 * line_height - ( line_height * 0.5f );
+		}
+	}
+	// WHAMER: TODO: vgui2
+	//iRetVal = gHUD.m_scrinfo.iHeight - gViewPortInterface->GetSpectatorBottomBarHeight() - 4;
+	return iRetVal - 5 * line_height - ( line_height * 0.5f );
+}
+
+// WHAMER: TODO: vgui2
+void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex, char *sstr1, char *sstr2, char *sstr3, char *sstr4 )
 {
 #if USE_VGUI
 	if( gViewPort && gViewPort->AllowedToPrintText() == FALSE )
@@ -231,6 +260,7 @@ void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientInde
 	Y_START -= ( line_height * ( MAX_LINES + 1 ) );
 }
 
+// WHAMER: TODO: vgui2
 void CHudSayText::EnsureTextFitsInOneLineAndWrapIfHaveTo( int line )
 {
 	int line_width = 0;
@@ -322,14 +352,4 @@ void CHudSayText::EnsureTextFitsInOneLineAndWrapIfHaveTo( int line )
 			}
 		}
 	}
-}
-
-void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex, char *sstr1, char *sstr2, char *sstr3, char *sstr4 )
-{
-
-}
-
-int CHudSayText::GetTextPrintY( void )
-{
-	return 1;
 }
