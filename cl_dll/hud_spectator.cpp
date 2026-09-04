@@ -44,6 +44,8 @@ extern vec3_t v_angles;		// last view angle
 extern vec3_t v_cl_angles;	// last client/mouse angle
 extern vec3_t v_sim_org;	// last sim origin
 
+extern char *szMapMarkerIcons[];
+
 #if 0
 const char *GetSpectatorLabel( int iMode )
 {
@@ -88,6 +90,11 @@ void SpectatorMode( void )
 		gHUD.m_Spectator.SetModes( atoi( gEngfuncs.Cmd_Argv( 1 ) ), -1 );
 	else if ( gEngfuncs.Cmd_Argc() == 3 )
 		gHUD.m_Spectator.SetModes( atoi( gEngfuncs.Cmd_Argv( 1 ) ), atoi( gEngfuncs.Cmd_Argv( 2 ) )  );
+}
+
+void SpectatorToggleInset( void )
+{
+	gHUD.m_Spectator.SetModes( -1, 0 );
 }
 
 void SpectatorSpray( void )
@@ -170,6 +177,38 @@ void ToggleScores( void )
 #endif
 }
 
+void SpectatorToggleDrawNames( void )
+{
+	if( gHUD.m_Spectator.m_drawnames->value == 0.0f )
+		gHUD.m_Spectator.m_drawnames->value == 1.0f;
+	else
+		gHUD.m_Spectator.m_drawnames->value == 0.0f;
+}
+
+void SpectatorToggleDrawCone( void )
+{
+	if( gHUD.m_Spectator.m_drawcone->value == 0.0f )
+		gHUD.m_Spectator.m_drawcone->value == 1.0f;
+	else
+		gHUD.m_Spectator.m_drawcone->value == 0.0f;
+}
+
+void SpectatorToggleDrawStatus( void )
+{
+	if( gHUD.m_Spectator.m_drawstatus->value == 0.0f )
+		gHUD.m_Spectator.m_drawstatus->value == 1.0f;
+	else
+		gHUD.m_Spectator.m_drawstatus->value == 0.0f;
+}
+
+void SpectatorToggleAutoDirector( void )
+{
+	if( gHUD.m_Spectator.m_autoDirector->value == 0.0f )
+		gHUD.m_Spectator.m_autoDirector->value == 1.0f;
+	else
+		gHUD.m_Spectator.m_autoDirector->value == 0.0f;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -194,20 +233,37 @@ int CHudSpectator::Init()
 	gEngfuncs.pfnAddCommand( "spec_help", SpectatorHelp );
 	gEngfuncs.pfnAddCommand( "spec_menu", SpectatorMenu );
 	gEngfuncs.pfnAddCommand( "togglescores", ToggleScores );
+	gEngfuncs.pfnAddCommand( "spec_drawnames", SpectatorToggleDrawNames );
+	gEngfuncs.pfnAddCommand( "spec_drawcone", SpectatorToggleDrawCone );
+	gEngfuncs.pfnAddCommand( "spec_drawstatus", SpectatorToggleDrawStatus );
+	gEngfuncs.pfnAddCommand( "spec_autodirector", SpectatorToggleAutoDirector );
 
 	m_drawnames = gEngfuncs.pfnRegisterVariable( "spec_drawnames", "1", 0 );
 	m_drawcone = gEngfuncs.pfnRegisterVariable( "spec_drawcone", "1", 0 );
 	m_drawstatus = gEngfuncs.pfnRegisterVariable( "spec_drawstatus", "1", 0 );
 	m_autoDirector = gEngfuncs.pfnRegisterVariable( "spec_autodirector", "1", 0 );
 	m_pip = gEngfuncs.pfnRegisterVariable( "spec_pip", "1", 0 );
+	m_scoreboard = gEngfuncs.pfnRegisterVariable( "spec_scoreboard", "0", 0 );
 	
-	if( !m_drawnames || !m_drawcone || !m_drawstatus || !m_autoDirector || !m_pip )
+	if( !m_drawnames || !m_drawcone || !m_drawstatus || !m_autoDirector || !m_pip || !m_scoreboard )
 	{
 		gEngfuncs.Con_Printf( "ERROR! Couldn't register all spectator variables.\n" );
 		return 0;
 	}
+	else
+	{
+		for( int i = 0; i != 64; i++ )
+		{
+			m_bAddDrawIconNextFrame[i] = 0;
+		}
 
-	return 1;
+		default_fov = gEngfuncs.pfnGetCvarPointer( "default_fov" );
+
+		// WHAMER: TODO: vgui2
+		//gViewPortInterface->SpectatorGUIEnableInsetView( 0 );
+
+		return 1;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -376,10 +432,10 @@ void CHudSpectator::SetSpectatorStartPosition()
 	else if( UTIL_FindEntityInMap( "info_player_start",  m_cameraOrigin, m_cameraAngles ) )
 		iJumpSpectator = 1;
 
-	else if( UTIL_FindEntityInMap( "info_player_deathmatch",  m_cameraOrigin, m_cameraAngles ) )
+	else if( UTIL_FindEntityInMap( "info_player_allies",  m_cameraOrigin, m_cameraAngles ) )
 		iJumpSpectator = 1;
 
-	else if( UTIL_FindEntityInMap( "info_player_coop",  m_cameraOrigin, m_cameraAngles ) )
+	else if( UTIL_FindEntityInMap( "info_player_axis",  m_cameraOrigin, m_cameraAngles ) )
 		iJumpSpectator = 1;
 	else
 	{
@@ -576,9 +632,36 @@ int CHudSpectator::VidInit()
 	m_hsprPlayerRed		= SPR_Load( "sprites/iplayerred.spr" );
 	m_hsprPlayerDead	= SPR_Load( "sprites/iplayerdead.spr" );
 	m_hsprUnkownMap		= SPR_Load( "sprites/tile.spr" );
-	m_hsprBeam		= SPR_Load( "sprites/laserbeam.spr" );
+	m_hsprBeam			= SPR_Load( "sprites/laserbeam.spr" );
 	m_hsprCamera		= SPR_Load( "sprites/camera.spr" );
 	m_hCrosshair		= SPR_Load( "sprites/crosshairs.spr" );
+
+	m_hsprAllieLight	= SPR_Load( "sprites/aplayer.spr" );
+	m_hsprAxisLight		= SPR_Load( "sprites/gplayer.spr" );
+	m_hsprAllieZone		= SPR_Load( "sprites/aflag.spr" );
+	m_hsprAxisZone		= SPR_Load( "sprites/gflag.spr" );
+	m_hsprCapZone		= SPR_Load( "sprites/wflag.spr" );
+	m_hsprTnT			= SPR_Load( "sprites/tnt.spr" );
+	m_hsprBanglr		= SPR_Load( "sprites/banglr.spr" );
+	m_hsprStick			= SPR_Load( "sprites/stick_hltv.spr" );
+	m_hsprGrenade		= SPR_Load( "sprites/grenade_hltv.spr" );
+	m_hsprCameraAllies	= SPR_Load( "sprites/allies_camera.spr" );
+	m_hsprCameraAxis	= SPR_Load( "sprites/axis_camera.spr" );
+	m_hsprCameraBrit	= SPR_Load( "sprites/brit_camera.spr" );
+	m_hsprCameraSpec	= SPR_Load( "sprites/spec_camera.spr" );
+	m_hsprBritLight		= SPR_Load( "sprites/bplayer.spr" );
+	m_hsprVoiceIcon		= SPR_Load( "sprites/mapsprites/voiceIcon.spr" );
+	m_hsprSpeakerIcon	= SPR_Load( "sprites/mapsprites/speakerIcon.spr" );
+
+	for( int i = 0; i <= 14; i++ )
+	{
+		m_hsprMapMarkers[i] = SPR_Load( szMapMarkerIcons[i] );
+	}
+
+	for( int i = 0; i != 64; i++ )
+	{
+		m_bAddDrawIconNextFrame[i] = 0;
+	}
 
 	m_lastPrimaryObject = m_lastSecondaryObject = 0;
 	m_flNextObserverInput = 0.0f;
@@ -1956,4 +2039,35 @@ void CHudSpectator::InitHUDData()
 
 	// reset HUD FOV
 	gHUD.m_iFOV =  CVAR_GET_FLOAT( "default_fov" );
+}
+
+HSPRITE CHudSpectator::GetMarkerSPR( int marker )
+{
+	if( marker <= 14 )
+		return m_hsprMapMarkers[marker];
+
+	return NULL;
+}
+
+void CHudSpectator::AddVoiceIconToPlayerEnt( int index )
+{
+	if( index >= 1 && index <= 64 )
+		m_hsprCameraSpec = 1;
+}
+
+void CHudSpectator::ClearVoiceIconFlags( void )
+{
+	for( int i = 0; i != 64; ++i )
+		m_bAddDrawIconNextFrame[i] = 0;
+}
+
+bool CHudSpectator::ShouldSetVoiceIcon( int index )
+{
+	if( index >= 1 && index <= 64 )
+	{
+		m_bAddDrawIconNextFrame[index] = 0;
+		return true;
+	}
+
+	return false;
 }

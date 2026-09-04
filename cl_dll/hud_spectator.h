@@ -88,6 +88,7 @@ public:
 	void HandleButtonsUp( int ButtonPressed );
 	void FindNextPlayer( bool bReverse );
 	void FindPlayer( const char *name );
+	void AddVoiceIconToPlayerEnt( int index );
 	void DirectorMessage( int iSize, void *pbuf );
 	void SetSpectatorStartPosition();
 	int Init();
@@ -95,14 +96,18 @@ public:
 
 	int Draw( float flTime );
 
+	HSPRITE GetMarkerSPR( int marker );
+	void ClearVoiceIconFlags( void );
+	bool ShouldSetVoiceIcon( int index );
+
 	void	AddWaypoint( float time, vec3_t pos, vec3_t angle, float fov, int flags );
 	void	SetCameraView( vec3_t pos, vec3_t angle, float fov );
 	float	GetFOV();
 	bool	GetDirectorCamera( vec3_t &position, vec3_t &angle );
 	void	SetWayInterpolation( cameraWayPoint_t *prev, cameraWayPoint_t *start, cameraWayPoint_t *end, cameraWayPoint_t *next );
 
-	void AddVoiceIconToPlayerEnt( int index ) { return; }
 
+	int m_hsprMapMarkers[15];
 
 	int m_iDrawCycle;
 	client_textmessage_t	m_HUDMessages[MAX_SPEC_HUD_MESSAGES];
@@ -121,6 +126,23 @@ public:
 	cvar_t			*m_autoDirector;
 	cvar_t			*m_pip;
 
+	cvar_t			*m_scoreboard;
+	cvar_t			*default_fov;
+
+	HSPRITE			m_hsprAllieZone;
+	HSPRITE			m_hsprAxisZone;
+	HSPRITE			m_hsprCapZone;
+	HSPRITE			m_hsprTnT;
+	HSPRITE			m_hsprBanglr;
+	HSPRITE			m_hsprGrenade;
+	HSPRITE			m_hsprStick;
+	HSPRITE			m_hsprCustom;
+	HSPRITE			m_hsprVoiceIcon;
+	HSPRITE			m_hsprSpeakerIcon;
+	HSPRITE			m_hsprAllieLight;
+	HSPRITE			m_hsprAxisLight;
+	HSPRITE			m_hsprBritLight;
+
 	qboolean			m_chatEnabled;
 
 	qboolean			m_IsInterpolating;
@@ -137,11 +159,17 @@ private:
 	HSPRITE		m_hsprPlayerRed;
 	HSPRITE		m_hsprPlayer;
 	HSPRITE		m_hsprCamera;
+	HSPRITE		m_hsprCameraAllies;
+	HSPRITE		m_hsprCameraAxis;
+	HSPRITE		m_hsprCameraBrit;
+	HSPRITE		m_hsprCameraSpec;
 	HSPRITE		m_hsprPlayerDead;
 	HSPRITE		m_hsprViewcone;
 	HSPRITE		m_hsprUnkownMap;
 	HSPRITE		m_hsprBeam;
 	HSPRITE		m_hCrosshair;
+
+	HSPRITE		m_bAddDrawIconNextFrame[64];	
 
 	wrect_t		m_crosshairRect;
 
