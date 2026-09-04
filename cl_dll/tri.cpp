@@ -17,6 +17,19 @@
 #include "cl_entity.h"
 #include "triangleapi.h"
 
+#include "tri.h"
+
+extern IParticleMan *g_pParticleMan;
+//extern engine_studio_api_t IEngineStudio;
+
+float g_flWeatherTime;
+int g_iWeatherType;
+
+extern cvar_t *cl_particlefx;
+extern cvar_t *cl_fog;
+extern float g_flGravity;
+extern vec3_t v_origin;
+
 extern "C"
 {
 	void DLLEXPORT HUD_DrawNormalTriangles( void );
@@ -113,4 +126,106 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 #if TEST_IT
 //	Draw_Triangles();
 #endif
+}
+
+
+/*
+==================================
+
+DAY OF DEFEAT PARTICLES CODE HERE
+
+==================================
+*/
+
+CDoDParticle *CDoDParticle::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
+	const char *classname, bool bDistCull )
+{
+	return NULL;
+}
+
+void CDoDParticle::Touch( vec3_t *pos, vec3_t *normal, int index )
+{
+
+}
+
+void CDoDParticle::Die( void )
+{
+
+}
+
+vec3_t GetViewAngles( void )
+{
+	return Vector( 0, 0, 0 );
+}
+
+void CDoDParticle::Think( float time )
+{
+
+}
+
+void CDoDParticle::Force( void )
+{
+
+}
+
+void CDoDParticle::SetGlobalWind( float *vecWind )
+{
+
+}
+
+void CDoDParticle::AddGlobalWind( void )
+{
+
+}
+
+void CreateExplosionSmoke( vec3_t origin, vec3_t vVelocity, bool bInsideSmoke, bool bSpawnInside, bool bBlowable )
+{
+
+}
+
+void CreateExplosionSmokeInside( vec3_t origin )
+{
+
+}
+
+void TriangleWallPuff::Think( float time )
+{
+
+}
+
+void CreateDebrisWallPuff( vec3_t origin, vec3_t vVelocity, vec3_t vColor, int iPuff )
+{
+
+}
+
+void CDoDRocketTrail::Think( float time )
+{
+
+}
+
+CDoDRocketTrail *CDoDRocketTrail::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
+	const char *classname, bool bDistCull )
+{
+	return NULL;
+}
+
+void CDoDDirtExploDust::Think( float time )
+{
+
+}
+
+CDoDDirtExploDust *CDoDDirtExploDust::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
+	const char *classname, bool bDistCull )
+{
+	return NULL;
+}
+
+void UpdateSnow( void )
+{
+
+}
+
+void UpdateRain( void )
+{
+
 }
