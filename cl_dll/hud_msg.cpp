@@ -21,12 +21,19 @@
 #include "parsemsg.h"
 #include "r_efx.h"
 
+#ifdef USE_PMAN
+#include "Particleman.h"
+
+extern IParticleMan *g_pParticleMan;
+#endif 
+
 #define MAX_CLIENTS 32
 
 extern BEAM *pBeam;
 extern BEAM *pBeam2;
 
-extern float g_lastFOV;			// Vit_amiN
+extern float g_lastFOV;
+extern int g_iAlive;
 
 /// USER-DEFINED SERVER MESSAGE HANDLERS
 
@@ -44,17 +51,41 @@ int CHud::MsgFunc_ResetHUD( const char *pszName, int iSize, void *pbuf )
 		pList = pList->pNext;
 	}
 
-	// reset sensitivity
-	m_flMouseSensitivity = 0;
+	if( g_iAlive )
+	{
+		g_lastFOV = 0.0f;
+		m_iFOV = 0;
+		m_flMouseSensitivity = 0.0f;
+		m_iConcussionEffect = 0;
+	}
 
-	// reset concussion effect
-	m_iConcussionEffect = 0;
-
-	// Vit_amiN: reset the FOV
-	m_iFOV = 0;	// default_fov
-	g_lastFOV = 0.0f;
+#ifdef USE_PMAN
+	if( g_pParticleMan )
+		g_pParticleMan->ResetParticles();
+#endif
 
 	return 1;
+}
+
+int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
+{
+	HUDLIST *pList = m_pHudList;
+
+	while( pList )
+	{
+		if( pList->p )
+			pList->p->PlayerDied();
+		pList = pList->pNext;
+	}
+
+	m_flMouseSensitivity = 0.0f;
+
+	/* WHAMER: TODO: vgui2
+	if( !g_iVuser1z && gDoDViewPortInterface->UpdateScoreBoard() )
+		return 1*/
+
+	m_iFOV = 0;
+	g_lastFOV = 0.0f;
 }
 
 void CAM_ToFirstPerson( void );
@@ -66,6 +97,10 @@ void CHud::MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
 
 void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
+	/* WHAMER: TODO: vgui2
+	if( gViewPortInterface )
+		gViewPortInterface->OnLevelChange();*/
+
 	// prepare all hud data
 	HUDLIST *pList = m_pHudList;
 
@@ -78,6 +113,7 @@ void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 
 	//Probably not a good place to put this.
 	pBeam = pBeam2 = NULL;
+	//DoD_LoadClientEnts( gEngfuncs.pfnGetLevelName() );
 }
 
 int CHud::MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
