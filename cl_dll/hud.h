@@ -38,7 +38,7 @@
 #define MIN_ALPHA	 100	
 #define	HUDELEM_ACTIVE	1
 
-#define CHudMsgFunc(x) int MsgFunc_##x(const char *pszName, int iSize, void *buf)
+#define CHudMsgFunc(x) int MsgFunc_##x(const char *pszName, int iSize, void *pbuf)
 #define CHudUserCmd(x) void UserCmd_##x()
 
 typedef struct

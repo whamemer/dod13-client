@@ -25,10 +25,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#if USE_VGUI
-#include "vgui_TeamFortressViewport.h"
-#endif
-
 extern float *GetClientColor( int clientIndex );
 
 #define MAX_LINES	5
@@ -110,10 +106,6 @@ int CHudSayText::Draw( float flTime )
 {
 	int y = Y_START;
 
-#if USE_VGUI
-	if( ( gViewPort && gViewPort->AllowedToPrintText() == FALSE ) )
-		return 1;
-#endif
 	if ( !m_HUD_saytext->value )
 		return 1;
 
@@ -195,15 +187,6 @@ int CHudSayText::GetTextPrintY( void )
 // WHAMER: TODO: vgui2
 void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex, char *sstr1, char *sstr2, char *sstr3, char *sstr4 )
 {
-#if USE_VGUI
-	if( gViewPort && gViewPort->AllowedToPrintText() == FALSE )
-	{
-		// Print it straight to the console
-		ConsolePrint( pszBuf );
-		return;
-	}
-#endif
-
 	int i;
 	// find an empty string slot
 	for( i = 0; i < MAX_LINES; i++ )

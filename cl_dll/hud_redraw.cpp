@@ -19,11 +19,7 @@
 
 #include "hud.h"
 #include "cl_util.h"
-//#include "triangleapi.h"
-
-#if USE_VGUI
-#include "vgui_TeamFortressViewport.h"
-#endif
+#include "triangleapi.h"
 
 #include "event_api.h"
 
@@ -38,8 +34,6 @@ int grgLogoFrame[MAX_LOGO_FRAMES] =
 
 extern int g_iVisibleMouse;
 extern vec3_t v_origin;
-
-extern Queue g_RubbleQueue;
 
 char cmd[50];
 
@@ -56,11 +50,6 @@ int g_SpecScoreboardActive;
 // Think
 void CHud::Think( void )
 {
-#if USE_VGUI
-	m_scrinfo.iSize = sizeof(m_scrinfo);
-	GetScreenInfo(&m_scrinfo);
-#endif
-
 	if( flBoltHideXHair > 0.0f )
 		flBoltHideXHair = flBoltHideXHair - gHUD.m_flTimeDelta;
 
@@ -174,8 +163,6 @@ void CHud::Think( void )
 		m_iFOV = gHUD.m_Spectator.GetFOV(); // default_fov->value;
 	}
 
-	g_RubbleQueue.~Queue();
-
 	/* WHAMER: TODO: vgui2
 	if( gViewPortInterface )
 		gViewPortInterface->OnTick();*/
@@ -195,40 +182,13 @@ int CHud::Redraw( float flTime, int intermission )
 	if( m_flTimeDelta < 0 )
 		m_flTimeDelta = 0;
 
-#if USE_VGUI
-	// Bring up the scoreboard during intermission
-	if (gViewPort)
-	{
-		if( m_iIntermission && !intermission )
-		{
-			// Have to do this here so the scoreboard goes away
-			m_iIntermission = intermission;
-			gViewPort->HideCommandMenu();
-			gViewPort->HideScoreBoard();
-			gViewPort->UpdateSpectatorPanel();
-		}
-		else if( !m_iIntermission && intermission )
-		{
-			m_iIntermission = intermission;
-			gViewPort->HideCommandMenu();
-			gViewPort->HideVGUIMenu();
-#if !USE_NOVGUI_SCOREBOARD
-			gViewPort->ShowScoreBoard();
-#endif
-			gViewPort->UpdateSpectatorPanel();
-			// Take a screenshot if the client's got the cvar set
-			if( CVAR_GET_FLOAT( "hud_takesshots" ) != 0 )
-				m_flShotTime = flTime + 1.0;	// Take a screenshot in a second
-		}
-	}
-#else
 	if( !m_iIntermission && intermission )
 	{
 		// Take a screenshot if the client's got the cvar set
 		if( CVAR_GET_FLOAT( "hud_takesshots" ) != 0 )
 			m_flShotTime = flTime + 1.0f;	// Take a screenshot in a second
 	}
-#endif
+
 	if( m_flShotTime && m_flShotTime < flTime )
 	{
 		gEngfuncs.pfnClientCmd( "snapshot\n" );
@@ -311,9 +271,6 @@ int CHud::Redraw( float flTime, int intermission )
 
 	if( crosshair && crosshair->value > 0 )
 		ClientCmd( "crosshair 0" );
-
-	if( max_rubble )
-		g_RubbleQueue.maxelemets = max_rubble->value;
 
 	return 1;
 }

@@ -91,12 +91,13 @@ int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 
 void CAM_ToFirstPerson( void );
 
-void CHud::MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
+int CHud::MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
 {
 	CAM_ToFirstPerson();
+	return 1;
 }
 
-void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
+int CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
 	/* WHAMER: TODO: vgui2
 	if( gViewPortInterface )
@@ -115,6 +116,7 @@ void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	//Probably not a good place to put this.
 	pBeam = pBeam2 = NULL;
 	//DoD_LoadClientEnts( gEngfuncs.pfnGetLevelName() );
+	return 1;
 }
 
 int CHud::MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
