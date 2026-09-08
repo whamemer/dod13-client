@@ -86,6 +86,7 @@ int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 
 	m_iFOV = 0;
 	g_lastFOV = 0.0f;
+	return 1;
 }
 
 void CAM_ToFirstPerson( void );

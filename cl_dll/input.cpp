@@ -40,6 +40,9 @@ extern "C"
 	int DLLEXPORT HUD_Key_Event( int eventcode, int keynum, const char *pszCurrentBinding );
 }
 
+int g_JoyForward;
+int g_JoySide;
+
 extern int g_iAlive;
 
 extern int g_weaponselect;
@@ -58,6 +61,9 @@ int CL_ButtonBits( int );
 // xxx need client dll function to get and clear impuse
 extern cvar_t *in_joystick;
 
+static float flPlaySprintSoundTime, flProneView;
+static int flProneViewM;
+
 int	in_impulse = 0;
 int	in_cancel = 0;
 
@@ -71,16 +77,45 @@ cvar_t	*lookspring;
 cvar_t	*cl_pitchup;
 cvar_t	*cl_pitchdown;
 cvar_t	*cl_upspeed;
+
+cvar_t  *cl_bulletejects;
+cvar_t  *dodcredits;
+
+cvar_t  *cl_hud_objectives;
+cvar_t  *cl_hud_objtimer;
+cvar_t  *cl_hud_reinforcements;
+cvar_t  *cl_hud_health;
+cvar_t  *cl_hud_ammo;
+cvar_t  *cl_hud_msgs;
+
+cvar_t  *cl_cutscenes;
+cvar_t  *cl_dynamiclights;
+cvar_t  *cl_identiconmode;
+cvar_t  *cl_drawmodels;
+cvar_t  *cl_drawplayermodels;;
+
+cvar_t  *cl_dynamic_xhair;
+cvar_t  *cl_xhair_style;
+
+cvar_t  *cl_fog_density;
+cvar_t  *cl_fog_start;
+cvar_t  *cl_fog_end;
+cvar_t  *cl_fog;
+cvar_t  *cl_fog_red;
+cvar_t  *cl_fog_green;
+cvar_t  *cl_fog_blue;
+
 cvar_t	*cl_forwardspeed;
 cvar_t	*cl_backspeed;
 cvar_t	*cl_sidespeed;
+float   g_flSideSpeed;
 cvar_t	*cl_movespeedkey;
 cvar_t	*cl_yawspeed;
 cvar_t	*cl_pitchspeed;
 cvar_t	*cl_anglespeedkey;
 cvar_t	*cl_vsmoothing;
+cvar_t  *cl_particlefx;
 
-cvar_t *cl_dynamiclights;
 
 /*
 ===============================================================================
@@ -120,6 +155,7 @@ kbutton_t	in_use;
 kbutton_t	in_jump;
 kbutton_t	in_attack;
 kbutton_t	in_attack2;
+kbutton_t	in_special;
 kbutton_t	in_up;
 kbutton_t	in_down;
 kbutton_t	in_duck;
@@ -128,6 +164,8 @@ kbutton_t	in_alt1;
 kbutton_t	in_score;
 kbutton_t	in_break;
 kbutton_t	in_graph;  // Display the netgraph
+kbutton_t   in_map;
+kbutton_t   in_mapzoom;
 
 typedef struct kblist_s
 {
@@ -336,6 +374,16 @@ void KeyDown( kbutton_t *b )
 
 /*
 ============
+ForceKeyUp
+============
+*/
+void ForceKeyUp( kbutton_t *b )
+{
+
+}
+
+/*
+============
 KeyUp
 ============
 */
@@ -390,6 +438,38 @@ int DLLEXPORT HUD_Key_Event( int down, int keynum, const char *pszCurrentBinding
 	return 1;
 }
 
+bool DoDAreWeAlive( void )
+{
+	return false;
+}
+
+bool DoDAreWeAttacking( void )
+{
+	return false;
+}
+
+bool IsAttackPressed( void )
+{
+	return false;
+}
+
+bool DoDAreWeMoving( void )
+{
+	return false;
+}
+
+extern float i_ProneCounter;
+
+float DoDGetSpeed( void )
+{
+	return 0.0f;
+}
+
+bool DoDHandleButtons( int ButtonPressed )
+{
+	return false;
+}
+
 void IN_BreakDown( void )
 {
 	KeyDown( &in_break );
@@ -438,6 +518,28 @@ void IN_UpUp( void )
 void IN_DownDown( void )
 {
 	KeyDown( &in_down );
+}
+
+extern int g_iDeadFlag;
+
+void IN_MapUp( void )
+{
+
+}
+
+void IN_MapDown( void )
+{
+
+}
+
+void IN_MapZoomUp( void )
+{
+
+}
+
+void IN_MapZoomDown( void )
+{
+
 }
 
 void IN_DownUp( void )
@@ -641,6 +743,16 @@ void IN_AttackUp( void )
 	in_cancel = 0;
 }
 
+void IN_SpecialDown( void )
+{
+
+}
+
+void IN_SpecialUp( void )
+{
+
+}
+
 // Special handling
 void IN_Cancel( void )
 {
@@ -737,6 +849,11 @@ float CL_KeyState( kbutton_t *key )
 	// clear impulses
 	key->state &= 1;		
 	return val;
+}
+
+void GetWeaponRecoilAmount( int weaponId, const float &flPitchRecoil, const float &flYawRecoil )
+{
+
 }
 
 /*

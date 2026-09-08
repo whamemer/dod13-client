@@ -5,10 +5,12 @@
 // $NoKeywords: $
 //=============================================================================
 
+#ifdef USE_PMAN
 #include "GL/gl.h"
-#include "r_studioint.h"
+#include "util_vector.h"
 #include "triangleapi.h"
 #include "hud.h"
+#include "r_studioint.h"
 
 extern engine_studio_api_t IEngineStudio;
 
@@ -75,3 +77,4 @@ void RenderDoDFog( void )
 		}
 	}
 }
+#endif

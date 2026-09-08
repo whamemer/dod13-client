@@ -11,6 +11,7 @@
 #include "com_model.h"
 #include "util_vector.h"
 
+#ifdef USE_PMAN
 #include "Particleman.h"
 
 extern IParticleMan *g_pParticleman;
@@ -115,5 +116,6 @@ public:
 		CDoDParticle::Think( time );
 	}
 };
+#endif // USE_PMAN
 
 #endif // TRI_H

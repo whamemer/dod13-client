@@ -180,33 +180,33 @@ void ToggleScores( void )
 void SpectatorToggleDrawNames( void )
 {
 	if( gHUD.m_Spectator.m_drawnames->value == 0.0f )
-		gHUD.m_Spectator.m_drawnames->value == 1.0f;
+		gHUD.m_Spectator.m_drawnames->value = 1.0f;
 	else
-		gHUD.m_Spectator.m_drawnames->value == 0.0f;
+		gHUD.m_Spectator.m_drawnames->value = 0.0f;
 }
 
 void SpectatorToggleDrawCone( void )
 {
 	if( gHUD.m_Spectator.m_drawcone->value == 0.0f )
-		gHUD.m_Spectator.m_drawcone->value == 1.0f;
+		gHUD.m_Spectator.m_drawcone->value = 1.0f;
 	else
-		gHUD.m_Spectator.m_drawcone->value == 0.0f;
+		gHUD.m_Spectator.m_drawcone->value = 0.0f;
 }
 
 void SpectatorToggleDrawStatus( void )
 {
 	if( gHUD.m_Spectator.m_drawstatus->value == 0.0f )
-		gHUD.m_Spectator.m_drawstatus->value == 1.0f;
+		gHUD.m_Spectator.m_drawstatus->value = 1.0f;
 	else
-		gHUD.m_Spectator.m_drawstatus->value == 0.0f;
+		gHUD.m_Spectator.m_drawstatus->value = 0.0f;
 }
 
 void SpectatorToggleAutoDirector( void )
 {
 	if( gHUD.m_Spectator.m_autoDirector->value == 0.0f )
-		gHUD.m_Spectator.m_autoDirector->value == 1.0f;
+		gHUD.m_Spectator.m_autoDirector->value = 1.0f;
 	else
-		gHUD.m_Spectator.m_autoDirector->value == 0.0f;
+		gHUD.m_Spectator.m_autoDirector->value = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -2000,7 +2000,11 @@ void CHudSpectator::Reset()
 	{
 		// update level overview if level changed
 		ParseOverviewFile();
-		LoadMapSprites();
+		
+		if( m_OverviewData.layers > 0 )
+			m_MapSprite = gEngfuncs.LoadMapSprite( *m_OverviewData.layersImages );
+		else
+			m_MapSprite = NULL;
 	}
 
 	memset( &m_OverviewEntities, 0, sizeof(m_OverviewEntities) );
@@ -2023,22 +2027,19 @@ void CHudSpectator::InitHUDData()
 	iJumpSpectator = 0;
 	g_iUser1 = g_iUser2 = 0;
 
-	memset( &m_OverviewData, 0, sizeof(m_OverviewData));
-	memset( &m_OverviewEntities, 0, sizeof(m_OverviewEntities));
+	memset( &m_OverviewData, 0, sizeof( m_OverviewData ) );
+	memset( &m_OverviewEntities, 0, sizeof( m_OverviewEntities ) );
 
-	if( gEngfuncs.IsSpectateOnly() || gEngfuncs.pDemoAPI->IsPlayingback() )
-		m_autoDirector->value = 1.0f;
-	else
-		m_autoDirector->value = 0.0f;
+	m_autoDirector->value = 1.0f;
 
 	Reset();
 
-	SetModes( OBS_CHASE_LOCKED, INSET_OFF );
+	SetModes( OBS_CHASE_FREE, INSET_OFF );
 
 	g_iUser2 = 0; // fake not target until first camera command
 
 	// reset HUD FOV
-	gHUD.m_iFOV =  CVAR_GET_FLOAT( "default_fov" );
+	gHUD.m_iFOV = CVAR_GET_FLOAT( "default_fov" );
 }
 
 HSPRITE CHudSpectator::GetMarkerSPR( int marker )

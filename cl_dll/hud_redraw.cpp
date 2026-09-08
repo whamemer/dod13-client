@@ -39,7 +39,7 @@ int grgLogoFrame[MAX_LOGO_FRAMES] =
 extern int g_iVisibleMouse;
 extern vec3_t v_origin;
 
-Queue g_RubbleQueue;
+extern Queue g_RubbleQueue;
 
 char cmd[50];
 

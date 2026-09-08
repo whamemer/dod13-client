@@ -388,7 +388,7 @@ TEMPENTITY *g_DeadPlayerModels[64];
 
 void EV_RoundReset( event_args_t *args )
 {
-	if( r_decals || gEngfuncs.pfnGetCvarPointer( "r_decals" ) != nullptr )
+	if( r_decals || gEngfuncs.pfnGetCvarPointer( "r_decals" ) != 0 )
 	{
 		int maxdecals = r_decals->value;
 
@@ -405,7 +405,7 @@ void EV_RoundReset( event_args_t *args )
 			if( g_DeadPlayerModels[j] )
 			{
 				g_DeadPlayerModels[j]->die = 0.0f;
-				g_DeadPlayerModels[j] = nullptr;
+				g_DeadPlayerModels[j] = NULL;
 			}
 		}
 }
