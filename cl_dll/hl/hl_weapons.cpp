@@ -31,6 +31,8 @@
 #include "../com_weapons.h"
 #include "../demo.h"
 
+#include "dod_shared.h"
+
 extern globalvars_t *gpGlobals;
 extern int g_iUser1;
 extern float flBoltHideXHair;
@@ -180,33 +182,67 @@ void CBaseEntity::Killed( entvars_t *pevAttacker, int iGib )
 /*
 =====================
 CBasePlayerWeapon::DefaultReload
-WHAMER: TODO: rework
 =====================
 */
 BOOL CBasePlayerWeapon::DefaultReload( int iClipSize, int iAnim, float fDelay, int body )
 {
-	if( m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0 )
-		return FALSE;
+	ItemInfo ii;
+	int *pAmmo;
+	int j;
 
-	int j = Q_min( iClipSize - m_iClip, m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] );
+	GetItemInfo( &ii );
 
-	if( j == 0 )
-		return FALSE;
+	pAmmo = current_ammo;
 
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + fDelay;
+	if( !pAmmo )
+		pAmmo = &m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType];
 
-	//!!UNDONE -- reload sound goes here !!!
-	SendWeaponAnim( iAnim, UseDecrement(), body );
+	j = *pAmmo;
 
-	m_fInReload = TRUE;
+	if( j > 0 )
+	{
+		if( m_iId == WEAPON_ENFIELD )
+			j = 2 * ii.iMaxClip - m_iClip;
+		else
+			j = ii.iMaxClip - m_iClip;
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 3.0f;
-	return TRUE;
+		if( *pAmmo <= j )
+		{
+			if( *pAmmo > m_iClip )
+			{
+				m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + fDelay;
+				m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + fDelay;
+
+				flBoltHideXHair = UTIL_WeaponTimeBase() + fDelay;
+
+				SendWeaponAnim( iAnim, UseDecrement() != 0 );
+
+				m_fInReload = TRUE;
+				gHUD.m_bAutoReloadComplete = FALSE;
+
+				if( ii.iFlags & ITEM_FLAG_HEAT )
+					m_flWeaponHeat = 0.0f;
+
+				float flDelay = 3.0f;
+
+				if( fDelay >= 3.0f )
+				{
+					flDelay = fDelay;
+				}
+
+				m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + flDelay;
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
 }
 
 /*
 =====================
 CBasePlayerWeapon::CanDeploy
+
 =====================
 */
 BOOL CBasePlayerWeapon::CanDeploy( void ) 
@@ -242,7 +278,7 @@ BOOL CBasePlayerWeapon::CanDeploy( void )
 /*
 =====================
 CBasePlayerWeapon::DefaultDeploy
-WHAMER: TODO: rework
+
 =====================
 */
 BOOL CBasePlayerWeapon::DefaultDeploy( const char *szViewModel, const char *szWeaponModel, int iAnim, const char *szAnimExt,
@@ -255,6 +291,8 @@ BOOL CBasePlayerWeapon::DefaultDeploy( const char *szViewModel, const char *szWe
 
 	SendWeaponAnim( iAnim, skiplocal, body );
 
+	flBoltHideXHair = 0.5f;
+	gHUD.g_pModel = szWeaponModel - gpGlobals->pStringBase;
 	m_pPlayer->m_flNextAttack = 0.5f;
 	m_flTimeWeaponIdle = 1.0f;
 	return TRUE;
@@ -269,6 +307,16 @@ CBasePlayerWeapon::TimedDeploy
 BOOL CBasePlayerWeapon::TimedDeploy( const char *szViewModel, const char *szWeaponModel, int iAnim, const char *szAnimExt, 
 	const char *szAnimReloadExt, float idleTime, float attackTime, int skiplocal )
 {
+	if( !CanDeploy() )
+		return FALSE;
+
+	gEngfuncs.CL_LoadModel( szViewModel, &m_pPlayer->pev->viewmodel );
+
+	SendWeaponAnim( iAnim, skiplocal, 0 );
+
+	m_pPlayer->m_flNextAttack = attackTime;
+	flBoltHideXHair = attackTime;
+	m_flTimeWeaponIdle = idleTime;
 	return TRUE;
 }
 
@@ -384,71 +432,130 @@ Vector CBaseEntity::FireBulletsNC ( Vector vecSrc, Vector vecDirShooting, float 
 CBasePlayerWeapon::ItemPostFrame
 
 Handles weapon firing, reloading, etc.
-WHAMER: TODO: rework
 =====================
 */
 void CBasePlayerWeapon::ItemPostFrame( void )
 {
-	if( ( m_fInReload ) && ( m_pPlayer->m_flNextAttack <= 0.0f ) )
+	int *pAmmo;
+	int j;
+	CRocketWeapon *pRocketWpn;
+	bool bAutoreload;
+	ItemInfo info, ii;
+
+	GetItemInfo( &info );
+
+	pAmmo = current_ammo;
+	if( !pAmmo )
 	{
-#if 1
-		// complete the reload. 
-		ItemInfo itemInfo;
-		memset( &itemInfo, 0, sizeof( itemInfo ) );
-		GetItemInfo( &itemInfo );
+		pAmmo = &m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType];
+	}
 
-		int j = Q_min( itemInfo.iMaxClip - m_iClip, m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] );
+	if( m_fInReload && m_flNextPrimaryAttack <= 0.0f && *pAmmo > 0 )
+	{
+		if( Classify() == CLASS_ROCKET )
+		{
+			if( m_iWeaponState & WPNSTATE_ROCKET_SLOW )
+			{
+				m_iWeaponState &= ~WPNSTATE_ROCKET_SLOW;
+				pRocketWpn->ReSlow();
+			}
+		}
 
-		// Add them to the clip
-		m_iClip += j;
-		m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] -= j;
-#else
-		m_iClip += 10;
-#endif
+		if( m_iId == WEAPON_ENFIELD )
+		{
+			j = 5;
+			if( *pAmmo <= 5 )
+				j = *pAmmo;
+		}
+		else
+		{
+			j = CBasePlayerItem::ItemInfoArray[m_iId].iMaxClip;
+			if( *pAmmo <= j )
+				j = *pAmmo;
+		}
+
+		m_iClip = j;
+		*pAmmo -= j;
 		m_fInReload = FALSE;
-	}
-
-	if( ( m_pPlayer->pev->button & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= 0.0f ) )
-	{
-		if( pszAmmo2() && !m_pPlayer->m_rgAmmo[SecondaryAmmoIndex()] )
-		{
-			m_fFireOnEmpty = TRUE;
-		}
-
-		SecondaryAttack();
-		m_pPlayer->pev->button &= ~IN_ATTACK2;
-	}
-	else if( ( m_pPlayer->pev->button & IN_ATTACK ) && ( m_flNextPrimaryAttack <= 0.0f ) )
-	{
-		if( ( m_iClip == 0 && pszAmmo1() ) || ( iMaxClip() == -1 && !m_pPlayer->m_rgAmmo[PrimaryAmmoIndex()] ) )
-		{
-			m_fFireOnEmpty = TRUE;
-		}
-
-		PrimaryAttack();
-	}
-	else if( m_pPlayer->pev->button & IN_RELOAD && iMaxClip() != WEAPON_NOCLIP && !m_fInReload )
-	{
-		// reload when reload is pressed, or if no buttons are down and weapon is empty.
-		Reload();
-	}
-	else if( !( m_pPlayer->pev->button & ( IN_ATTACK | IN_ATTACK2 ) ) )
-	{
-		// no fire buttons down
 		m_fFireOnEmpty = FALSE;
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase();
+	}
 
-		// weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
-		if( m_iClip == 0 && !( iFlags() & ITEM_FLAG_NOAUTORELOAD ) && m_flNextPrimaryAttack <= 0.0f )
+	if( m_fInAttack && ( m_pPlayer->pev->button & IN_ATTACK ) == 0 )
+		m_fInAttack = FALSE;
+
+	GetItemInfo( &ii );
+
+	if( ii.iFlags & ITEM_FLAG_HEAT )
+	{
+		m_flWeaponHeat = g_flWeaponHeat;
+		if( g_flWeaponHeat < 0.0f )
+			m_flWeaponHeat = 0.0f;
+	}
+
+	int button = m_pPlayer->pev->button;
+
+	if( ( button & IN_ATTACK2 ) && m_flNextSecondaryAttack <= 0.0f )
+	{
+		if( CBasePlayerItem::ItemInfoArray[m_iId].pszAmmo2 && !m_pPlayer->m_rgAmmo[SecondaryAmmoIndex()] )
+			m_fFireOnEmpty = TRUE;
+
+		if( gHUD.m_iRoundState == 1 )
+			SecondaryAttack();
+
+		m_pPlayer->pev->button &= ~IN_ATTACK2;
+
+		if( ShouldWeaponIdle() )
+			WeaponIdle();
+
+		return;
+	}
+
+	if( ( button & IN_ATTACK ) && m_flNextPrimaryAttack <= 0.0f )
+	{
+		if( ( !m_iClip && info.pszAmmo1 ) || ( info.iMaxClip == -1 && !*pAmmo ) )
+			m_fFireOnEmpty = TRUE;
+
+		if( gHUD.m_iRoundState == 1 )
+			PrimaryAttack();
+
+		gHUD.i_Recoil = 1;
+
+		if( ShouldWeaponIdle() )
+			WeaponIdle();
+
+		return;
+	}
+
+	if( ( button & IN_RELOAD ) && CBasePlayerItem::ItemInfoArray[m_iId].iMaxClip != -1 
+		&& !m_fInReload && gHUD.m_bAutoReloadComplete )
+	{
+		if( m_pPlayer->pev->waterlevel <= 2 )
 		{
 			Reload();
 			return;
 		}
+	}
+	else
+	{
+		m_fFireOnEmpty = FALSE;
+		gHUD.i_Recoil = 0;
 
-		WeaponIdle( );
-		return;
+		bAutoreload = ( cl_autoreload->value > 0.0f );
+
+		if( bAutoreload
+			&& gHUD.m_bAutoReloadComplete
+			&& !m_iClip
+			&& ( info.iFlags & ITEM_FLAG_NOAUTOSWITCHEMPTY ) == 0
+			&& m_flNextPrimaryAttack < 0.0f
+			&& ( g_iUser3 != 2 && g_iVuser1x != 2 || Classify() != CLASS_MACHINEGUNS )
+			&& m_pPlayer->pev->waterlevel <= 2 )
+		{
+			Reload();
+			return;
+		}
 	}
 
-	// catch all
 	if( ShouldWeaponIdle() )
 	{
 		WeaponIdle();
@@ -499,6 +606,12 @@ int CBasePlayerWeapon::ChangeFOV( int fov )
 	return g_lastFOV;
 }
 
+/*
+=====================
+CBasePlayerWeapon::ZoomIn
+
+=====================
+*/
 int CBasePlayerWeapon::ZoomIn( void )
 {
 	if( m_pPlayer->pev->fuser2 != g_lastFOV )
@@ -509,6 +622,12 @@ int CBasePlayerWeapon::ZoomIn( void )
 	return 0;
 }
 
+/*
+=====================
+CBasePlayerWeapon::ZoomOut
+
+=====================
+*/
 int CBasePlayerWeapon::ZoomOut( void )
 {
 	if( g_iVuser1z || m_pPlayer->pev->fuser2 != g_lastFOV )
@@ -519,11 +638,23 @@ int CBasePlayerWeapon::ZoomOut( void )
 	return 0;
 }
 
+/*
+=====================
+CBasePlayerWeapon::GetFOV
+
+=====================
+*/
 int CBasePlayerWeapon::GetFOV( void ) 
 { 
 	return g_lastFOV; 
 }
 
+/*
+=====================
+CBasePlayerWeapon::PlayerIsWaterSniping
+
+=====================
+*/
 bool CBasePlayerWeapon::PlayerIsWaterSniping( void )
 {
 	int WaterLevel = gHUD.GetWaterLevel();
@@ -537,12 +668,24 @@ bool CBasePlayerWeapon::PlayerIsWaterSniping( void )
 	return true;
 }
 
+/*
+=====================
+CBasePlayerWeapon::ThinkZoomOut
+
+=====================
+*/
 void CBasePlayerWeapon::ThinkZoomOut( void )
 {
 	m_pPlayer->m_iFOV = ZoomOut();
 	UpdateZoomSpeed();
 }
 
+/*
+=====================
+CBasePlayerWeapon::ThinkZoomIn
+
+=====================
+*/
 void CBasePlayerWeapon::ThinkZoomIn()
 {
 	vec3_t length = m_pPlayer->pev->velocity;
@@ -557,11 +700,23 @@ void CBasePlayerWeapon::ThinkZoomIn()
 	}
 }
 
+/*
+=====================
+CBasePlayerWeapon::flAim
+
+=====================
+*/
 float CBasePlayerWeapon::flAim( float accuracyFactor, CBasePlayer *pOther )
 {
 	return accuracyFactor;
 }
 
+/*
+=====================
+CBasePlayerWeapon::Aim
+
+=====================
+*/
 Vector CBasePlayerWeapon::Aim( float accuracyFactor, CBasePlayer *pOther, unsigned int shared_rand )
 {
 	float targetx, targety, targetz;

@@ -140,6 +140,8 @@ public:
 #define ITEM_FLAG_ROCKET			642
 #define ITEM_FLAG_66MM_GER_BIPOD	2178
 
+#define ITEM_FLAG_HEAT				2048
+
 #define WEAPON_IS_ONTARGET 0x40
 
 // for guns Classify
