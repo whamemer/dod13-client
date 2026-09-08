@@ -43,9 +43,7 @@ extern "C"
 #include "r_studioint.h"
 #include "com_model.h"
 
-#ifdef USE_VGUI
 #include "voice_status.h"
-#endif
 
 #ifdef USE_PMAN
 #include "particleman.h"
@@ -339,48 +337,137 @@ char *EV_HLDM_DamageDecal( physent_t *pe )
 
 static cvar_t *r_decals;
 
-// WHAMER: TODO: rework
-void EV_HLDM_GunshotDecalTrace( pmtrace_t *pTrace, char *decalName, float *vecSrc, float *vecEnd, int iBulletType )
+void EV_HLDM_GunshotDecalTrace( pmtrace_t *pTrace, float *vecSrc, float *vecEnd, int iBulletType )
 {
-	int iRand;
 	physent_t *pe;
+	char chTextureType = 'F';
+	int idx;
+	static char decalname[32];
 
-	gEngfuncs.pEfxAPI->R_BulletImpactParticles( pTrace->endpos );
+	float flHeight = EV_HLDM_WaterHeight( vecSrc, 0.0f, 0.0f ) - vecSrc[2];
 
-	iRand = gEngfuncs.pfnRandomLong( 0, 0x7FFF );
-	if( iRand < ( 0x7fff / 2 ) )// not every bullet makes a sound.
+	if( flHeight < 0.8f )
 	{
-		switch( iRand % 5 )
+		if( EV_HLDM_WaterHeight( pTrace->endpos, 0.0f, 0.0f ) - pTrace->endpos[2] < 8.0f )
+			flHeight = 0.0f;
+		else
+			flHeight = EV_HLDM_WaterHeight( pTrace->endpos, 0.0f, 0.0f ) - pTrace->endpos[2] 
+				+ pTrace->endpos[2] - vecSrc[2];
+	}
+
+	int entity = gEngfuncs.pEventAPI->EV_IndexFromTrace( pTrace );
+	char *pTextureName;
+	pmtrace_t tr2;
+	char texname[64], szbuffer[64];
+	vec3_t location;
+
+	if( entity > gEngfuncs.GetMaxClients() )
+	{
+		chTextureType = 'K';
+		pTextureName = ( char * ) gEngfuncs.pEventAPI->EV_TraceTexture( tr2.ent, pTrace->endpos, vecEnd );
+
+		if( pTextureName )
 		{
-		case 0:
-			gEngfuncs.pEventAPI->EV_PlaySound( -1, pTrace->endpos, 0, "weapons/ric1.wav", 1.0, ATTN_NORM, 0, PITCH_NORM );
-			break;
-		case 1:
-			gEngfuncs.pEventAPI->EV_PlaySound( -1, pTrace->endpos, 0, "weapons/ric2.wav", 1.0, ATTN_NORM, 0, PITCH_NORM );
-			break;
-		case 2:
-			gEngfuncs.pEventAPI->EV_PlaySound( -1, pTrace->endpos, 0, "weapons/ric3.wav", 1.0, ATTN_NORM, 0, PITCH_NORM );
-			break;
-		case 3:
-			gEngfuncs.pEventAPI->EV_PlaySound( -1, pTrace->endpos, 0, "weapons/ric4.wav", 1.0, ATTN_NORM, 0, PITCH_NORM );
-			break;
-		case 4:
-			gEngfuncs.pEventAPI->EV_PlaySound( -1, pTrace->endpos, 0, "weapons/ric5.wav", 1.0, ATTN_NORM, 0, PITCH_NORM );
-			break;
+			strcpy( texname, pTextureName );
+
+			char *pCleanName = texname;
+
+			if( texname[0] == '+' || texname[0] == '-' )
+			{
+				pCleanName = &texname[2];
+			}
+
+			if( pCleanName[0] == '!' || pCleanName[0] == '{' || pCleanName[0] == '~' || pCleanName[0] == ' ' )
+			{
+				pCleanName++;
+			}
+
+			strcpy( szbuffer, pCleanName );
+			szbuffer[12] = '\0';
+
+			chTextureType = PM_FindTextureType( szbuffer );
+
+			if( flHeight != 0.0f )
+			{
+				chTextureType = 'S';
+				if( EV_HLDM_WaterEntryPoint( pTrace, vecSrc, location ) )
+				{
+					VectorCopy( location, pTrace->endpos );
+				}
+			}
 		}
 	}
 
 	pe = gEngfuncs.pEventAPI->EV_GetPhysent( pTrace->ent );
 
-	// Only decal brush models such as the world etc.
-	if(  decalName && decalName[0] && pe && ( pe->solid == SOLID_BSP || pe->movetype == MOVETYPE_PUSHSTEP ) )
+	if( pe && ( pe->classnumber == 1 || chTextureType == 'Y' ) )
 	{
-		if( CVAR_GET_FLOAT( "r_decals" ) )
+		chTextureType = 'Y';
+		idx = gEngfuncs.pfnRandomLong( 0, 2 );
+		sprintf( decalname, "{break%i", idx + 1 );
+	}
+	else
+	{
+		switch( chTextureType )
 		{
-			gEngfuncs.pEfxAPI->R_DecalShoot(
-				gEngfuncs.pEfxAPI->Draw_DecalIndex( gEngfuncs.pEfxAPI->Draw_DecalIndexFromName( decalName ) ),
-				gEngfuncs.pEventAPI->EV_IndexFromTrace( pTrace ), 0, pTrace->endpos, 0 );
+		case 'A': case 'D': case 'E': case 'F': case 'G':
+		case 'H': case 'K': case 'L': case 'M': case 'N':
+		case 'P': case 'R': case 'S':
+			decalname[0] = '\0';
+			break;
+		case 'B':
+			chTextureType = 'B';
+			idx = gEngfuncs.pfnRandomLong( 1, 2 );
+			sprintf( decalname, "{cement%i", idx );
+			break;
+		case 'C':
+			chTextureType = 'C';
+			idx = gEngfuncs.pfnRandomLong( 1, 2 );
+			sprintf( decalname, "{cement%i", idx );
+			break;
+		case 'T':
+			chTextureType = 'T';
+			idx = gEngfuncs.pfnRandomLong( 1, 4 );
+			sprintf( decalname, "{crack%i", idx );
+			break;
+		case 'W':
+			chTextureType = 'W';
+			idx = gEngfuncs.pfnRandomLong( 1, 3 );
+			sprintf( decalname, "{wood%i", idx );
+			break;
+		case 'Z':
+			chTextureType = 'Z';
+			idx = gEngfuncs.pfnRandomLong( 1, 3 );
+			sprintf( decalname, "{wood%i", idx );
+			break;
+		default:
+			idx = gEngfuncs.pfnRandomLong( 1, 3 );
+			sprintf( decalname, "{generic%i", idx );
+			break;
 		}
+	}
+
+	EV_PlaySurfaceHitSound( pTrace, iBulletType, chTextureType );
+
+	if( pe && ( pe->solid == 4 || pe->movetype == 13 ) )
+	{
+		if( !r_decals )
+		{
+			r_decals = gEngfuncs.pfnGetCvarPointer( "r_decals" );
+		}
+
+		if( decalname[0] != '\0' && r_decals && r_decals->value != 0.0f )
+		{
+			int iHitEntity = gEngfuncs.pEventAPI->EV_IndexFromTrace( pTrace );
+			int iDecalIndex = gEngfuncs.pEfxAPI->Draw_DecalIndexFromName( decalname );
+			int iFinalDecal = gEngfuncs.pEfxAPI->Draw_DecalIndex( iDecalIndex );
+
+			gEngfuncs.pEfxAPI->R_DecalShoot( iFinalDecal, iHitEntity, 0, pTrace->endpos, 0 );
+		}
+
+#ifdef USE_PMAN
+		EV_HLDM_DoDSurfaceFX( pTrace, iBulletType, chTextureType );
+#endif
 	}
 }
 
@@ -723,53 +810,118 @@ FireBullets
 Go to the trouble of combining multiple pellets into a single damage call.
 ================
 */
-// WHAMER: TODO: rework
-void EV_HLDM_FireBullets( int idx, float *forward, float *right, float *up, int cShots, float *vecSrc, float *vecDirShooting, float flDistance, int iBulletType, int iTracerFreq, int *tracerCount, float flSpreadX, float flSpreadY )
+void EV_HLDM_FireBullets( int idx, float *forward, float *right, float *up, int cShots, 
+	float *vecSrc, float *vecDirShooting, float *vecSpread, float flDistance, int iBulletType, 
+	int iTracerFreq, int *tracerCount )
 {
 	int i;
 	pmtrace_t tr;
 	int iShot;
-	int tracer;
+	vec3_t tracerOrigin;
+	vec3_t vecDir, vecEnd;
 
-	for( iShot = 1; iShot <= cShots; iShot++ )	
+	cl_entity_t *thisplayer = gEngfuncs.GetLocalPlayer();
+	cl_entity_t *firingPlayer = gEngfuncs.GetEntityByIndex( idx );
+
+	if( cShots <= 0 )
+		return;
+
+	for( iShot = 1; iShot <= cShots; iShot++ )
 	{
 		vec3_t vecDir, vecEnd;
-		float x, y, z;
 
-		//We randomize for the Shotgun.
-		if( iBulletType == BULLET_PLAYER_BUCKSHOT )
+		for( i = 0; i < 3; i++ )
 		{
-			do{
-				x = gEngfuncs.pfnRandomFloat( -0.5, 0.5 ) + gEngfuncs.pfnRandomFloat( -0.5, 0.5 );
-				y = gEngfuncs.pfnRandomFloat( -0.5, 0.5 ) + gEngfuncs.pfnRandomFloat( -0.5, 0.5 );
-				z = x * x + y * y;
-			}while( z > 1 );
-
-			for( i = 0 ; i < 3; i++ )
-			{
-				vecDir[i] = vecDirShooting[i] + x * flSpreadX * right[i] + y * flSpreadY * up [i];
-				vecEnd[i] = vecSrc[i] + flDistance * vecDir[i];
-			}
-		}//But other guns already have their spread randomized in the synched spread.
-		else
-		{
-			for( i = 0 ; i < 3; i++ )
-			{
-				vecDir[i] = vecDirShooting[i] + flSpreadX * right[i] + flSpreadY * up [i];
-				vecEnd[i] = vecSrc[i] + flDistance * vecDir[i];
-			}
+			vecEnd[i] = ( right[i] * vecSpread[0] + vecDirShooting[i] + up[i] * vecSpread[1] ) * flDistance + vecSrc[i];
 		}
 
 		gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction( false, true );
-
-		// Store off the old count
 		gEngfuncs.pEventAPI->EV_PushPMStates();
-
-		// Now add in all of the players.
-		gEngfuncs.pEventAPI->EV_SetSolidPlayers( idx - 1 );	
-
+		gEngfuncs.pEventAPI->EV_SetSolidPlayers( idx - 1 );
 		gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
-		gEngfuncs.pEventAPI->EV_PlayerTrace( vecSrc, vecEnd, PM_NORMAL, -1, &tr );
+		gEngfuncs.pEventAPI->EV_PlayerTrace( vecSrc, vecEnd, 2, -1, &tr );
+
+		tracerOrigin = { 0.0f, 0.0f, 0.0f };
+
+		if( firingPlayer->curstate.gaitsequence - 15 > 1 )
+		{
+			for( i = 0; i < 2; i++ )
+			{
+				tracerOrigin[i] = vecSrc[i] + right[i] + right[i] + forward[i] * 16.0f;
+			}
+
+			tracerOrigin[2] = vecSrc[2] - 4.0f + right[2] + right[2] + forward[2] * 16.0f;
+		}
+		else
+		{
+			for( i = 0; i < 2; i++ )
+			{
+				tracerOrigin[i] = vecSrc[i] + right[i] + right[i] + forward[i] * 16.0f 
+					+ forward[i] * 34.0f + right[i] * 10.0f;
+			}
+
+			tracerOrigin[2] = vecSrc[2] - 16.0f + right[2] + right[2] + forward[2] * 16.0f 
+				+ forward[2] * 34.0f + right[2] * 10.0f;
+		}
+
+		EV_HLDM_CheckTracer( idx, vecSrc, vecEnd, forward, right, iBulletType, iTracerFreq, tracerCount, tracerOrigin );
+
+		pmtrace_t *tr2;
+		vec3_t vecTarget, vecBullet;
+		vec3_t vecCross;
+		float projectionLen;
+
+		if( firingPlayer != thisplayer )
+		{
+			for( i = 0; i < 3; i++ )
+			{
+				vecBullet[i] = tr.endpos[i] - vecSrc[i];
+			}
+
+			vecTarget = firingPlayer->curstate.origin - thisplayer->curstate.origin;
+
+			gEngfuncs.pEventAPI->EV_PlayerTrace( vecSrc, thisplayer->curstate.origin, PM_WORLD_ONLY, -1, &tr );
+
+			if( tr2->fraction > 0.9f )
+			{
+				vecCross = CrossProduct( vecBullet, vecTarget );
+				projectionLen = vecCross.Length();
+
+				if( projectionLen != 0.0f )
+				{
+					float fl = DotProduct( vecBullet, vecTarget ) / ( vecBullet.Length() * vecTarget.Length() );
+
+					if( fl > 1.0f )
+						fl = 1.0f;
+					else if( fl < -1.0f )
+						fl = -1.0f;
+
+					float fTheta = acosf( fl );
+					float flDist = sinf( fTheta ) * vecTarget.Length();
+
+					if( flDist < 100.0f )
+					{
+						if( vecBullet.Length() > vecTarget.Length() * cosf( fTheta ) )
+						{
+							char buf[32];
+
+							sprintf( buf, "weapons/whizz%d.wav", gEngfuncs.pfnRandomLong( 1, 17 ) );
+							gEngfuncs.pfnPlaySoundByName( buf, gEngfuncs.pfnRandomFloat( 0.95f, 1.0f ) );
+						}
+					}
+				}
+			}
+		}
+
+		if( tr.fraction != 1.0f )
+		{
+			EV_HLDM_PlayTextureSound( idx, &tr, vecSrc, &vecEnd.x, iBulletType );
+
+			physent_t *pe = gEngfuncs.pEventAPI->EV_GetPhysent( tr.ent );
+
+			if( pe && pe->solid == SOLID_BBOX )
+				EV_HLDM_GunshotDecalTrace( &tr, vecSrc, vecEnd, iBulletType );
+		}
 
 		gEngfuncs.pEventAPI->EV_PopPMStates();
 	}
@@ -777,7 +929,53 @@ void EV_HLDM_FireBullets( int idx, float *forward, float *right, float *up, int 
 
 float EV_HLDM_WaterHeight( vec3_t position, float minz, float maxz )
 {
-	return 0.0f;
+	vec3_t midUp;
+	float diff;
+
+	midUp[0] = position.x;
+	midUp[1] = position.y;
+	midUp[2] = minz;
+
+	if( gEngfuncs.PM_PointContents( midUp, 0 ) == CONTENTS_WATER )
+	{
+		midUp[2] = maxz;
+
+		if( gEngfuncs.PM_PointContents( midUp, 0 ) == CONTENTS_WATER )
+		{
+			return maxz;
+		}
+		else
+		{
+			diff = minz;
+			float flRange = maxz - minz;
+
+			if( flRange > 1.0f )
+			{
+				while( 1 )
+				{
+					midUp[2] = flRange * 0.5f + diff;
+
+					if( gEngfuncs.PM_PointContents( midUp, 0 ) == CONTENTS_WATER )
+						diff = midUp[2];
+					else
+						maxz = midUp[2];
+
+					float flNextRange = maxz - diff;
+
+					if( flNextRange <= 1.0f )
+						break;
+
+					flRange = flNextRange;
+				}
+			}
+			else
+			{
+				return midUp[2];
+			}
+		}
+	}
+
+	return midUp[2];
 }
 
 int EV_HLDM_WaterEntryPoint( pmtrace_t *pTrace, float *vecSrc, float *vecResult )
@@ -2284,7 +2482,7 @@ extern char *s_VoiceCommands[][4];
 
 void EV_USVoice( event_args_t *args )
 {
-#ifdef USE_VGUI
+
 	int iPlayer, pitch1, pitch2;
 
 	vec3_t origin;
@@ -2295,53 +2493,48 @@ void EV_USVoice( event_args_t *args )
 
 	VectorCopy( args->origin, origin );
 
-	if( GetClientVoiceMgr()->IsPlayerBlocked( iPlayer ) )
+	char *vcFiles, *vcCommands;
+
+	if( pitch2 )
+		vcFiles = s_BRITVoiceFiles[pitch1];
+	else
+		vcFiles = s_USVoiceFiles[pitch1];
+
+	gEngfuncs.pEventAPI->EV_PlaySound( iPlayer, origin, CHAN_VOICE, vcFiles, gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 100 );
+	GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+
+	int team = gEngfuncs.GetEntityByIndex( iPlayer )->curstate.team;
+
+	if( team == g_iTeamNumber && !g_iUser1 && team == gEngfuncs.GetLocalPlayer()->curstate.team )
 	{
-		char *vcFiles, *vcCommands;
+		Vector vecTeam = origin - gEngfuncs.GetLocalPlayer()->curstate.origin;
+		float len = VectorNormalize( vecTeam );
 
-		if( pitch2 )
-			vcFiles = s_BRITVoiceFiles[pitch1];
-		else
-			vcFiles = s_USVoiceFiles[pitch1];
+		char pattern[256];
 
-		gEngfuncs.pEventAPI->EV_PlaySound( iPlayer, origin, CHAN_VOICE, vcFiles, gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 100 );
-		GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
-
-		int team = gEngfuncs.GetEntityByIndex( iPlayer )->curstate.team;
-
-		if( team == g_iTeamNumber && !g_iUser1 && team == gEngfuncs.GetLocalPlayer()->curstate.team )
+		if( len <= 1100.0f )
 		{
-			Vector vecTeam = origin - gEngfuncs.GetLocalPlayer()->curstate.origin;
-			float len = VectorNormalize( vecTeam );
+			GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+			sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[iPlayer].name, ": %s2" );
 
-			char pattern[256];
+			vcCommands = s_VoiceCommands[pitch1][3];
 
-			if( len <= 1100.0f )
-			{
-				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
-				sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[iPlayer].name, ": %s2" );
+			if( !vcCommands || !*vcCommands || !gHUD.m_bBritish )
+				vcCommands = s_VoiceCommands[pitch1][1];
 
-				vcCommands = s_VoiceCommands[pitch1][3];
+			gHUD.m_SayText.SayTextPrint( pattern, 256, iPlayer, "#VOICE", vcCommands, 0, 0 );
 
-				if( !vcCommands || !*vcCommands || !gHUD.m_bBritish )
-					vcCommands = s_VoiceCommands[pitch1][1];
+			GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
 
-				gHUD.m_SayText.SayTextPrint( pattern, 256, iPlayer, "#VOICE", vcCommands, 0, 0 );
-
-				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
-
-				gHUD.m_Spectator.AddVoiceIconToPlayerEnt( iPlayer );
-			}
+			gHUD.m_Spectator.AddVoiceIconToPlayerEnt( iPlayer );
 		}
 	}
-#endif // USE_VGUI
 }
 
 extern char *s_GERVoiceFiles[];
 
 void EV_GERVoice( event_args_t *args )
 {
-#ifdef USE_VGUI
 int iPlayer, pitch1;
 
 	vec3_t origin;
@@ -2351,48 +2544,44 @@ int iPlayer, pitch1;
 
 	VectorCopy( args->origin, origin );
 
-	if( GetClientVoiceMgr()->IsPlayerBlocked(iPlayer) )
+	char *vcFiles = s_GERVoiceFiles[pitch1];
+	const char *vcCommands;
+
+	if( pitch1 == 27 && gHUD.m_bBritish )
+		pitch1 = 28;
+
+	gEngfuncs.pEventAPI->EV_PlaySound( iPlayer, origin, CHAN_VOICE, vcFiles, gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 100 );
+
+	int team = gEngfuncs.GetEntityByIndex( iPlayer )->curstate.team;
+
+	if( team == g_iTeamNumber && !g_iUser1 && team == gEngfuncs.GetLocalPlayer()->curstate.team )
 	{
-		char *vcFiles = s_GERVoiceFiles[pitch1];
-		const char *vcCommands;
+		Vector vecTeam = origin - gEngfuncs.GetLocalPlayer()->curstate.origin;
+		float len = VectorNormalize( vecTeam );
 
-		if( pitch1 == 27 && gHUD.m_bBritish )
-			pitch1 = 28;
+		char pattern[256];
 
-		gEngfuncs.pEventAPI->EV_PlaySound( iPlayer, origin, CHAN_VOICE, vcFiles, gEngfuncs.pfnRandomFloat( 0.92f, 1.0f ), ATTN_NORM, 0, 100 );
-
-		int team = gEngfuncs.GetEntityByIndex( iPlayer )->curstate.team;
-
-		if( team == g_iTeamNumber && !g_iUser1 && team == gEngfuncs.GetLocalPlayer()->curstate.team )
+		if( len <= 1100.0f )
 		{
-			Vector vecTeam = origin - gEngfuncs.GetLocalPlayer()->curstate.origin;
-			float len = VectorNormalize( vecTeam );
+			GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
+			sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[iPlayer].name, ": %s2" );
 
-			char pattern[256];
+			vcCommands = *s_VoiceCommands[pitch1];
 
-			if( len <= 1100.0f )
-			{
-				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
-				sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[iPlayer].name, ": %s2" );
+			char *text;
 
-				vcCommands = *s_VoiceCommands[pitch1];
+			if( vcCommands[2] )
+				text = CHudTextMessage::BufferedLocaliseTextString( &vcCommands[2] );
+			else
+				text = CHudTextMessage::BufferedLocaliseTextString( &vcCommands[1] );
 
-				char *text;
+			gHUD.m_SayText.SayTextPrint( pattern, 256, iPlayer, "#VOICE", text, 0, 0 );
 
-				if( vcCommands[2] )
-					text = CHudTextMessage::BufferedLocaliseTextString( &vcCommands[2] );
-				else
-					text = CHudTextMessage::BufferedLocaliseTextString( &vcCommands[1] );
+			GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
 
-				gHUD.m_SayText.SayTextPrint( pattern, 256, iPlayer, "#VOICE", text, 0, 0 );
-
-				GetPlayerInfo( iPlayer, &g_PlayerInfoList[iPlayer] );
-
-				gHUD.m_Spectator.AddVoiceIconToPlayerEnt( iPlayer );
-			}
+			gHUD.m_Spectator.AddVoiceIconToPlayerEnt( iPlayer );
 		}
 	}
-#endif // USE_VGUI
 }
 
 void EV_BodyDamage( event_args_t *args )
