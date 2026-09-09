@@ -122,7 +122,6 @@ void CMeleeWeapon::SwingAgain( void )
     Swing( FALSE );
 }
 
-// WHAMER: TODO
 int CMeleeWeapon::Swing( int fFirst )
 {
 	TraceResult tr;
@@ -152,7 +151,7 @@ int CMeleeWeapon::Swing( int fFirst )
 		m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.5f;
 
 		SetThink( &CMeleeWeapon::Smack );
-		pev->nextthink = UTIL_WeaponTimeBase() + 0.2;
+		pev->nextthink = UTIL_WeaponTimeBase() + 0.2f;
 		m_pPlayer->m_iWeaponVolume = KNIFE_WALLHIT_VOLUME;
 		return TRUE;
 	}
@@ -170,10 +169,51 @@ int CMeleeWeapon::Swing( int fFirst )
 	return FALSE;
 }
 
-// WHAMER: TODO
 int CMeleeWeapon::Stab( int fFirst )
 {
-	return 0;
+	TraceResult tr;
+
+	UTIL_MakeVectors( m_pPlayer->pev->v_angle );
+	Vector vecSrc = m_pPlayer->GetGunPosition();
+	Vector vecEnd = vecSrc + gpGlobals->v_forward * 32.0f;
+
+	UTIL_TraceLine( vecSrc, vecEnd, dont_ignore_monsters, ENT( m_pPlayer->pev ), &tr );
+	UTIL_TraceHull( vecSrc, vecEnd, dont_ignore_monsters, head_hull, ENT( m_pPlayer->pev ), &tr );
+
+	if( tr.flFraction < 1.0f )
+	{
+		CBaseEntity *pHit = CBaseEntity::Instance( tr.pHit );
+		if( !pHit || pHit->IsBSPModel() )
+			FindHullIntersection( vecSrc, tr, VEC_HULL_MIN, VEC_HULL_MAX, m_pPlayer->edict() );
+		vecEnd = tr.vecEndPos;
+	}
+
+	if( tr.flFraction >= 1.0f )
+	{
+		PLAYBACK_EVENT_FULL( FEV_NOTHOST, m_pPlayer->edict(), m_iFireEvent,
+			0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim(),
+			0, 0, 0 );
+
+		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.1f;
+		m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.1f;
+
+		SetThink( &CMeleeWeapon::Smack );
+		pev->nextthink = UTIL_WeaponTimeBase() + 0.2f;
+		m_pPlayer->m_iWeaponVolume = KNIFE_WALLHIT_VOLUME;
+		return TRUE;
+	}
+
+	if( !fFirst )
+		return FALSE;
+
+	PLAYBACK_EVENT_FULL( FEV_NOTHOST, m_pPlayer->edict(), m_iFireEvent,
+		0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim(),
+		0, 1, 0 );
+
+	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.0f;
+	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.0f;
+	m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
+	return FALSE;
 }
 
 void CMeleeWeapon::WeaponIdle( void )

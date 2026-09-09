@@ -19,25 +19,25 @@ LINK_ENTITY_TO_CLASS( weapon_piat, CPIAT )
 
 void CPIAT::Reload( void )
 {
-    BOOL iResult;
+    BOOL bResult;
 
-    if( m_iClip < 0 )
+    if( m_iClip <= 0 )
     {
-        if( m_iWeaponState |= WPNSTATE_ROCKET_SLOW )
-            iResult = DefaultReload( WpnInfo[WEAPON_PIAT].ammo_maxclip, PIAT_RELOAD_AIMED, WpnInfo[WEAPON_PIAT].anim_reloadtime );
+        if( m_iWeaponState & WPNSTATE_SCOPED )
+            bResult = DefaultReload( WpnInfo[WEAPON_PIAT].ammo_maxclip, PIAT_RELOAD_AIMED, WpnInfo[WEAPON_PIAT].anim_reloadtime );
         else
-            iResult = DefaultReload( WpnInfo[WEAPON_PIAT].ammo_maxclip, PIAT_RELOAD_IDLE, WpnInfo[WEAPON_PIAT].anim_reloadtime );
+            bResult = DefaultReload( WpnInfo[WEAPON_PIAT].ammo_maxclip, PIAT_RELOAD_IDLE, WpnInfo[WEAPON_PIAT].anim_reloadtime );
     }
 
-    if( iResult )
+    if( bResult )
     {
         m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_PIAT].anim_reloadtime;
         m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_PIAT].anim_reloadtime;
 
-        if( m_iWeaponState & WPNSTATE_ROCKET_SLOW )
+        if( m_iWeaponState & WPNSTATE_SCOPED )
         {
             UnSlow();
-            m_iWeaponState &= ~WPNSTATE_ROCKET_SLOW;
+            m_iWeaponState = WPNSTATE_ROCKET_SLOW;
         }
     }
 }
@@ -82,7 +82,7 @@ int CPIAT::GetItemInfo( ItemInfo *p )
 
 BOOL CPIAT::Deploy( void )
 {
-    m_iWeaponState &= WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState &= ~WPNSTATE_SCOPED;
     float idleTime = WpnInfo[WEAPON_PIAT].anim_drawtime;
     int iAnim = m_iClip != PIAT_IDLE_EMPTY + PIAT_DRAW;
 
@@ -98,7 +98,7 @@ BOOL CPIAT::CanHolster( void )
 void CPIAT::Holster( int skiplocal )
 {
     gHUD.m_iSensLevel = 0;
-    m_iWeaponState & WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState &= ~( WPNSTATE_SCOPED | WPNSTATE_ROCKET_SLOW );
     m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5f;
     CBasePlayerWeapon::Holster( skiplocal );
 }
@@ -121,7 +121,7 @@ void CPIAT::PrimaryAttack( void )
             PlayEmptySound();
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.0f;
         }
-        else if( m_iWeaponState |= WPNSTATE_ROCKET_SLOW )
+        else if( m_iWeaponState & WPNSTATE_SCOPED )
         {
             m_pPlayer->m_iWeaponVolume = LOUD_GUN_VOLUME;
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFirePIAT, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
@@ -141,7 +141,7 @@ void CPIAT::SecondaryAttack( void )
 {
     if( m_pPlayer->pev->waterlevel <= 1 )
     {
-        if( m_iWeaponState & WPNSTATE_ROCKET_SLOW )
+        if( !( m_iWeaponState & WPNSTATE_SCOPED ) )
         {
             Raise();
             return;
@@ -150,7 +150,7 @@ void CPIAT::SecondaryAttack( void )
         Lower();
     }
 
-    if( m_iWeaponState |= WPNSTATE_ROCKET_SLOW )
+    if( m_iWeaponState & WPNSTATE_SCOPED )
     {
         Lower();
     }
@@ -162,7 +162,7 @@ void CPIAT::WeaponIdle( void )
 
     if( m_flTimeWeaponIdle <= UTIL_WeaponTimeBase() )
     {
-        if( m_iWeaponState |= WPNSTATE_ROCKET_SLOW )
+        if( m_iWeaponState & WPNSTATE_SCOPED )
             SendWeaponAnim( m_iClip != PIAT_IDLE_EMPTY + PIAT_AIMED );
         else
             SendWeaponAnim( m_iClip != PIAT_IDLE_EMPTY );
@@ -193,13 +193,13 @@ void CPIAT::Lower( void )
 
 void CPIAT::UnSlow( void )
 {
-    m_iWeaponState & WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState = 0;
     gHUD.m_iSensLevel = 0;
 }
 
 void CPIAT::ReSlow( void )
 {
-    m_iWeaponState &= ~WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState = WPNSTATE_SCOPED;
     gHUD.m_iSensLevel = 1;
 }
 

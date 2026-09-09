@@ -66,10 +66,12 @@ BOOL CHandGrenade::CanHolster( void )
     return m_flStartThrow == 0.0f;
 }
 
-// WHAMER: TODO
 void CHandGrenade::DropGren( void )
 {
-    if( m_flStartThrow != 0.0f && m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] )
+    vec3_t eyes, vecSrc;
+    TraceResult tr;
+
+    if( m_flStartThrow != 0.0f && m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] > 0 )
     {
         SendWeaponAnim( HANDGRENADE_THROW, UseDecrement() != FALSE );
 
@@ -77,17 +79,15 @@ void CHandGrenade::DropGren( void )
             m_pPlayer->SetAnimation( PLAYER_ROLLGRENADE );
         else
             m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
-        
-        TraceResult tr;
-        Vector vecSrc, vecThrow;
-        
-        float fl = m_pPlayer->pev->classname;
 
-        UTIL_TraceLine( vecSrc, vecThrow + Vector(0,0,0), ignore_monsters, ENT(pev), &tr);
+        eyes = m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs;
+        vecSrc = eyes + gpGlobals->v_forward * 16.0f;
 
-        if ( tr.flFraction < 1.0f )
-            tr.vecEndPos = vecSrc;
-        
+        UTIL_TraceLine( eyes, vecSrc, ignore_monsters, m_pPlayer->pev->pContainingEntity, &tr );
+
+        if( tr.flFraction < 1.0f )
+            vecSrc = tr.vecEndPos;
+
         m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType]--;
         m_flStartThrow = 0.0f;
         m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5f;
@@ -135,33 +135,112 @@ void CHandGrenade::StartThrow( BOOL bUnderhand )
     }
 }
 
-// WHAMER: TODO
 void CHandGrenade::WeaponIdle( void )
 {
-    if( m_flReleaseThrow == 0.0f ) m_flReleaseThrow = gpGlobals->time;
-    
-    /*if( ( m_pPlayer->m_pGoalEnt + m_iPrimaryAmmoType + 284 ) <= 0 )
-    {
+	vec3_t eyes;
+	float time;
+	TraceResult tr;
 
-    }*/
-    
-    if( m_flTimeWeaponIdle > gpGlobals->time )
-        return;
-    
-    if( m_flTimeWeaponIdle > gpGlobals->time && m_flStartThrow == 1.0f )
-    {
-        if( m_flReleaseThrow != 0.0f )
-        {
-            m_flStartThrow = gpGlobals->time + 0.5f;
+	time = gpGlobals->time;
 
-            if( m_bUnderhand )
-                m_pPlayer->SetAnimation( PLAYER_ROLLGRENADE );
-            else
-                m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
-            
+	if( m_flReleaseThrow == 0.0f )
+		m_flReleaseThrow = time;
 
-        }
-    }
+	if( m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] <= 0 )
+	{
+		if( m_flReleaseThrow > 0.0f && m_flStartThrow == 0.0f && time > m_flTimeWeaponIdle )
+		{
+			m_flStartThrow = 0.0f;
+			RetireWeapon();
+		}
+		return;
+	}
+
+	if( m_flTimeWeaponIdle > time )
+		return;
+
+	if( m_flTimeWeaponIdle != time && m_flStartThrow == 1.0f && m_flReleaseThrow != 0.0f )
+	{
+		m_flStartThrow = time + 0.5f;
+
+		if( m_bUnderhand )
+			m_pPlayer->SetAnimation( PLAYER_ROLLGRENADE );
+		else
+			m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
+
+		angThrow = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+
+		if( angThrow.x >= 0.0f )
+			angThrow.x = angThrow.x * 1.11f - 10.0f;
+		else
+			angThrow.x = angThrow.x * 0.89f - 10.0f;
+
+		flVel = ( 90.0f - angThrow.x ) * 4.0f;
+
+		if( flVel > 600.0f )
+			flVel = 600.0f;
+
+		UTIL_MakeVectors( angThrow );
+
+		float flPlayerSpeedBonus = DotProduct( m_pPlayer->pev->velocity, gpGlobals->v_forward );
+		vecThrow = gpGlobals->v_forward * ( flPlayerSpeedBonus + flVel );
+		return;
+	}
+
+	if( time > m_flStartThrow && m_flStartThrow != 0.0f && m_flStartThrow != 1.0f )
+	{
+		angThrow = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+
+		if( angThrow.x < 0.0f )
+			angThrow.x = angThrow.x * 0.89 - 10.0f;
+		else
+			angThrow.x = angThrow.x * 1.11 - 10.0f;
+
+		UTIL_MakeVectors( angThrow );
+
+		eyes = m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs;
+		vecSrc = eyes + gpGlobals->v_forward * 16.0f;
+
+		if( m_bUnderhand )
+		{
+			vecSrc = eyes + gpGlobals->v_forward * 16.0f;
+			vecThrow = gpGlobals->v_forward * 300.0f;
+		}
+
+		UTIL_TraceLine( eyes, vecSrc, ignore_monsters, m_pPlayer->pev->pContainingEntity, &tr );
+
+		if( tr.flFraction < 1.0f )
+			vecSrc = tr.vecEndPos;
+
+		EMIT_SOUND( m_pPlayer->pev->pContainingEntity, CHAN_WEAPON, "weapons/grenthrow.wav", 0.8f, ATTN_NORM );
+		SendWeaponAnim( HANDGRENADE_THROW, UseDecrement() != FALSE );
+
+		m_flStartThrow = 0.0f;
+		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.0f;
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5f;
+
+		m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType]--;
+		return;
+	}
+
+	if( m_flStartThrow == 0.0f )
+	{
+		if( m_flReleaseThrow < 0.0f )
+		{
+			m_flTimeWeaponIdle = time + RANDOM_FLOAT( 5.0f, 7.0f );
+
+			SendWeaponAnim( HANDGRENADE_DRAW, UseDecrement() != FALSE );
+			return;
+		}
+
+		if( m_flReleaseThrow > 0.0f && time > m_flTimeWeaponIdle )
+		{
+			m_flTimeWeaponIdle = time + RANDOM_FLOAT( 5.0f, 7.0f );;
+
+			SendWeaponAnim( HANDGRENADE_IDLE, UseDecrement() != FALSE );
+			m_flReleaseThrow = -1.0f;
+		}
+	}
 }
 
 BOOL CHandGrenade::CanDeploy( void )

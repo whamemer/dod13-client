@@ -19,25 +19,25 @@ LINK_ENTITY_TO_CLASS( weapon_bazooka, CBazooka )
 
 void CBazooka::Reload( void )
 {
-    BOOL iResult;
+    BOOL bResult;
 
-    if( m_iClip < 0 )
+    if( m_iClip <= 0 )
     {
-        if( m_iWeaponState & WPNSTATE_ROCKET_SLOW )
-            iResult = DefaultReload( WpnInfo[WEAPON_BAZOOKA].ammo_maxclip, BAZOOKA_RELOAD_AIMED, WpnInfo[WEAPON_BAZOOKA].anim_reloadtime );
+        if( m_iWeaponState & WPNSTATE_SCOPED )
+            bResult = DefaultReload( WpnInfo[WEAPON_BAZOOKA].ammo_maxclip, BAZOOKA_RELOAD_AIMED, WpnInfo[WEAPON_BAZOOKA].anim_reloadtime );
         else
-            iResult = DefaultReload( WpnInfo[WEAPON_BAZOOKA].ammo_maxclip, BAZOOKA_RELOAD_IDLE, WpnInfo[WEAPON_BAZOOKA].anim_reloadtime );
+            bResult = DefaultReload( WpnInfo[WEAPON_BAZOOKA].ammo_maxclip, BAZOOKA_RELOAD_IDLE, WpnInfo[WEAPON_BAZOOKA].anim_reloadtime );
     }
 
-    if( iResult )
+    if( bResult )
     {
         m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_BAZOOKA].anim_reloadtime;
         m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_BAZOOKA].anim_reloadtime;
 
-        if( m_iWeaponState & WPNSTATE_ROCKET_SLOW )
+        if( m_iWeaponState & WPNSTATE_SCOPED )
         {
             UnSlow();
-            m_iWeaponState &= ~WPNSTATE_ROCKET_SLOW;
+            m_iWeaponState = WPNSTATE_ROCKET_SLOW;
         }
     }
 }
@@ -85,11 +85,11 @@ int CBazooka::GetItemInfo( ItemInfo *p )
 
 BOOL CBazooka::Deploy( void )
 {
-    m_iWeaponState &= ~WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState &= ~WPNSTATE_SCOPED;
     float idleTime = WpnInfo[WEAPON_BAZOOKA].anim_drawtime;
 
     return TimedDeploy( WpnInfo[WEAPON_BAZOOKA].vmodel, WpnInfo[WEAPON_BAZOOKA].pmodel, BAZOOKA_DRAW, WpnInfo[WEAPON_BAZOOKA].szAnimExt, 
-        WpnInfo[WEAPON_BAZOOKA].szAnimReloadExt, idleTime, idleTime, 0 );
+        WpnInfo[WEAPON_BAZOOKA].szAnimReloadExt, idleTime, idleTime, UseDecrement() != FALSE );
 }
 
 BOOL CBazooka::CanHolster( void )
@@ -100,7 +100,7 @@ BOOL CBazooka::CanHolster( void )
 void CBazooka::Holster( int skiplocal )
 {
     gHUD.m_iSensLevel = 0;
-    m_iWeaponState & WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState &= ~( WPNSTATE_SCOPED | WPNSTATE_ROCKET_SLOW );
     m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5f;
     CBasePlayerWeapon::Holster( skiplocal );
 }
@@ -114,7 +114,7 @@ void CBazooka::PrimaryAttack( void )
             PlayEmptySound();
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.0f;
         }
-        else if( m_iWeaponState |= WPNSTATE_ROCKET_SLOW )
+        else if( m_iWeaponState & WPNSTATE_SCOPED )
         {
             m_pPlayer->m_iWeaponVolume = LOUD_GUN_VOLUME;
             PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireBazooka, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
@@ -134,7 +134,7 @@ void CBazooka::SecondaryAttack( void )
 {
     if( m_pPlayer->pev->waterlevel <= 1 )
     {
-        if( m_iWeaponState & WPNSTATE_ROCKET_SLOW )
+        if( !( m_iWeaponState & WPNSTATE_SCOPED ) )
         {
             Raise();
             return;
@@ -143,7 +143,7 @@ void CBazooka::SecondaryAttack( void )
         Lower();
     }
 
-    if( m_iWeaponState |= WPNSTATE_ROCKET_SLOW )
+    if( m_iWeaponState & WPNSTATE_SCOPED )
     {
         Lower();
     }
@@ -155,7 +155,7 @@ void CBazooka::WeaponIdle( void )
 
     if( m_flTimeWeaponIdle <= UTIL_WeaponTimeBase() )
     {
-        if( m_iWeaponState |= WPNSTATE_ROCKET_SLOW )
+        if( m_iWeaponState & WPNSTATE_SCOPED )
             SendWeaponAnim( BAZOOKA_AIMED );
         else
             SendWeaponAnim( BAZOOKA_IDLE );
@@ -186,13 +186,13 @@ void CBazooka::Lower( void )
 
 void CBazooka::UnSlow( void )
 {
-    m_iWeaponState & WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState = 0;
     gHUD.m_iSensLevel = 0;
 }
 
 void CBazooka::ReSlow( void )
 {
-    m_iWeaponState &= ~WPNSTATE_ROCKET_SLOW;
+    m_iWeaponState = WPNSTATE_SCOPED;
     gHUD.m_iSensLevel = 1;
 }
 

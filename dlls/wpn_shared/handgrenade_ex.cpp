@@ -81,10 +81,63 @@ void CHandGrenadeEx::StartThrow( BOOL bUnderhand )
     }
 }
 
-// WHAMER: TODO
 void CHandGrenadeEx::DropGren( void )
 {
+    vec3_t angThrow, eyes, vecThrow, vecSrc;
+    float time, friction, flVel;
+    TraceResult tr;
 
+    if( m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] > 0 )
+    {
+        SendWeaponAnim( HANDGRENADE_EX_THROW, UseDecrement() != FALSE );
+
+        angThrow = m_pPlayer->pev->v_angle + m_pPlayer->pev->punchangle;
+
+        if( angThrow.x < 0.0f )
+            angThrow.x = angThrow.x * 0.89f - 10.0f;
+        else
+            angThrow.x = angThrow.x * 1.11 - 10.0f;
+
+        flVel = ( 90.0f - angThrow.x ) * 4.0f;
+
+        if( flVel > 600.0f )
+            flVel = 600.0f;
+
+        UTIL_MakeVectors( angThrow );
+
+        eyes = m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs;
+        vecSrc = eyes + gpGlobals->v_forward * 16.0f;
+        time = m_flTimeToExplode - gpGlobals->time;
+
+        if( time < 0.0f )
+            time = 0.0f;
+
+        if( m_bUnderhand )
+        {
+            friction = 0.6f;
+            vecSrc = eyes + gpGlobals->v_forward * 16.0f;
+            vecThrow = gpGlobals->v_forward * 300.0f;
+        }
+        else
+        {
+            friction = 0.8f;
+            float flPlayerSpeedBonus = DotProduct( m_pPlayer->pev->velocity, gpGlobals->v_forward );
+            vecThrow = gpGlobals->v_forward * ( flPlayerSpeedBonus + flVel );
+        }
+
+        UTIL_TraceLine( eyes, vecSrc, ignore_monsters, m_pPlayer->pev->pContainingEntity, &tr );
+
+        if( tr.flFraction < 1.0f )
+            vecSrc = tr.vecEndPos;
+
+        if( pev->iuser1 )
+            CGrenade::ShootPickup( m_pPlayer->pev, vecSrc, vecThrow, time, G_HANDGRENADE, friction );
+        else
+            CGrenade::ShootPickup( m_pPlayer->pev, vecSrc, vecThrow, time, G_MILLSGRENADE, friction );
+
+        m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType]--;
+        m_flStartThrow = 0.0f;
+    }
 }
 
 void CHandGrenadeEx::WeaponIdle( void )
