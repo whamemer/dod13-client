@@ -1184,7 +1184,7 @@ public:
 		// and only accept HUD style changes if user has allowed HD sprites
 		return m_iMaxRes > 640 && m_pAllowHD->value;
 	}
-	
+
 	int GetSpriteIndex( const char *SpriteName );	// gets a sprite index, for use in the m_rghSprites[] array
 
 	CHudScope		m_Scope;

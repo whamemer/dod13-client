@@ -32,6 +32,7 @@ private:
 	WEAPON*		rgSlots[MAX_WEAPON_SLOTS + 1][MAX_WEAPON_POSITIONS + 1];	// The slots currently in use by weapons.  The value is a pointer to the weapon;  if it's NULL, no weapon is there
 	int			riAmmo[MAX_AMMO_TYPES];					// count of each ammo type
 
+public:
 	WEAPON		scoped_fg42;
 	WEAPON		folding_carbine;
 	WEAPON		gravity_knife;
@@ -40,7 +41,6 @@ private:
 	WEAPON		brit_grenade;
 	WEAPON		ger_binoculars;
 
-public:
 	void Init( void )
 	{
 		memset( rgWeapons, 0, sizeof rgWeapons );

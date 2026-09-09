@@ -27,11 +27,8 @@
 #include <stdio.h>
 
 #include "dod_shared.h"
-
+#include "demo_api.h"
 #include "ammohistory.h"
-#if USE_VGUI
-#include "vgui_TeamFortressViewport.h"
-#endif
 
 WEAPON *gpActiveSel;	// NULL means off, 1 means just the menu bar, otherwise
 						// this points to the active weapon menu item
@@ -44,6 +41,8 @@ WeaponsResource gWR;
 int g_weaponselect = 0;
 int g_iWeaponFlags = 0;
 float g_flWeaponHeat = 0.0f;
+
+extern int g_iWeaponBits2;
 
 void WeaponsResource::LoadAllWeaponSprites( void )
 {
@@ -912,118 +911,199 @@ ClipInfo *CHudAmmo::GetCurrentGun( WEAPON *pw )
 
 //-------------------------------------------------------------------------
 // Drawing code
-// WHAMER: TODO: rework
+// 
 //-------------------------------------------------------------------------
+
+extern int g_iAlive, g_iDeadFlag;
+extern float m_flWeaponHeat;
+
 int CHudAmmo::Draw( float flTime )
 {
-	int a, x, y, r, g, b;
-	int AmmoWidth;
+	int x, y, r, g, b;
+	int clipHeight, clipWidth, ExtraClipWidth, ExtraClipHeight;
+	int numGrens, i_eclip, fullclips, remainder;
+	int height, barrelHeight, barrely;
 
-	if( !( gHUD.m_iWeaponBits & ( 1 << ( WEAPON_SUIT ) ) ) )
+	WEAPON *pw;
+	ClipInfo currentGun;
+	wrect_t rc, *area;
+	float cappedOverheat;
+	char buf[8];
+	HSPRITE sprite;
+
+	r = 255; g = 255; b = 255;
+
+	if( g_iVuser1z || ( !gHUD.m_iWeaponBits && !g_iWeaponBits2 ) )
 		return 1;
 
-	if( ( gHUD.m_iHideHUDDisplay & ( HIDEHUD_WEAPONS | HIDEHUD_ALL ) ) )
+	int iFlags = gHUD.m_iHideHUDDisplay;
+
+	if( ( iFlags & HIDEHUD_WEAPONS ) != 0 || g_iUser1 || g_iUser2 || !g_iAlive || g_iDeadFlag || !g_iTeamNumber || !g_iPlayerClass )
 		return 1;
 
-	// Draw Weapon Menu
-	DrawWList( flTime );
+	if( ( iFlags & ( HIDEHUD_WEAPONS | HIDEHUD_ALL ) ) != 0 )
+		return 1;
 
-	// Draw ammo pickup history
-	gHR.DrawAmmoHistory( flTime );
+	DrawWeaponList( flTime );
 
 	if( !( m_iFlags & HUD_ACTIVE ) )
 		return 0;
 
-	if( !m_pWeapon )
+	pw = m_pWeapon;
+
+	if( !pw )
 		return 0;
 
-	WEAPON *pw = m_pWeapon; // shorthand
+	gHUD.m_iClipSize = pw->iClip;
 
-	// SPR_Draw Ammo
-	if( ( pw->iAmmoType < 0 ) && ( pw->iAmmo2Type < 0 ) )
+	if( gEngfuncs.pDemoAPI->IsPlayingback() )
+		gHUD.g_iClip = pw->iClip;
+
+	if( pw->iAmmoType < 0 && pw->iAmmo2Type < 0 )
 		return 0;
 
-	int iFlags = DHN_DRAWZERO; // draw 0 values
+	if( m_fFade > 0.0f )
+		m_fFade -= 20.0f * gHUD.m_flTimeDelta;
 
-	AmmoWidth = gHUD.GetSpriteRect( gHUD.m_HUD_number_0 ).right - gHUD.GetSpriteRect( gHUD.m_HUD_number_0 ).left;
+	currentGun = *GetCurrentGun( pw );
 
-	a = (int)Q_max( MIN_ALPHA, m_fFade );
+	if( currentGun.weapon_id == WEAPON_NONE )
+		return 0;
 
-	if( m_fFade > 0 )
-		m_fFade -= ( (float)gHUD.m_flTimeDelta * 20.0f );
+	height = gHUD.m_scrinfo.iHeight;
 
-	UnpackRGB( r, g, b, RGB_YELLOWISH );
+	y = height - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
 
-	ScaleColors( r, g, b, a );
+	if( pw->iAmmoType <= 0 )
+		return 0;
 
-	// Does this weapon have a clip?
-	y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
-	y += gHUD.m_iHudNumbersYOffset; // a1ba: fix HL25 HUD vertical inconsistensy
+	area = currentGun.FullArea;
+	clipHeight = area->bottom - area->top;
+	clipWidth = area->right - area->left;
 
-	// Does weapon have any ammo at all?
-	if( m_pWeapon->iAmmoType > 0 )
+	ExtraClipWidth = currentGun.ExtraArea->right - currentGun.ExtraArea->left;
+	ExtraClipHeight = currentGun.ExtraArea->bottom - currentGun.ExtraArea->top;
+
+	if( currentGun.weapon_id != WEAPON_MG42 &&
+		currentGun.weapon_id != WEAPON_CAL30 &&
+		currentGun.weapon_id != WEAPON_MG34 &&
+		currentGun.weapon_id != WEAPON_WEBLEY )
 	{
-		int iIconWidth = m_pWeapon->rcAmmo.right - m_pWeapon->rcAmmo.left;
-
-		if( pw->iClip >= 0 )
+		if( currentGun.weapon_id == WEAPON_HANDGRENADE ||
+			currentGun.weapon_id == WEAPON_STICKGRENADE ||
+			currentGun.weapon_id == WEAPON_MORTAR )
 		{
-			// room for the number and the '|' and the current ammo
-			x = ScreenWidth - ( 8 * AmmoWidth ) - iIconWidth;
-			x = gHUD.DrawHudNumber( x, y, iFlags | DHN_3DIGITS, pw->iClip, r, g, b );
+			sprite = currentGun.ExtraSprite;
+			wrect_t *grenArea = currentGun.ExtraArea;
 
-			/*wrect_t rc;
-			rc.top = 0;
-			rc.left = 0;
-			rc.right = AmmoWidth;
-			rc.bottom = 100;*/
+			if( currentGun.weapon_id == WEAPON_HANDGRENADE && gHUD.m_bBritish )
+			{
+				sprite = BritGrenClipInfo.ExtraSprite;
+				grenArea = BritGrenClipInfo.ExtraArea;
+			}
 
-			int iBarWidth =  AmmoWidth / 10;
+			numGrens = gWR.CountAmmo( pw->iAmmoType );
 
-			x += AmmoWidth / 2;
+			if( ShowHudElement( 3 ) && numGrens > 0 )
+			{
+				x = gHUD.m_scrinfo.iWidth - ExtraClipWidth - 30;
 
-			UnpackRGB( r,g,b, RGB_YELLOWISH );
+				gEngfuncs.pfnSPR_Set( sprite, r, g, b );
+				gEngfuncs.pfnSPR_DrawHoles( 0, x, gHUD.m_iFontHeight + y - ExtraClipHeight, grenArea );
 
-			// draw the | bar
-			FillRGBA( x, y, iBarWidth, gHUD.m_iFontHeight, r, g, b, a );
-
-			x += iBarWidth + AmmoWidth / 2;
-
-			// GL Seems to need this
-			ScaleColors( r, g, b, a );
-			x = gHUD.DrawHudNumber( x, y, iFlags | DHN_3DIGITS, gWR.CountAmmo( pw->iAmmoType ), r, g, b );
-		}
-		else
-		{
-			// SPR_Draw a bullets only line
-			x = ScreenWidth - 4 * AmmoWidth - iIconWidth;
-			x = gHUD.DrawHudNumber( x, y, iFlags | DHN_3DIGITS, gWR.CountAmmo( pw->iAmmoType ), r, g, b );
+				sprintf( buf, "x %d", numGrens );
+				gHUD.DrawHudString( ExtraClipWidth + x, y, ExtraClipWidth + x + 64, buf, r, g, b );
+			}
 		}
 
-		// Draw the ammo Icon
-		int iOffset = ( m_pWeapon->rcAmmo.bottom - m_pWeapon->rcAmmo.top ) / 8;
-		SPR_Set( m_pWeapon->hAmmo, r, g, b );
-		SPR_DrawAdditive( 0, x, y - iOffset, &m_pWeapon->rcAmmo );
+		else if( currentGun.weapon_id == WEAPON_BAZOOKA ||
+			currentGun.weapon_id == WEAPON_PSCHRECK ||
+			currentGun.weapon_id == WEAPON_PIAT )
+		{
+			numGrens = gWR.CountAmmo( pw->iAmmoType );
+
+			x = gHUD.m_scrinfo.iWidth - ( ExtraClipWidth + clipWidth ) - 30;
+
+			if( ShowHudElement( 3 ) )
+			{
+				gEngfuncs.pfnSPR_Set( currentGun.EmptySprite, r, g, b );
+				gEngfuncs.pfnSPR_DrawHoles( 0, x, y - clipHeight + gHUD.m_iFontHeight, currentGun.EmptyArea );
+
+				if( gHUD.g_iClip > 0 )
+				{
+					gEngfuncs.pfnSPR_Set( currentGun.FullSprite, r, g, b );
+					gEngfuncs.pfnSPR_DrawHoles( 0, x, gHUD.m_iFontHeight + y - clipHeight, currentGun.FullArea );
+				}
+
+				if( numGrens > 0 )
+				{
+					i_eclip = clipWidth + x;
+
+					gEngfuncs.pfnSPR_Set( currentGun.ExtraSprite, r, g, b );
+					gEngfuncs.pfnSPR_DrawHoles( 0, i_eclip, gHUD.m_iFontHeight + y - ExtraClipHeight, currentGun.ExtraArea );
+					sprintf( buf, "x %d", numGrens );
+					gHUD.DrawHudString( ExtraClipWidth + i_eclip, y, ExtraClipWidth + i_eclip + 64, buf, r, g, b );
+				}
+			}
+		}
+	}
+	else
+	{
+		if( ShowHudElement( 3 ) )
+		{
+			x = gHUD.m_scrinfo.iWidth - clipWidth - 30;
+
+			fullclips = pw->iClip / 10;
+			remainder = pw->iClip % 10;
+
+			sprite = gHUD.GetSprite( currentGun.weapon_id );
+			rc = gHUD.GetSpriteRect( currentGun.weapon_id );
+
+			gEngfuncs.pfnSPR_Set( currentGun.EmptySprite, r, g, b );
+			gEngfuncs.pfnSPR_DrawHoles( 0, x, y - clipHeight + gHUD.m_iFontHeight, currentGun.EmptyArea );
+
+			if( gHUD.g_iClip > 0 )
+			{
+				gEngfuncs.pfnSPR_Set( currentGun.FullSprite, r, g, b );
+				gEngfuncs.pfnSPR_DrawHoles( 0, x, gHUD.m_iFontHeight + y - clipHeight, currentGun.FullArea );
+			}
+
+			if( m_flWeaponHeat > 0.0f )
+			{
+				cappedOverheat = m_flWeaponHeat;
+
+				if( cappedOverheat > 1.0f )
+					cappedOverheat = 1.0f;
+
+				barrelHeight = clipHeight;
+				barrely = y - barrelHeight + gHUD.m_iFontHeight;
+
+				sprite = gHUD.GetSprite( currentGun.weapon_id + 100 );
+				rc = gHUD.GetSpriteRect( currentGun.weapon_id + 100 );
+
+				int iHeatVisualHeight = ( int ) ( barrelHeight * cappedOverheat );
+				rc.top = rc.bottom - iHeatVisualHeight;
+
+				gEngfuncs.pfnSPR_Set( sprite, 255, ( int ) ( 255 * ( 1.0f - cappedOverheat ) ), 0 );
+				gEngfuncs.pfnSPR_DrawHoles( 0, x - 15, barrely + ( barrelHeight - iHeatVisualHeight ), &rc );
+			}
+
+			numGrens = gWR.CountAmmo( pw->iAmmoType );
+
+			if( numGrens > 0 )
+			{
+				i_eclip = clipWidth + x + 5;
+
+				gEngfuncs.pfnSPR_Set( currentGun.ExtraSprite, r, g, b );
+				gEngfuncs.pfnSPR_DrawHoles( 0, i_eclip, gHUD.m_iFontHeight + y - ExtraClipHeight, currentGun.ExtraArea );
+
+				sprintf( buf, "x %d", numGrens );
+				gHUD.DrawHudString( ExtraClipWidth + i_eclip, y, ExtraClipWidth + i_eclip + 64, buf, r, g, b );
+			}
+		}
 	}
 
-	// Does weapon have seconday ammo?
-	if( pw->iAmmo2Type > 0 )
-	{
-		int iIconWidth = m_pWeapon->rcAmmo2.right - m_pWeapon->rcAmmo2.left;
-
-		// Do we have secondary ammo?
-		if( ( pw->iAmmo2Type != 0 ) && ( gWR.CountAmmo( pw->iAmmo2Type ) > 0 ) )
-		{
-			y -= gHUD.m_iFontHeight + gHUD.m_iFontHeight / 4;
-			x = ScreenWidth - 4 * AmmoWidth - iIconWidth;
-			x = gHUD.DrawHudNumber( x, y, iFlags | DHN_3DIGITS, gWR.CountAmmo( pw->iAmmo2Type ), r, g, b );
-
-			// Draw the ammo Icon
-			SPR_Set( m_pWeapon->hAmmo2, r, g, b );
-			int iOffset = ( m_pWeapon->rcAmmo2.bottom - m_pWeapon->rcAmmo2.top) / 8;
-			SPR_DrawAdditive(0, x, y - iOffset, &m_pWeapon->rcAmmo2 );
-		}
-	}
-	return 1;
+	return 0;
 }
 
 //
@@ -1241,6 +1321,107 @@ int CHudAmmo::DrawWList( float flTime )
 
 int CHudAmmo::DrawWeaponList( float flTime )
 {
+	int x, y, r, g, b;
+	int height, width, iSlotHeight, averageHeight;
+	int iSlot, numdrawn, iPos;
+
+	WEAPON *pWpn;
+	wrect_t *p_rcActive;
+	HSPRITE hSprite;
+
+	if( !gpActiveSel )
+		return 0;
+
+	height = gHUD.m_scrinfo.iHeight;
+	width = gHUD.m_scrinfo.iWidth;
+
+	averageHeight = height / 2 - 150;
+	iSlotHeight = averageHeight;
+
+	for( iSlot = 0; iSlot < 5; iSlot++ )
+	{
+		numdrawn = 0;
+
+		for( iPos = 0; iPos < 12; iPos++ )
+		{
+			pWpn = gWR.GetWeaponSlot( iSlot, iPos );
+
+			if( !pWpn || !pWpn->iId )
+				continue;
+
+			iSlotHeight += 50;
+			numdrawn++;
+
+			x = width + pWpn->rcActive.left - 5 - pWpn->rcActive.right;
+
+			r = g = b = ( gpActiveSel == pWpn ) ? 255 : 80;
+
+			hSprite = pWpn->hActive;
+			p_rcActive = &pWpn->rcActive;
+
+			switch( pWpn->iId )
+			{
+			case WEAPON_FG42:
+				if( g_iWeaponFlags & 1 )
+				{
+					hSprite = gWR.scoped_fg42.hActive;
+					p_rcActive = &gWR.scoped_fg42.rcActive;
+				}
+				break;
+			case WEAPON_M1CARBINE:
+				if( gHUD.m_bParatrooper )
+				{
+					hSprite = gWR.folding_carbine.hActive;
+					p_rcActive = &gWR.folding_carbine.rcActive;
+				}
+				break;
+			case WEAPON_GERKNIFE:
+				if( gHUD.m_bParatrooper )
+				{
+					hSprite = gWR.gravity_knife.hActive;
+					p_rcActive = &gWR.gravity_knife.rcActive;
+				}
+				break;
+			case WEAPON_ENFIELD:
+				if( pWpn->iLastWeaponState & WPNSTATE_SCOPED )
+				{
+					hSprite = gWR.scoped_enfield.hActive;
+					p_rcActive = &gWR.scoped_enfield.rcActive;
+				}
+				break;
+			case WEAPON_AMERKNIFE:
+				if( gHUD.m_bBritish )
+				{
+					hSprite = gWR.brit_knife.hActive;
+					p_rcActive = &gWR.brit_knife.rcActive;
+				}
+				break;
+			case WEAPON_HANDGRENADE:
+				if( gHUD.m_bBritish )
+				{
+					hSprite = gWR.brit_grenade.hActive;
+					p_rcActive = &gWR.brit_grenade.rcActive;
+				}
+				break;
+			default:
+				if( pWpn->iId == WEAPON_BINOC && g_iTeamNumber == 2 )
+				{
+					hSprite = gWR.ger_binoculars.hActive;
+					p_rcActive = &gWR.ger_binoculars.rcActive;
+				}
+				break;
+			}
+
+			gEngfuncs.pfnSPR_Set( hSprite, r, g, b );
+			gEngfuncs.pfnSPR_DrawHoles( 0, x, iSlotHeight, p_rcActive );
+		}
+
+		if( !numdrawn )
+		{
+			iSlotHeight += 50;
+		}
+	}
+
 	return 1;
 }
 
