@@ -29,15 +29,9 @@
 cvar_t *cl_scoreboard_bg;
 cvar_t *cl_showpacketloss;
 
-
-#if USE_VGUI
-#include "vgui_TeamFortressViewport.h"
-#endif
-
 DECLARE_COMMAND( m_Scoreboard, ShowScores )
 DECLARE_COMMAND( m_Scoreboard, HideScores )
 
-#if !USE_VGUI || USE_NOVGUI_SCOREBOARD
 DECLARE_MESSAGE( m_Scoreboard, ScoreInfo )
 DECLARE_MESSAGE( m_Scoreboard, TeamInfo )
 DECLARE_MESSAGE( m_Scoreboard, TeamScore )
@@ -51,11 +45,9 @@ int CHudScoreboard::Init( void )
 	// HOOK_COMMAND( "+showscores", ShowScores );
 	// HOOK_COMMAND( "-showscores", HideScores );
 
-#if !USE_VGUI || USE_NOVGUI_SCOREBOARD
 	HOOK_MESSAGE( ScoreInfo );
 	HOOK_MESSAGE( TeamScore );
 	HOOK_MESSAGE( TeamInfo );
-#endif
 
 	InitHUDData();
 
@@ -500,10 +492,6 @@ int CHudScoreboard::MsgFunc_ScoreInfo( const char *pszName, int iSize, void *pbu
 		g_PlayerExtraInfo[cl].deaths = deaths;
 		g_PlayerExtraInfo[cl].playerclass = playerclass;
 		g_PlayerExtraInfo[cl].teamnumber = teamnumber;
-
-#if USE_VGUI
-		gViewPort->UpdateOnPlayerInfo();
-#endif
 	}
 
 	return 1;

@@ -52,16 +52,6 @@ if (GOLDSOURCE_SUPPORT)
 	add_definitions(-DGOLDSOURCE_SUPPORT)
 endif()
 
-if (USE_VGUI)
-	add_definitions(-DUSE_VGUI)
-	if (USE_NOVGUI_MOTD)
-		add_definitions(-DUSE_NOVGUI_MOTD)
-	endif()
-	if (USE_NOVGUI_SCOREBOARD)
-		add_definitions(-DUSE_NOVGUI_SCOREBOARD)
-	endif()
-endif()
-
 if (USE_PMAN)
 	add_definitions(-DUSE_PMAN)
 endif()
@@ -161,52 +151,6 @@ set (CLDLL_SOURCES
 	../public/safe_snprintf.c
 )
 
-if (USE_VGUI)
-	list(APPEND CLDLL_SOURCES
-		vgui_int.cpp
-		vgui_ClassMenu.cpp
-		vgui_ConsolePanel.cpp
-		vgui_ControlConfigPanel.cpp
-		vgui_CustomObjects.cpp
-		vgui_MOTDWindow.cpp
-		vgui_SchemeManager.cpp
-		vgui_ScorePanel.cpp
-		vgui_TeamFortressViewport.cpp
-		vgui_SpectatorPanel.cpp
-		vgui_teammenu.cpp
-		voice_status.cpp
-		../game_shared/vgui_checkbutton2.cpp
-		../game_shared/vgui_grid.cpp
-		../game_shared/vgui_helpers.cpp
-		../game_shared/vgui_listbox.cpp
-		../game_shared/vgui_loadtga.cpp
-		../game_shared/vgui_scrollbar2.cpp
-		../game_shared/vgui_slider2.cpp
-		../game_shared/voice_banmgr.cpp
-		vgui/dod_button.cpp
-		vgui/dodclientscoreboard.cpp
-		vgui/dodmotd.cpp
-		vgui/dodprogressbar.cpp
-		vgui/dodspectatorgui.cpp
-		vgui/dodteammenu.cpp
-		vgui/dodviewport.cpp
-		vgui/dodviewport_interface.cpp
-		vgui/hintpanel.cpp
-		vgui/mortarpanel.cpp
-		vgui/widescreenpanel.cpp
-		)
-	if (USE_NOVGUI_MOTD)
-		list(APPEND CLDLL_SOURCES MOTD.cpp)
-	endif()
-	if (USE_NOVGUI_SCOREBOARD)
-		list(APPEND CLDLL_SOURCES scoreboard.cpp)
-	endif()
-else()
-	list(APPEND CLDLL_SOURCES
-		MOTD.cpp
-		scoreboard.cpp)
-endif()
-
 if (USE_PMAN)
 	list(APPEND CLDLL_SOURCES
 		../3rdparty/particleman/particleman/particlefx_source/pman_main.cpp
@@ -237,14 +181,6 @@ if (WIN32)
 	include_directories (../external/)
 endif()
 
-if (USE_VGUI)
-	SET(CMAKE_SKIP_RPATH TRUE)
-	link_directories(${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib)
-	include_directories(../3rdparty/vgui_support/vgui-dev/include)
-else()
-	include_directories(../utils/fake_vgui/include)
-endif()
-
 if(USE_VOICEMGR)
 	#set(CLDLL_SOURCES
 	#	${CLDLL_SOURCES}
@@ -257,19 +193,6 @@ target_link_libraries(${CLDLL_LIBRARY} vcs_info)
 
 if (GOLDSOURCE_SUPPORT)
 	target_link_libraries( ${CLDLL_LIBRARY} ${CMAKE_DL_LIBS} )
-endif()
-
-if (USE_VGUI)
-	if (WIN32)
-		add_library(vgui SHARED IMPORTED)
-		set_property(TARGET vgui PROPERTY IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib/win32_vc6/vgui.dll")
-		set_property(TARGET vgui PROPERTY IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib/win32_vc6/vgui.lib")
-		target_link_libraries(${CLDLL_LIBRARY} vgui)
-	elseif(APPLE)
-		target_link_libraries(${CLDLL_LIBRARY} "-Wl,--no-undefined -L${CMAKE_SOURCE_DIR}/3rdparty/vgui_support/vgui-dev/lib vgui.dylib")
-	else()
-		target_link_libraries(${CLDLL_LIBRARY} :vgui.so)
-	endif()
 endif()
 
 if(WIN32)

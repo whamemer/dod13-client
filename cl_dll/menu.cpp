@@ -24,10 +24,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#if USE_VGUI
-#include "vgui_TeamFortressViewport.h"
-#endif
-
 #define MAX_MENU_STRING	512
 char g_szMenuString[MAX_MENU_STRING];
 char g_szPrelocalisedMenuString[MAX_MENU_STRING];
@@ -144,12 +140,6 @@ int CHudMenu::Draw( float flTime )
 			return 1;
 		}
 	}
-
-	// don't draw the menu if the scoreboard is being shown
-#if USE_VGUI
-	if( gViewPort && gViewPort->IsScoreBoardVisible() )
-		return 1;
-#endif
 
 	SCREENINFO screenInfo;
 

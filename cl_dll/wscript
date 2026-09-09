@@ -8,25 +8,15 @@ import os
 def options(opt):
 	grp = opt.add_option_group('Client options')
 
-	grp.add_option('--enable-vgui', action = 'store_true', dest = 'USE_VGUI', default = False,
-		help = 'Enable VGUI1')
 	grp.add_option('--enable-pman', action = 'store_true', dest = 'USE_PMAN', default = False,
 		help = 'Enable Particleman')
-	grp.add_option('--enable-novgui-motd', action = 'store_true', dest = 'USE_NOVGUI_MOTD', default = False,
-		help = 'Prefer non-VGUI MOTD when USE_VGUI is enabled')
-	grp.add_option('--enable-novgui-scoreboard', action = 'store_true', dest = 'USE_NOVGUI_SCOREBOARD', default = False,
-		help = 'Prefer non-VGUI Scoreboard when USE_VGUI is enabled')
 	grp.add_option('--disable-goldsrc-support', action = 'store_false', dest = 'GOLDSOURCE_SUPPORT',
 		default=True, help = 'disable GoldSource compatibility on i386 Win/Mac/Linux')
 
 	opt.load('vgui')
 
 def configure(conf):
-	conf.options.VGUI_DEV = os.path.join('vgui_support', 'vgui-dev') # vgui is in submodule
-	conf.env.USE_VGUI = conf.options.USE_VGUI
 	conf.env.USE_PMAN= conf.options.USE_PMAN
-	conf.env.USE_NOVGUI_MOTD = conf.options.USE_NOVGUI_MOTD
-	conf.env.USE_NOVGUI_SCOREBOARD = conf.options.USE_NOVGUI_SCOREBOARD
 	conf.env.USE_VOICEMGR = conf.options.USE_VOICEMGR
 
 	if (conf.env.DEST_CPU == 'x86' or (conf.env.DEST_CPU == 'x86_64' and not conf.options.ALLOW64)) and conf.env.DEST_OS in ['win32', 'linux', 'darwin']:
@@ -36,11 +26,6 @@ def configure(conf):
 
 	if conf.env.GOLDSOURCE_SUPPORT and not conf.env.DEST_OS == 'win32':
 		conf.check_cc(lib='dl')
-
-	if conf.env.USE_VGUI:
-		conf.load('vgui')
-		if not conf.check_vgui():
-			conf.fatal('VGUI was enabled but VGUI cannot be used')
 
 def build(bld):
 	libs = ['vcs_info']
@@ -52,31 +37,11 @@ def build(bld):
 		'../engine',
 		'../pm_shared',
 		'../game_shared',
-		'../public']
+		'../public',
 	excluded_files = ['GameStudioModelRenderer_Sample.cpp',
 		'game_shared/voice_vgui_tweakdlg.cpp',
 		'game_shared/voice_gamemgr.cpp',
-		'game_shared/voice_status.cpp']
-
-	if bld.env.USE_VGUI:
-		defines += ['USE_VGUI']
-		libs += ['VGUI']
-		excluded_files += ['vgui/*.cpp']
-		if bld.env.USE_NOVGUI_MOTD:
-			defines += ['USE_NOVGUI_MOTD']
-		else:
-			excluded_files += ['MOTD.cpp']
-
-		if bld.env.USE_NOVGUI_SCOREBOARD:
-			defines += ['USE_NOVGUI_SCOREBOARD']
-		else:
-			excluded_files += ['scoreboard.cpp']
-	else:
-		includes += ['../utils/fake_vgui/include']
-		excluded_files += ['voice_status.cpp',
-			'vgui_*.cpp',
-			'game_shared/vgui_*.cpp',
-			'game_shared/voice_banmgr.cpp']
+		'game_shared/voice_status.cpp',
 
 	if bld.env.USE_PMAN:
 		defines += ['USE_PMAN']
