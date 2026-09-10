@@ -37,11 +37,11 @@ def build(bld):
 		'../engine',
 		'../pm_shared',
 		'../game_shared',
-		'../public',
+		'../public']
 	excluded_files = ['GameStudioModelRenderer_Sample.cpp',
 		'game_shared/voice_vgui_tweakdlg.cpp',
 		'game_shared/voice_gamemgr.cpp',
-		'game_shared/voice_status.cpp',
+		'game_shared/voice_status.cpp']
 
 	if bld.env.USE_PMAN:
 		defines += ['USE_PMAN']
