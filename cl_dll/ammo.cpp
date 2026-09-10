@@ -909,6 +909,7 @@ ClipInfo *CHudAmmo::GetCurrentGun( WEAPON *pw )
 // 
 //-------------------------------------------------------------------------
 
+extern bool ShowHudElement( int i_hudElement );
 extern int g_iAlive, g_iDeadFlag;
 extern float m_flWeaponHeat;
 

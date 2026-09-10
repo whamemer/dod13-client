@@ -617,6 +617,7 @@ public:
 	wrect_t m_iconarea;
 	HSPRITE TimerHUD;
 	wrect_t *TimerHUDArea;
+	bool m_bWarmupMode;
 
 	int Init( void );
 	int VidInit( void );
@@ -666,7 +667,6 @@ private:
 	wrect_t m_topwrect;
 	wrect_t m_bottomwrect;
 	HSPRITE m_TopNumber;
-	bool m_bWarmupMode;
 };
 
 //
@@ -788,10 +788,10 @@ public:
 	void InitHUDData( void );
 	CHudMsgFunc( GameRules );
 	CHudMsgFunc( ResetSens );
+	CHudMsgFunc( CameraView );
 	//int MsgFunc_ParaLand( const char *pszName, int iSize, void *pbuf );
 	int Draw( float flTime );
 	int VidInit( void );
-	int MsgFunc_CameraView( const char *pszName, int iSize, void *pbuf );
 };
 
 //
@@ -1236,7 +1236,7 @@ public:
 	CHudMsgFunc( YouDied );
 	CHudMsgFunc( HLTV );
 	CHudMsgFunc( RoundState );
-	CHudMsgFunc( Timeleft );
+	CHudMsgFunc( TimeLeft );
 	CHudMsgFunc( UseSound );
 
 	//int _cdecl MsgFunc_ZoomStatus( const char *pszName, int iSize, void *pbuf );
