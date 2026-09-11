@@ -8,6 +8,16 @@
 #ifndef DOD_CAMERA_H
 #define DOD_CAMERA_H
 
+#ifdef _WIN32
+#include "string.h"
+#define strcasecmp _stricmp
+#else
+#include "strings.h"
+#endif
+
+#define SF_ENVMODEL_OFF 0x01
+#define SF_ENVMODEL_ACTION_ON 0x10
+
 typedef enum
 {
 	DOD_CAMERA = 0,
