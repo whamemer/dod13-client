@@ -36,8 +36,11 @@ include_directories(
 	../pm_shared
 	../dlls
 	../game_shared
-	../external/GL
 	../public)
+
+if (WIN32)
+	include_directories (../external/)
+endif()
 
 add_definitions(-DCLIENT_WEAPONS -DCLIENT_DLL -DSTDINT_H=<cstdint>)
 

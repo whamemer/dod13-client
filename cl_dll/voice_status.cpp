@@ -17,6 +17,7 @@
 #include "parsemsg.h" // BEGIN_READ(), ...
 
 #include "voice_status.h"
+#include "steam/steamtypes.h"
 
 #pragma warning( disable : 4800 ) // disable forcing int to bool performance warning
 
@@ -280,13 +281,13 @@ int CVoiceStatus::GetSpeakerStatus( int iPlayer )
 
 void CVoiceStatus::HandleVoiceMaskMsg( int iSize, void *pbuf )
 {
-	BufferReader reader( pbuf, iSize );
+	BEGIN_READ( pbuf, iSize );
 
 	uint32 dw;
 	for( dw = 0; dw < VOICE_MAX_PLAYERS_DW; dw++ )
 	{
-		m_AudiblePlayers.SetDWord( dw, ( uint32 ) reader.ReadLong() );
-		m_ServerBannedPlayers.SetDWord( dw, ( uint32 ) reader.ReadLong() );
+		m_AudiblePlayers.SetDWord( dw, ( uint32 ) READ_LONG() );
+		m_ServerBannedPlayers.SetDWord( dw, ( uint32 ) READ_LONG() );
 
 		if( gEngfuncs.pfnGetCvarFloat( "voice_clientdebug" ) )
 		{
@@ -301,7 +302,7 @@ void CVoiceStatus::HandleVoiceMaskMsg( int iSize, void *pbuf )
 		}
 	}
 
-	m_bServerModEnable = reader.ReadByte();
+	m_bServerModEnable = READ_BYTE();
 }
 
 void CVoiceStatus::HandleReqStateMsg( int iSize, void *pbuf )
