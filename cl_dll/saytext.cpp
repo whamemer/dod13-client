@@ -110,7 +110,7 @@ int CHudSayText::Draw( float flTime )
 		return 1;
 
 	// make sure the scrolltime is within reasonable bounds,  to guard against the clock being reset
-	flScrollTime = Q_min( flScrollTime, flTime + m_HUD_saytext_time->value );
+	flScrollTime = min( flScrollTime, flTime + m_HUD_saytext_time->value );
 
 	if( flScrollTime <= flTime )
 	{
@@ -137,7 +137,7 @@ int CHudSayText::Draw( float flTime )
 				static char buf[MAX_PLAYER_NAME_LENGTH + 32];
 
 				// draw the first x characters in the player color
-				strlcpy( buf, g_szLineBuffer[i], Q_min(g_iNameLengths[i] + 1, MAX_PLAYER_NAME_LENGTH + 32 ) );
+				strlcpy( buf, g_szLineBuffer[i], min(g_iNameLengths[i] + 1, MAX_PLAYER_NAME_LENGTH + 32 ) );
 				DrawSetTextColor( g_pflNameColors[i][0], g_pflNameColors[i][1], g_pflNameColors[i][2] );
 				int x = DrawConsoleString( LINE_START, y, buf );
 
@@ -222,7 +222,7 @@ void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientInde
 		}
 	}
 
-	strlcpy( g_szLineBuffer[i], pszBuf, Q_max( iBufSize, MAX_CHARS_PER_LINE ) );
+	strlcpy( g_szLineBuffer[i], pszBuf, max( iBufSize, MAX_CHARS_PER_LINE ) );
 
 	// make sure the text fits in one line
 	EnsureTextFitsInOneLineAndWrapIfHaveTo( i );

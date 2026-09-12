@@ -17,6 +17,7 @@
 //
 
 #include "hud.h"
+#include "tri.h"
 #include "dod_shared.h"
 
 extern float g_flWeatherTime;
@@ -33,21 +34,16 @@ int CWeatherManager::VidInit( void )
 	return 1;
 }
 
-#ifdef USE_PMAN
 void CDoDRainDrop::Think( float flTime )
 {
 
 }
-#endif // USE_PMAN
 
 void CWeatherManager::CreateRainParticle( float *origin )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
-#ifdef USE_PMAN
 void CDoDSnowFlake::Think( float time )
 {
 
@@ -58,16 +54,13 @@ void CDoDSnowFlake::Touch( vec3_t *pos, vec3_t *normal, int index )
 
 }
 
-void CDoDSnowFlake::Create( vec3_t org, vec3_t normal, model_s *sprite, float size, float brightness,
-	const char *classname )
+CDoDSnowFlake *CDoDSnowFlake::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
+	const char *classname, bool bDistCull )
 {
 
 }
-#endif // USE_PMAN
 
 void CWeatherManager::CreateSnowParticle( float *origin )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }

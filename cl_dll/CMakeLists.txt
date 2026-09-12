@@ -8,11 +8,13 @@ file(GLOB DOD_WPNSH_SRC "../dlls/wpn_shared/*.cpp")
 file(GLOB DOD_SHARED_SRC "../dlls/dod_shared.cpp")
 file(GLOB DOD_PM_SRC "../pm_shared/*.cpp")
 file(GLOB DOD_GAMSH_SRC "../game_shared/*.cpp")
+file(GLOB DOD_PARTICLEMAN_SRC "../particleman/*.cpp")
 
 list(APPEND DOD_CLIENT_SRC ${DOD_WPNSH_SRC})
 list(APPEND DOD_CLIENT_SRC ${DOD_SHARED_SRC})
 list(APPEND DOD_CLIENT_SRC ${DOD_PM_SRC})
 list(APPEND DOD_CLIENT_SRC ${DOD_GAMSH_SRC})
+list(APPEND DOD_CLIENT_SRC ${DOD_PARTICLEMAN_SRC})
 
 if (HAVE_STRLCPY)
 	add_definitions(-DHAVE_STRLCPY)
@@ -36,7 +38,8 @@ include_directories(
 	../pm_shared
 	../dlls
 	../game_shared
-	../public)
+	../public
+	../particleman)
 
 if (WIN32)
 	include_directories (../external/)

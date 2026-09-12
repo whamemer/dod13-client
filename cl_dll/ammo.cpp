@@ -164,7 +164,7 @@ void WeaponsResource::LoadWeaponSprites( WEAPON *pWeapon )
 		pWeapon->hInactive = SPR_Load( sz );
 		pWeapon->rcInactive = p->rc;
 
-		gHR.iHistoryGap = Q_max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
+		gHR.iHistoryGap = max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
 	}
 	else
 		pWeapon->hInactive = 0;
@@ -186,7 +186,7 @@ void WeaponsResource::LoadWeaponSprites( WEAPON *pWeapon )
 		pWeapon->hAmmo = SPR_Load( sz );
 		pWeapon->rcAmmo = p->rc;
 
-		gHR.iHistoryGap = Q_max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
+		gHR.iHistoryGap = max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
 	}
 	else
 		pWeapon->hAmmo = 0;
@@ -198,7 +198,7 @@ void WeaponsResource::LoadWeaponSprites( WEAPON *pWeapon )
 		pWeapon->hAmmo2 = SPR_Load( sz );
 		pWeapon->rcAmmo2 = p->rc;
 
-		gHR.iHistoryGap = Q_max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
+		gHR.iHistoryGap = max( gHR.iHistoryGap, pWeapon->rcActive.bottom - pWeapon->rcActive.top );
 	}
 	else
 		pWeapon->hAmmo2 = 0;

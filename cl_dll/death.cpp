@@ -101,7 +101,7 @@ int CHudDeathNotice::Draw( float flTime )
 
 	screenInfo.iSize = sizeof(SCREENINFO);
 	gEngfuncs.pfnGetScreenInfo(&screenInfo);
-	gap = Q_max( gap, screenInfo.iCharHeight );
+	gap = max( gap, screenInfo.iCharHeight );
 
 	for( int i = 0; i < MAX_DEATHNOTICES; i++ )
 	{
@@ -117,7 +117,7 @@ int CHudDeathNotice::Draw( float flTime )
 			continue;
 		}
 
-		rgDeathNoticeList[i].flDisplayTime = Q_min( rgDeathNoticeList[i].flDisplayTime, gHUD.m_flTime + DEATHNOTICE_DISPLAY_TIME );
+		rgDeathNoticeList[i].flDisplayTime = min( rgDeathNoticeList[i].flDisplayTime, gHUD.m_flTime + DEATHNOTICE_DISPLAY_TIME );
 
 		// Only draw if the viewport will let me
 		// vgui dropped out

@@ -16,12 +16,10 @@
 #include "entity_state.h"
 #include "cl_entity.h"
 #include "triangleapi.h"
-
-#ifdef USE_PMAN
 #include "tri.h"
+#include "particleman.h"
 
 extern IParticleMan *g_pParticleMan;
-#endif
 
 //extern engine_studio_api_t IEngineStudio;
 
@@ -131,16 +129,6 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 #endif
 }
 
-
-/*
-==================================
-
-DAY OF DEFEAT PARTICLES CODE HERE
-
-==================================
-*/
-#ifdef USE_PMAN
-
 CDoDParticle *CDoDParticle::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
 	const char *classname, bool bDistCull )
 {
@@ -234,4 +222,4 @@ void UpdateRain( void )
 
 }
 
-#endif // USE_PMAN
+#endif

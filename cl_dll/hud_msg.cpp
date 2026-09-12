@@ -21,11 +21,9 @@
 #include "parsemsg.h"
 #include "r_efx.h"
 
-#ifdef USE_PMAN
-#include "Particleman.h"
+#include "particleman.h"
 
 extern IParticleMan *g_pParticleMan;
-#endif 
 
 #define MAX_CLIENTS 32
 
@@ -59,10 +57,8 @@ int CHud::MsgFunc_ResetHUD( const char *pszName, int iSize, void *pbuf )
 		m_iConcussionEffect = 0;
 	}
 
-#ifdef USE_PMAN
 	if( g_pParticleMan )
 		g_pParticleMan->ResetParticles();
-#endif
 
 	return 1;
 }

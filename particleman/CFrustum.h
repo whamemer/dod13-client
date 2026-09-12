@@ -12,38 +12,32 @@
 *   without written permission from Valve LLC.
 *
 ****/
-//
-//  ParticleShooter.cpp - implementation of the CParticleShooter class
-//
 
-#include "hud.h"
-#include "dod_shared.h"
+#pragma once
 
-//DECLARE_MESSAGE( m_PShooter, PShoot )
-
-extern cvar_t *cl_particlefx;
-
-int CParticleShooter::Init( void )
+enum FrustumSide
 {
-	return 1;
-}
+	RIGHT = 0,
+	LEFT = 1,
+	BOTTOM = 2,
+	TOP = 3,
+	BACK = 4,
+	FRONT = 5,
+};
 
-int CParticleShooter::VidInit( void )
+struct CFrustum
 {
-	return 1;
-}
+	void CalculateFrustum();
 
-void CParticleShooter::AddParticleSystem( particle_shooter_t *pShooter )
-{
+	bool PointInsideFrustum(float x, float y, float z);
 
-}
+	bool SphereInsideFrustum(float x, float y, float z, float radius);
 
-int CParticleShooter::MsgFunc_PShoot( const char *pszName, int iSize, void *pbuf )
-{
-	return 1;
-}
+	bool PlaneInsideFrustum(float x, float y, float z, float size);
 
-void CParticleShooter::Think( void )
-{
+private:
+	void NormalizeFrustumPlane(float frustum[6][4], int side);
 
-}
+public:
+	float g_flFrustum[6][4];
+};

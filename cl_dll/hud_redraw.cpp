@@ -148,14 +148,14 @@ void CHud::Think( void )
 	else
 	{
 		// set a new sensitivity that is proportional to the change from the FOV default
-		m_flMouseSensitivity = sensitivity->value * ((float)newfov / Q_max( default_fov->value, 90 )) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
+		m_flMouseSensitivity = sensitivity->value * ((float)newfov / max( default_fov->value, 90 )) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
 	}
 
 	// think about default fov
 	if( m_iFOV == 0 )
 	{
 		// only let players adjust up in fov,  and only if they are not overriden by something else
-		m_iFOV = Q_max( default_fov->value, 90 );  
+		m_iFOV = max( default_fov->value, 90 );  
 	}
 
 	if( gEngfuncs.IsSpectateOnly() )

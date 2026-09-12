@@ -211,8 +211,8 @@ float V_CalcBob( struct ref_params_s *pparams )
 
 	bob = sqrt( vel[0] * vel[0] + vel[1] * vel[1] ) * cl_bob->value;
 	bob = bob * 0.3f + bob * 0.7f * sin(cycle);
-	bob = Q_min( bob, 4.0f );
-	bob = Q_max( bob, -7.0f );
+	bob = min( bob, 4.0f );
+	bob = max( bob, -7.0f );
 	return bob;
 }
 
@@ -707,7 +707,7 @@ void V_CalcNormalRefdef( struct ref_params_s *pparams )
 			if( dt > 0.0 )
 			{
 				frac = ( t - ViewInterp.OriginTime[foundidx & ORIGIN_MASK] ) / dt;
-				frac = Q_min( 1.0, frac );
+				frac = min( 1.0, frac );
 				VectorSubtract( ViewInterp.Origins[( foundidx + 1 ) & ORIGIN_MASK], ViewInterp.Origins[foundidx & ORIGIN_MASK], delta );
 				VectorMA( ViewInterp.Origins[foundidx & ORIGIN_MASK], frac, delta, neworg );
 
@@ -1580,7 +1580,7 @@ void V_DropPunchAngle( float frametime, float *ev_punchangle )
 
 	len = VectorNormalize( ev_punchangle );
 	len -= ( 10.0f + len * 0.5f ) * (float)frametime;
-	len = Q_max( len, 0.0f );
+	len = max( len, 0.0f );
 	VectorScale( ev_punchangle, len, ev_punchangle );
 }
 

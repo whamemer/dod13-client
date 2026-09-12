@@ -271,9 +271,8 @@ void Parse_info_doddetect( dod_bspparse_ent *pEnt )
 				gHUD.m_bBritish = ( strtol( value, NULL, 10 ) == 1 );
 		}
 	}
-#ifdef USE_PMAN
-	CDoDParticle::SetGlobalWind( &vWind[0] );
-#endif
+
+	g_pDoDParticle->SetGlobalWind( &vWind[0] );
 }
 
 void Parse_env_model( dod_bspparse_ent *pEnt )

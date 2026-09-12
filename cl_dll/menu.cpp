@@ -153,7 +153,7 @@ int CHudMenu::Draw( float flTime )
 		if( g_szMenuString[i] == '\n' )
 			nlc++;
 
-	int nFontHeight = Q_max( 12, screenInfo.iCharHeight );
+	int nFontHeight = max( 12, screenInfo.iCharHeight );
 
 	// center it
 	int y = ( ScreenHeight / 2 ) - (( nlc / 2 )* nFontHeight ) - ( 3 * nFontHeight + nFontHeight / 3 ); // make sure it is above the say text
@@ -183,7 +183,7 @@ int CHudMenu::Draw( float flTime )
 			const char *ptr = sptr;
 			while( *sptr != '\0' && *sptr != '\n' && *sptr != '\\' )
 				sptr++;
-			strlcpy( menubuf, ptr, Q_min(( sptr - ptr + 1 ), (int)sizeof( menubuf )));
+			strlcpy( menubuf, ptr, min(( sptr - ptr + 1 ), (int)sizeof( menubuf )));
 			if( menu_ralign )
 				// IMPORTANT: Right-to-left rendered text does not parse escape tokens!
 				menu_x = gHUD.DrawHudStringReverse( menu_x, y, 0, menubuf, menu_r, menu_g, menu_b );

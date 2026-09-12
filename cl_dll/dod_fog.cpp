@@ -5,7 +5,6 @@
 // $NoKeywords: $
 //=============================================================================
 
-#ifdef USE_PMAN
 #include "GL/gl.h"
 #include "util_vector.h"
 #include "triangleapi.h"
@@ -77,4 +76,3 @@ void RenderDoDFog( void )
 		}
 	}
 }
-#endif

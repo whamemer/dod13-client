@@ -45,11 +45,9 @@ extern "C"
 
 #include "voice_status.h"
 
-#ifdef USE_PMAN
 #include "particleman.h"
 
 extern IParticleMan *g_pParticleman;
-#endif
 
 extern engine_studio_api_t IEngineStudio;
 static float fl_timeMusicLeft;
@@ -465,9 +463,7 @@ void EV_HLDM_GunshotDecalTrace( pmtrace_t *pTrace, float *vecSrc, float *vecEnd,
 			gEngfuncs.pEfxAPI->R_DecalShoot( iFinalDecal, iHitEntity, 0, pTrace->endpos, 0 );
 		}
 
-#ifdef USE_PMAN
 		EV_HLDM_DoDSurfaceFX( pTrace, iBulletType, chTextureType );
-#endif
 	}
 }
 
@@ -566,7 +562,6 @@ void CreateCorpse( vec3_t vOrigin, vec3_t vAngles, const char *pModel, float flA
 	}
 }
 
-#ifdef USE_PMAN
 void EV_BasicPuff( pmtrace_t *pTrace, float scale )
 {
 	vec3_t origin, vColor, vVelocity;
@@ -640,7 +635,6 @@ void EV_TileHit( pmtrace_t *pTrace, float fScale )
 {
 
 }
-#endif // USE_PMAN
 
 void EV_PlaySurfaceHitSound( pmtrace_t *pTrace, int iBulletType, char cSurfaceType )
 {
@@ -695,7 +689,6 @@ void EV_PlaySurfaceHitSound( pmtrace_t *pTrace, int iBulletType, char cSurfaceTy
 	}
 }
 
-#ifdef USE_PMAN
 void EV_HLDM_DoDSurfaceFX( pmtrace_t *pTrace, int iBulletType, char cSurfaceType )
 {
 	float fScale = 1.5f;
@@ -755,7 +748,6 @@ void EV_HLDM_DoDSurfaceFX( pmtrace_t *pTrace, int iBulletType, char cSurfaceType
 		return;
 	}
 }
-#endif // USE_PMAN
 
 void EV_HLDM_DecalGunshot( pmtrace_t *pTrace, int iBulletType, float *vecSrc, float *vecEnd )
 {
@@ -2327,12 +2319,10 @@ void EV_SparkShower( event_args_t *args )
 	gEngfuncs.pEfxAPI->R_SparkShower( origin );
 }
 
-#ifdef USE_PMAN
 void P_ExplosionFlash( event_args_t *args )
 {
 
 }
-#endif // USE_PMAN
 
 void PlayExplosionSound( float *origin )
 {
@@ -2351,37 +2341,27 @@ void EV_BaseExplosion( event_args_t *args )
 
 void EV_WaterExplosion( event_args_t *args )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_DirtTrailCallback( tempent_s *ent, float frametime, float currenttime )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_DirtRubble( event_args_t *args )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_DirtExplosion( event_args_t *args )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_Explosion( event_args_t *args )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_Bubbles( event_args_t *args )
@@ -2454,9 +2434,7 @@ void EV_BloodSprite( event_args_t *args )
 
 void EV_Smoke( event_args_t *args )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_Pain( event_args_t *args )
@@ -2738,7 +2716,7 @@ int EV_TFC_IsAllyTeam( int iTeam1, int iTeam2 )
 	return iTeam1 == iTeam2;
 }
 
-#ifdef USE_PMAN
+
 void P_Rubble( event_args_t *args )
 {
 
@@ -2748,7 +2726,7 @@ void P_ExplosionSmoke( event_args_t *args )
 {
 
 }
-#endif // USE_PMAN
+
 
 char EV_FindHitTexture( float *start, float *end )
 {
@@ -2762,23 +2740,17 @@ char EV_TexNameToType( char *pTextureName )
 
 void CreateFlyingRubble( vec3_t origin, bool bLargeRubble, float vVelocityx, float vVelocityy, float vVelocityz, float fSize, int iTextureType, vec3_t vNormal )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_RocketTrailCallback( tempent_s *ent, float frametime, float currenttime )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_RocketTrail( event_args_t *args )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_MortarShellCallback( tempent_s *ent, float frametime, float currenttime )
@@ -2793,14 +2765,11 @@ void EV_MortarShell( event_args_t *args )
 
 void EV_OverheatCallback( tempent_s *ent, float frametime, float currenttime )
 {
-#ifdef USE_PMAN
 
-#endif // USE_PMAN
 }
 
 void EV_Overheat( event_args_t *args )
 {
-#ifdef USE_PMAN
 	int idx;
 
 	float lastOverheatTime;
@@ -2831,5 +2800,4 @@ void EV_Overheat( event_args_t *args )
 			p->entity.baseline.fuser2 = gEngfuncs.GetClientTime();
 		}
 	}
-#endif // USE_PMAN
 }

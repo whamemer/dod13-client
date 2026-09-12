@@ -11,31 +11,31 @@
 #include "com_model.h"
 #include "util_vector.h"
 
-#ifdef USE_PMAN
-#include "Particleman.h"
+#include "particleman.h"
+#include "CBaseParticle.h"
 
 extern IParticleMan *g_pParticleman;
 
 class CBaseDoDParticle : public CBaseParticle
 {
 public:
-	virtual void Think( float time ) { g_pParticleMan->CoreThink( this, time ); }
-	virtual void Draw( void ) { g_pParticleMan->CoreDraw( this ); }
-	virtual void Animate( float time ) { g_pParticleMan->CoreAnimate( this, time ); }
-	virtual void AnimateAndDie( float time ) { g_pParticleMan->CoreAnimateAndDie( this, time ); }
-	virtual void Expand( float time ) { g_pParticleMan->CoreExpand( this, time ); }
-	virtual void Contract( float time ) { g_pParticleMan->CoreContract( this, time ); }
-	virtual void Fade( float time ) { g_pParticleMan->CoreFade( this, time ); }
-	virtual void Spin( float time ) { g_pParticleMan->CoreSpin( this, time ); }
-	virtual void CalculateVelocity( float time ) { g_pParticleMan->CoreCalculateVelocity( this, time ); }
-	virtual void CheckCollision( float time ) { g_pParticleMan->CoreCheckCollision( this, time ); }
-	virtual void Touch( vec3_t *pos, vec3_t *normal, int index ) { g_pParticleMan->CoreTouch( this, *pos, *normal, index ); }
-	virtual void Die( void ) { g_pParticleMan->CoreDie( this ); }
-	virtual void Force( void ) { g_pParticleMan->CoreForce( this ); }
+	virtual void Think( float time ) { g_pBaseParticle->Think( time ); }
+	virtual void Draw( void ) { g_pBaseParticle->Draw(); }
+	virtual void Animate( float time ) { g_pBaseParticle->Animate( time ); }
+	virtual void AnimateAndDie( float time ) { g_pBaseParticle->AnimateAndDie( time ); }
+	virtual void Expand( float time ) { g_pBaseParticle->Expand( time ); }
+	virtual void Contract( float time ) { g_pBaseParticle->Contract( time ); }
+	virtual void Fade( float time ) { g_pBaseParticle->Fade( time ); }
+	virtual void Spin( float time ) { g_pBaseParticle->Spin( time ); }
+	virtual void CalculateVelocity( float time ) { g_pBaseParticle->CalculateVelocity( time ); }
+	virtual void CheckCollision( float time ) { g_pBaseParticle->CheckCollision( time ); }
+	virtual void Touch( vec3_t *pos, vec3_t *normal, int index ) { g_pBaseParticle->Touch( *pos, *normal, index ); }
+	virtual void Die( void ) { g_pBaseParticle->Die(); }
+	virtual void Force( void ) { g_pBaseParticle->Force(); }
 
 	virtual void InitializeSprite( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness ) 
 	{ 
-		g_pParticleMan->CoreInitializeSprite( this, *pos, *normal, sprite, size, brightness ); 
+		g_pBaseParticle->InitializeSprite( *pos, *normal, sprite, size, brightness );
 	}
 };
 
@@ -98,10 +98,7 @@ public:
 	virtual void Think( float time );
 	virtual void Touch( vec3_t *pos, vec3_t *normal, int index );
 	CDoDSnowFlake *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
-		const char *classname, bool bDistCull )
-	{
-		return NULL;
-	}
+		const char *classname, bool bDistCull );
 
 	bool m_bSpiral, m_bTouched;
 	float m_flOldTime, m_flFadeOutTime;
@@ -110,12 +107,9 @@ public:
 class CDoDRainDrop : public CDoDParticle
 {
 public:
-	virtual void Think( float time )
-	{
-		m_flBrightness = 130.0f;
-		CDoDParticle::Think( time );
-	}
+	virtual void Think( float time );
 };
-#endif // USE_PMAN
+
+CDoDParticle *g_pDoDParticle;
 
 #endif // TRI_H
