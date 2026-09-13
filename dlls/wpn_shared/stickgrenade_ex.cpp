@@ -144,7 +144,7 @@ void CStickGrenadeEx::WeaponIdle( void )
         RetireWeapon();
         m_pPlayer->ClearHasWeapon( WEAPON_HANDGRENADEX );
         SetThink( &CBasePlayerItem::DestroyItem );
-        pev->nextthink - gpGlobals->time + 0.1f;
+        pev->nextthink = gpGlobals->time + 0.1f;
         m_flStartThrow = 0.0f;
         return;
     }
