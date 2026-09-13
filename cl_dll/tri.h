@@ -16,6 +16,8 @@
 
 extern IParticleMan *g_pParticleman;
 
+void CreateDebrisWallPuff( vec3_t origin, vec3_t vVelocity, vec3_t vColor, int iPuff );
+
 class CBaseDoDParticle : public CBaseParticle
 {
 public:
@@ -109,7 +111,5 @@ class CDoDRainDrop : public CDoDParticle
 public:
 	virtual void Think( float time );
 };
-
-CDoDParticle *g_pDoDParticle;
 
 #endif // TRI_H
