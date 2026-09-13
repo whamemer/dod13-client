@@ -52,4 +52,18 @@ typedef struct
 dod_camera_t s_cameras[256];
 int s_num_cameras;
 
+void DoD_ProcessEnts( char *buffer );
+void Parse_dod_camera( dod_bspparse_ent *pEnt );
+void Parse_path_corner( dod_bspparse_ent *pEnt );
+void Parse_particle_shooter( dod_bspparse_ent *pEnt );
+void Parse_info_doddetect( dod_bspparse_ent *pEnt );
+void Parse_env_model( dod_bspparse_ent *pEnt );
+char *DoD_LoadEntityLump( char *filename );
+void DoD_LoadClientEnts( const char *map );
+dod_camera_t *DoD_FindTarget( const char *name );
+void DoD_ReadCameraSettings( const char *Targetname );
+void DoD_ScreenFades( int flags, float holdtime, int r, int g, int b, int a, int speed );
+char *ParseSingleEnt( char *buffer, dod_bspparse_ent *pEnt, int *error );
+void DoD_SetKVPair( dod_bspparse_ent *pEnt, const char *key, const char *value );
+
 #endif // DOD_CAMERA_H
