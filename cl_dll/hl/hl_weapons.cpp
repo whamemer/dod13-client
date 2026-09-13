@@ -917,6 +917,12 @@ void UTIL_ParticleLine( CBasePlayer *player, float *start, float *end, float lif
 	gEngfuncs.pEfxAPI->R_ParticleLine( start, end, r, g, b, life );
 }
 
+/*
+=====================
+CBasePlayerWeapon::PrintState
+
+=====================
+*/
 void CBasePlayerWeapon::PrintState( void )
 {
 	COM_Log( "c:\\hl.log", "%.4f ", gpGlobals->time );
@@ -1474,14 +1480,14 @@ void DoD_SetSequence( int seq, int gaitseq )
 
 void DoD_SetOrientation( vec3_t *o, vec3_t *a )
 {
-	g_clorg = Vector( *o );
-	g_clang = Vector( *a );
+	VectorCopy( o, g_clorg );
+	VectorCopy( a, g_clang );
 }
 
 void DoD_GetOrientation( float *o, float *a )
 {
-	o = Vector( g_clorg );
-	a = Vector( g_clang );
+	VectorCopy( g_clorg, o );
+	VectorCopy( g_clang, a );
 }
 
 /*
