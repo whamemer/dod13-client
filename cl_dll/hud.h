@@ -73,14 +73,19 @@ typedef struct cvar_s cvar_t;
 //
 //-----------------------------------------------------
 //
-/*class Element
+class Element
 {
 public:
 	float flTimeCreated;
 	Element *next;
 	Element *previous;
 
-	Element( float flTime );
+	Element( float Time )
+	{
+		flTimeCreated = Time;
+		next = NULL;
+		previous = NULL;
+	}
 };
 
 class Queue
@@ -95,31 +100,82 @@ public:
 
 	~Queue( void )
 	{
+		Update( 99999.0f );
+	}
+
+	bool Full( void ) 
+	{ 
+		return ( count >= maxelemets ); 
+	}
+
+	bool Add( float flTime )
+	{
+		if( Full() )
+			return false;
+
+		Element *pNewElement = new Element( flTime );
+
+		if( !pNewElement )
+			return false;
+
+		if( !first )
+		{
+			first = pNewElement;
+			last = pNewElement;
+			current = pNewElement;
+		}
+		else
+		{
+			pNewElement->previous = last;
+			last->next = pNewElement;
+			last = pNewElement;
+			current = pNewElement;
+		}
+
+		count++;
+		return true;
+	}
+
+
+	void Update( float flCurrentTime )
+	{
+		Element *last;
+		Element *previous;
+
+		last = this->last;
+
 		if( last )
 		{
-			while( last->flTimeCreated + m_flDuration < 99999.0f )
+			while( last->flTimeCreated - flCurrentTime < 0.0f )
 			{
-				delete[] last;
-				--count;
-				last = last->previous;
-				current = last->previous;
+				previous = last->previous;
 
-				if( !last->previous )
+				delete last;
+
+				count--;
+				this->last = previous;
+				current = previous;
+
+				if( !previous )
 				{
 					first = NULL;
 					current = NULL;
 					return;
 				}
 
-				last = last->previous;
+				last = previous;
+			}
+
+			Element *pCurr = first;
+
+			while( pCurr )
+			{
+				pCurr->flTimeCreated -= flCurrentTime;
+				pCurr = pCurr->next;
 			}
 		}
 	}
-
-	bool Full( void );
-	bool Add( float flDuration );
-	void Update( float flDuration );
-};*/
+};
 
 struct pmodel_fx_t
 {
@@ -1187,6 +1243,7 @@ public:
 
 	int GetSpriteIndex( const char *SpriteName );	// gets a sprite index, for use in the m_rghSprites[] array
 
+	Queue			m_Queue;
 	CHudScope		m_Scope;
 	CHudDodIcons	m_Icons;
 	CObjectiveIcons	m_ObjectiveIcons;
@@ -1296,7 +1353,6 @@ public:
 	int m_iNoConsolePrint;
 
 	void AddHudElem( CHudBase *p );
-	// void SetFOV( int, int );
 	float GetSensitivity( void );
 	void SetWaterLevel( int level );
 	int GetWaterLevel( void );
@@ -1320,7 +1376,7 @@ public:
 	float GetMortarUnDeployTime( void );
 	bool IsTeamPara( int team );
 	char *GetPlayerClassName( int playerclass );
-	// void SetFOV( int );
+	void SetFOV( int fov ) { m_iFOV = fov; }
 	int GetFOV( void );
 	void DoRecoil( int weapon_id );
 	void GetWeaponRecoilAmount( int weaponId, float &flPitchRecoil, float &flYawRecoil );

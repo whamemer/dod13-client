@@ -34,6 +34,7 @@
 #include "voice_status.h"
 
 extern engine_studio_api_t IEngineStudio;
+extern Queue g_RubbleQueue;
 hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
 team_info_t		g_TeamInfo[MAX_TEAMS + 1];
@@ -561,6 +562,8 @@ CHud::~CHud()
 		}
 		m_pHudList = NULL;
 	}
+
+	g_RubbleQueue.Update( 99999.0f );
 }
 
 // GetSpriteIndex()
@@ -1165,102 +1168,117 @@ void CHud::GetWeaponRecoilAmount( int weaponId, float &flPitchRecoil, float &flY
 
 	switch( weaponId )
 	{
-		case WEAPON_COLT:
-		case WEAPON_LUGER:
-		case WEAPON_M1CARBINE:
-		case WEAPON_WEBLEY:
-			flPitchRecoil = 1.4f;
-			flYawRecoil = 0.35f;
-		case WEAPON_GARAND:
-		case WEAPON_KAR:
-			flPitchRecoil = 8.0f;
-			flYawRecoil = 2.0f;
-		case WEAPON_SCOPEDKAR:
+	case WEAPON_COLT:
+	case WEAPON_LUGER:
+	case WEAPON_M1CARBINE:
+	case WEAPON_WEBLEY:
+		flPitchRecoil = 1.4f;
+		flYawRecoil = 0.35f;
+		break;
+	case WEAPON_GARAND:
+	case WEAPON_KAR:
+		flPitchRecoil = 8.0f;
+		flYawRecoil = 2.0f;
+		break;
+	case WEAPON_SCOPEDKAR:
+		flPitchRecoil = 6.0f;
+		flYawRecoil = 1.5f;
+		break;
+	case WEAPON_THOMPSON:
+	case WEAPON_GREASEGUN:
+		flPitchRecoil = 2.15f;
+		flYawRecoil = 0.5375f;
+		break;
+
+	case WEAPON_MP44:
+		flPitchRecoil = 5.0f;
+		flYawRecoil = 1.25f;
+		break;
+	case WEAPON_SPRING:
+		flPitchRecoil = 5.6f;
+		flYawRecoil = 1.4f;
+		break;
+	case WEAPON_BAR:
+	case WEAPON_BREN:
+		flPitchRecoil = 6.72f;
+		flYawRecoil = 1.3f;
+		break;
+	case WEAPON_MP40:
+	case WEAPON_STEN:
+		flPitchRecoil = 2.2f;
+		flYawRecoil = 0.55f;
+		break;
+	case WEAPON_MG42:
+	case WEAPON_CAL30:
+	case WEAPON_MG34:
+		flPitchRecoil = 20.0f;
+		flYawRecoil = 5.0f;
+		break;
+	case WEAPON_FG42:
+		flPitchRecoil = 5.3f;
+		flYawRecoil = 1.325f;
+		break;
+	case WEAPON_K43:
+		flPitchRecoil = 7.0f;
+		flYawRecoil = 1.75f;
+		break;
+	case WEAPON_ENFIELD:
+		if( ( g_iWeaponFlags & WPNSTATE_SCOPED ) != 0 )
+		{
 			flPitchRecoil = 6.0f;
 			flYawRecoil = 1.5f;
-		case WEAPON_THOMPSON:
-		case WEAPON_GREASEGUN:
-			flPitchRecoil = 2.15f;
-			flYawRecoil = 0.5375f;
-		case WEAPON_MP44:
-			flPitchRecoil = 5.0f;
-			flYawRecoil = 1.25f;
-		case WEAPON_SPRING:
-			flPitchRecoil = 5.6f;
-			flYawRecoil = 1.4f;
-		case WEAPON_BAR:
-		case WEAPON_BREN:
-			flPitchRecoil = 6.72f;
+		}
+		else
+		{
+			flPitchRecoil = 8.0f;
+			flYawRecoil = 2.0f;
+		}
+		break;
+	case WEAPON_BAZOOKA:
+	case WEAPON_PSCHRECK:
+	case WEAPON_PIAT:
+		flPitchRecoil = 10.0f;
+		flYawRecoil = 2.5f;
+		break;
+	default:
+		flPitchRecoil = 0.0f;
+		flYawRecoil = 0.0f;
+		flYawRecoil = 0.25f * flPitchRecoil;
+
+		if( weaponId == WEAPON_BAR || weaponId == WEAPON_BREN )
 			flYawRecoil = 1.3f;
-		case WEAPON_MP40:
-		case WEAPON_STEN:
-			flPitchRecoil = 2.2f;
-			flYawRecoil = 0.55f;
-		case WEAPON_MG42:
-		case WEAPON_CAL30:
-		case WEAPON_MG34:
-			flPitchRecoil = 20.0f;
-			flYawRecoil = 5.0f;
-		case WEAPON_FG42:
-			flPitchRecoil = 5.3f;
-			flYawRecoil = 1.325;
-		case WEAPON_K43:
-			flPitchRecoil = 7.0f;
-			flYawRecoil = 1.75f;
-		case WEAPON_ENFIELD:
-			if( ( g_iWeaponFlags & WPNSTATE_SCOPED ) != 0 )
-			{
-				flPitchRecoil = 6.0f;
-				flYawRecoil = 1.5f;
-			}
+
+		break;
+	}
+
+	if( ( gHUD.IsProneDeployed() || gHUD.IsSandbagDeployed() )
+		&& ( weaponId == WEAPON_BAR || weaponId == WEAPON_MG42 || weaponId == WEAPON_MG34
+			|| weaponId == WEAPON_FG42 || weaponId == WEAPON_BREN ) )
+	{
+		flPitchRecoil = 0.0f;
+		flYawRecoil = 0.0f;
+	}
+	else
+	{
+		float fl = 1.0f;
+
+		if( !gHUD.IsProne() || weaponId == WEAPON_MG42 || weaponId == WEAPON_CAL30 || weaponId == WEAPON_MG34 )
+		{
+			if( ( gHUD.m_iKeyBits & IN_DUCK ) != 0 )
+				fl = 0.5f;
 			else
-			{
-				flPitchRecoil = 8.0f;
-				flYawRecoil = 2.0f;
-			}
-		case WEAPON_BAZOOKA:
-		case WEAPON_PSCHRECK:
-		case WEAPON_PIAT:
-			flPitchRecoil = 10.0f;
-			flYawRecoil = 2.5f;
-		default:
-			flPitchRecoil = 0.0f;
-			flYawRecoil = 0.0f;
+				return;
+		}
+		else
+		{
+			fl = 0.25f;
+		}
 
-			flYawRecoil = 0.25f * flPitchRecoil;
-
-			if( weaponId == WEAPON_BAR || weaponId == WEAPON_BREN )
-				flYawRecoil = 1.3f;
-
-			if( ( gHUD.IsProneDeployed() || gHUD.IsSandbagDeployed() )
-				&& ( weaponId == WEAPON_BAR || weaponId == WEAPON_MG42 || weaponId == WEAPON_MG34
-					|| weaponId == WEAPON_FG42 || weaponId == WEAPON_BREN ) )
-			{
-				flPitchRecoil = 0.0f;
-				flYawRecoil = 0.0f;
-			}
-			else
-			{
-				float fl;
-
-				if( gHUD.IsProne() || weaponId == WEAPON_MG42 || weaponId == WEAPON_CAL30 || weaponId == WEAPON_MG34 )
-				{
-					if( ( gHUD.m_iKeyBits & IN_BACK ) == 0 )
-						return;
-
-					fl = 0.5f;
-
-				}
-				else
-					fl = 0.25f;
-
-				flPitchRecoil *= fl;
-				flYawRecoil *= fl;
-			}
-
-			return;
+		flPitchRecoil *= fl;
+		flYawRecoil *= fl;
 	}
 }
+
 
 void CHud::DoRecoil( int weapon_id )
 {

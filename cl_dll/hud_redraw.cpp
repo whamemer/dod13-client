@@ -35,6 +35,8 @@ int grgLogoFrame[MAX_LOGO_FRAMES] =
 extern int g_iVisibleMouse;
 extern vec3_t v_origin;
 
+Queue g_RubbleQueue;
+
 char cmd[50];
 
 float HUD_GetFOV( void );
@@ -50,61 +52,44 @@ int g_SpecScoreboardActive;
 // Think
 void CHud::Think( void )
 {
+	HUDLIST *pList;
+	float volume;
+	float zoom_sens;
+	int newfov;
+
+	m_scrinfo.iSize = sizeof( SCREENINFO );
+	gEngfuncs.pfnGetScreenInfo( &m_scrinfo );
+
 	if( flBoltHideXHair > 0.0f )
-		flBoltHideXHair = flBoltHideXHair - gHUD.m_flTimeDelta;
+		flBoltHideXHair -= m_flTimeDelta;
 
 	if( flBoltHideXHair < 0.0f )
 		flBoltHideXHair = 0.0f;
 
 	if( !g_iDeadFlag )
 	{
-		if( m_flTime <= m_flPlaySprintSoundTime || g_fStamina >= 60.0f )
+		if( m_flTime > m_flPlaySprintSoundTime && g_fStamina < 60.0f )
 		{
-			if( !g_iUser1 )
+			if( !gEngfuncs.IsSpectateOnly() )
 			{
-				if( !gEngfuncs.IsSpectateOnly() )
-				{
-					if( i_dodmusic == 1 && m_flTime > i_MusicFadeCounter )
-					{
-						gEngfuncs.pfnPlaySoundByName( "player/prewarmup.wav", 1.0f );
-						i_dodmusic = 0;
-					}
+				volume = 0.8f;
 
-					if( i_MusicFadeCounter - m_flTime > 10.0 )
-						i_MusicFadeCounter = m_flTime - 1.0;
-				}
+				if( g_fStamina >= 10.0f && g_fStamina >= 25.0f )
+					volume = 0.3f;
+
+				gEngfuncs.pEventAPI->EV_PlaySound( -1, &v_origin.x, 6, "player/sprintgrunts.wav", volume, 0.0f, 0, 100 );
+				m_flPlaySprintSoundTime = m_flTime + 1.4f;
 			}
-			else
-			{
-				m_iSensLevel = 0;
-
-				if( !gEngfuncs.IsSpectateOnly() )
-				{
-					if( i_dodmusic == 1 && m_flTime > i_MusicFadeCounter )
-					{
-						gEngfuncs.pfnPlaySoundByName( "player/prewarmup.wav", 1.0f );
-						i_dodmusic = 0;
-					}
-
-					if( i_MusicFadeCounter - m_flTime > 10.0f )
-						i_MusicFadeCounter = m_flTime - 1.0f;
-				}
-			}
-		}
-
-		if( !gEngfuncs.IsSpectateOnly() )
-		{
-			float flVolume = 0.8f;
-
-			if( g_fStamina >= 10.0f && g_fStamina >= 25.0f )
-				flVolume = 0.3f;
-
-			gEngfuncs.pEventAPI->EV_PlaySound( -1, &v_origin.x, 6, "player/sprintgrunts.wav", flVolume, 0.0f, 0, 100 );
-			m_flPlaySprintSoundTime = m_flTime + 1.4f;
 		}
 	}
+	else
+	{
+		if( m_flPlaySprintSoundTime > m_flTime )
+			gEngfuncs.pEventAPI->EV_StopSound( -1, 6, "player/sprintgrunts.wav" );
+	}
 
-	m_iSensLevel = 0;
+	if( !g_iDeadFlag || !g_iUser1 )
+		m_iSensLevel = 0;
 
 	if( !gEngfuncs.IsSpectateOnly() )
 	{
@@ -118,54 +103,49 @@ void CHud::Think( void )
 			i_MusicFadeCounter = m_flTime - 1.0f;
 	}
 
-	int newfov;
-	HUDLIST *pList = m_pHudList;
-
-	while( pList )
+	for( pList = m_pHudList; pList; pList = pList->pNext )
 	{
-		if( pList->p->m_iFlags & HUD_ACTIVE )
+		if( pList->p->m_iFlags & 1 )
 			pList->p->Think();
-		pList = pList->pNext;
 	}
 
-	newfov = HUD_GetFOV();
-	if( newfov == 0 )
+	float flCurrentFOV = HUD_GetFOV();
+	newfov = ( int ) flCurrentFOV;
+
+	if( !flCurrentFOV )
+		newfov = 90;
+
+	if( newfov != m_iFOV )
+		SetFOV( newfov );
+
+	if( newfov == 90 )
 	{
-		m_iFOV = default_fov->value;
+		m_flMouseSensitivity = 0.0f;
 	}
 	else
 	{
-		m_iFOV = newfov;
-	}
+		zoom_sens = zoom_sensitivity_ratio->value;
 
-	// the clients fov is actually set in the client data update section of the hud
-	// Set a new sensitivity
-	if( m_iFOV == default_fov->value )
-	{
-		// reset to saved sensitivity
-		m_flMouseSensitivity = 0;
-	}
-	else
-	{
-		// set a new sensitivity that is proportional to the change from the FOV default
-		m_flMouseSensitivity = sensitivity->value * ((float)newfov / max( default_fov->value, 90 )) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
-	}
+		m_flMouseSensitivity = zoom_sens * ( ( float ) newfov / 90.0f * sensitivity->value );
 
-	// think about default fov
-	if( m_iFOV == 0 )
-	{
-		// only let players adjust up in fov,  and only if they are not overriden by something else
-		m_iFOV = max( default_fov->value, 90 );  
+		if( !newfov )
+			SetFOV( 90 );
 	}
 
 	if( gEngfuncs.IsSpectateOnly() )
 	{
-		m_iFOV = gHUD.m_Spectator.GetFOV(); // default_fov->value;
+		if( g_iUser1 == 4 && g_iUser2 != 0 )
+		{
+			newfov = ( m_PlayerFOV[g_iUser2] != 0 ) ? m_PlayerFOV[g_iUser2] : 90;
+			SetFOV( newfov );
+		}
+		else
+		{
+			SetFOV( 90 );
+		}
 	}
 
-	/* WHAMER: TODO: vgui2
-	if( gViewPortInterface )
-		gViewPortInterface->OnTick();*/
+	g_RubbleQueue.Update( m_flTime );
 }
 
 // Redraw
