@@ -623,7 +623,7 @@ void CGameStudioModelRenderer::CalculatePitchBlend( entity_state_t *pplayer )
 
 void CGameStudioModelRenderer::CalculateYawBlend( entity_state_t *pplayer )
 {
-	float flYaw, float maxyaw, float blend_yaw;
+	float flYaw, maxyaw, blend_yaw;
 
 	StudioEstimateGait( pplayer );
 
