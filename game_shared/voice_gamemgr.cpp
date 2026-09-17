@@ -74,10 +74,8 @@ static void VoiceServerDebug( char const *pFmt, ... )
 		return;
 
 	va_start( marker, pFmt );
-	_vsnprintf( msg, sizeof( msg ) - 1, pFmt, marker );
+	_vsnprintf( msg, sizeof(msg), pFmt, marker );
 	va_end( marker );
-
-	msg[sizeof( msg ) - 1] = 0;
 
 	ALERT( at_console, "%s", msg );
 }
@@ -221,8 +219,8 @@ void CVoiceGameMgr::UpdateMasks()
 	bool bAllTalk = !!(sv_alltalk.value);
 
 	for(int iClient=0; iClient < m_nMaxPlayers; iClient++)
-	{
-		CBaseEntity *pEnt = UTIL_PlayerByIndex(iClient+1);
+	{   // SERVER PART
+		/*CBaseEntity *pEnt = UTIL_PlayerByIndex(iClient + 1);
 		if(!pEnt || !pEnt->IsPlayer())
 			continue;
 
@@ -271,6 +269,6 @@ void CVoiceGameMgr::UpdateMasks()
 		{
 			bool bCanHear = gameRulesMask[iOtherClient] && !g_BanMasks[iClient][iOtherClient];
 			g_engfuncs.pfnVoice_SetClientListening(iClient+1, iOtherClient+1, bCanHear);
-		}
+		}*/
 	}
 }

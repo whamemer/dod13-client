@@ -43,4 +43,3 @@ protected:
 	BannedPlayer	m_PlayerHash[256];
 };
 #endif // VOICE_BANMGR_H
-
