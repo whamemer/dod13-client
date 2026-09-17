@@ -47,7 +47,7 @@ public:
 
 	static CGrenade *ShootTimed( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity, float time );
 	static CGrenade *ShootContact( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity );
-	static CGrenade* ShootPickup( entvars_t* pevOwner, Vector vecStart, Vector vecVelocity, float time, grenType value, float f );
+	static CGrenade *ShootPickup( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity, float time, grenType value, float f ) { return NULL; }
 	static CGrenade *ShootSatchelCharge( entvars_t *pevOwner, Vector vecStart, Vector vecVelocity );
 	static void UseSatchelCharges( entvars_t *pevOwner, SATCHELCODE code );
 
@@ -622,7 +622,7 @@ class CRocketWeapon : public CBasePlayerWeapon
 public:
 	int iItemSlot( void ) { return 2; }
 	int Classify( void ) { return CLASS_ROCKET; }
-	void ReSlow( void );
+	void ReSlow( void ) { ; };
 
 	virtual BOOL UseDecrement( void )
 	{

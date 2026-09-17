@@ -103,7 +103,7 @@ void CGarand::PrimaryAttack( void )
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
             FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_GARAND, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
-            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireGarand, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+            PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_usFireGarand, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_GARAND].anim_firedelay;
             m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_GARAND].anim_firedelay;

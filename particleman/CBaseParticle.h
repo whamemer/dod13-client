@@ -57,7 +57,7 @@ public:
 	virtual void Spin(float time);
 	virtual void CalculateVelocity(float time);
 	virtual void CheckCollision(float time);
-	virtual void Touch(Vector pos, Vector normal, int index);
+	virtual void Touch(Vector pos, Vector normal, int index, bool enteringWater);
 	virtual void Die();
 	virtual void InitializeSprite(Vector org, Vector normal, model_s* sprite, float size, float brightness);
 	virtual void Force();
@@ -179,4 +179,4 @@ protected:
 	float m_flNextCollisionTime;
 };
 
-CBaseParticle *g_pBaseParticle;
+extern CBaseParticle *g_pBaseParticle;
