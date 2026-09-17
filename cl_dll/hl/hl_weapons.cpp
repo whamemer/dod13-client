@@ -1480,14 +1480,25 @@ void DoD_SetSequence( int seq, int gaitseq )
 
 void DoD_SetOrientation( vec3_t *o, vec3_t *a )
 {
-	VectorCopy( o, g_clorg );
-	VectorCopy( a, g_clang );
+	if( o && a )
+	{
+		g_clorg[0] = ( *o )[0];
+		g_clorg[1] = ( *o )[1];
+		g_clorg[2] = ( *o )[2];
+
+		g_clang[0] = ( *a )[0];
+		g_clang[1] = ( *a )[1];
+		g_clang[2] = ( *a )[2];
+	}
 }
 
 void DoD_GetOrientation( float *o, float *a )
 {
-	VectorCopy( g_clorg, o );
-	VectorCopy( g_clang, a );
+	vec3_t *pOutOrigin = ( vec3_t * ) o;
+	vec3_t *pOutAngles = ( vec3_t * ) a;
+
+	*pOutOrigin = g_clorg;
+	*pOutAngles = g_clang;
 }
 
 /*

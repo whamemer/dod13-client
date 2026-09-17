@@ -55,9 +55,9 @@ void CDoDSnowFlake::Touch( vec3_t *pos, vec3_t *normal, int index )
 }
 
 CDoDSnowFlake *CDoDSnowFlake::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
-	const char *classname, bool bDistCull )
+	const char *classname )
 {
-
+	return NULL;
 }
 
 void CWeatherManager::CreateSnowParticle( float *origin )

@@ -1243,7 +1243,6 @@ public:
 
 	int GetSpriteIndex( const char *SpriteName );	// gets a sprite index, for use in the m_rghSprites[] array
 
-	Queue			m_Queue;
 	CHudScope		m_Scope;
 	CHudDodIcons	m_Icons;
 	CObjectiveIcons	m_ObjectiveIcons;

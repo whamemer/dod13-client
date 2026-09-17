@@ -237,9 +237,9 @@ int CHud::Redraw( float flTime, int intermission )
 
 	if( cl_lw && cl_lw->value != 1 )
 	{
-		strcpy( things, "quit\n" );
+		//strcpy( things, "quit\n" );
 		//ClientCmd( "cl_lw 1" );
-		ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
+		//ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
 		//ClientCmd( things );
 	}
 

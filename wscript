@@ -262,24 +262,6 @@ def configure(conf):
 		conf.define('_LINUX', True)
 		conf.define('LINUX', True)
 
-	conf.msg(msg='-> processing mod options', result='...', color='BLUE')
-	regex = re.compile('^([A-Za-z0-9_-]+)=([A-Za-z0-9_-]+) # (.*)$')
-	with open(str(conf.path.make_node('mod_options.txt'))) as fd:
-		lines = fd.readlines()
-	for line in lines:
-		m = regex.match(line.strip())
-		if m:
-			p = m.groups()
-			conf.start_msg("* " + p[2])
-			if p[1] == 'ON':
-				conf.env[p[0]] = True
-				conf.define(p[0], 1)
-			elif p[1] == 'OFF':
-				conf.env[p[0]] = False
-				conf.undefine(p[0])
-			else:
-				conf.env[p[0]] = p[1]
-			conf.end_msg(p[1])
 	if conf.env.HLDEMO_BUILD and conf.env.OEM_BUILD:
 		conf.fatal('Don\'t mix Demo and OEM builds!')
 

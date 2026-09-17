@@ -21,6 +21,8 @@
 #include "exportdef.h"
 #include "cvardef.h"
 
+#include "hud.h"
+
 #if !defined(TRUE)
 #define TRUE 1
 #define FALSE 0
@@ -202,12 +204,17 @@ inline int GetSpriteRes( int width, int height )
 	return min( i, gHUD.m_iMaxRes );
 }
 
+#define bound( min, num, max ) ((num) >= (min) ? ((num) < (max) ? (num) : (max)) : (min))
+#define RAD2DEG( x )	((float)(x) * (float)(180.f / M_PI))
+#define DEG2RAD( x )	((float)(x) * (float)(M_PI / 180.f))
+
 void ScaleColors( int &r, int &g, int &b, int a );
 
 #define DotProduct(x, y) ((x)[0] * (y)[0] + (x)[1] * (y)[1] + (x)[2] * (y)[2])
 #define VectorSubtract(a, b, c) { (c)[0] = (a)[0] - (b)[0]; (c)[1] = (a)[1] - (b)[1]; (c)[2] = (a)[2] - (b)[2]; }
 #define VectorAdd(a, b, c) { (c)[0] = (a)[0] + (b)[0]; (c)[1] = (a)[1] + (b)[1]; (c)[2] = (a)[2] + (b)[2]; }
 #define VectorCopy(a, b) { (b)[0] = (a)[0]; (b)[1] = (a)[1]; (b)[2] = (a)[2]; }
+#define VectorCompare2(a, b) ( (a)[0] == (b)[0] && (a)[1] == (b)[1] && (a)[2] == (b)[2] )
 inline void VectorClear( float *a ) { a[0] = 0.0; a[1] = 0.0; a[2] = 0.0; }
 float Length( const float *v );
 void VectorMA( const float *veca, float scale, const float *vecb, float *vecc );
@@ -234,6 +241,4 @@ HSPRITE LoadSprite( const char *pszName );
 
 bool HUD_MessageBox( const char *msg );
 bool IsXashFWGS();
-void CL_UnloadParticleMan();
-void CL_LoadParticleMan();
 #endif

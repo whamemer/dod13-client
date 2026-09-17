@@ -4,16 +4,20 @@ project(client)
 set(CLIENT_LIB client)
 
 file(GLOB DOD_CLIENT_SRC "*.cpp")
+file(GLOB DOD_CLIENT_MISC "misc/*.cpp")
 file(GLOB DOD_WPNSH_SRC "../dlls/wpn_shared/*.cpp")
 file(GLOB DOD_SHARED_SRC "../dlls/dod_shared.cpp")
 file(GLOB DOD_PM_SRC "../pm_shared/*.cpp")
 file(GLOB DOD_GAMSH_SRC "../game_shared/*.cpp")
+file(GLOB MINIUTL_SRC "../3rdparty/MiniUTL/*.cpp")
 file(GLOB DOD_PARTICLEMAN_SRC "../particleman/*.cpp")
 
+list(APPEND DOD_CLIENT_SRC ${DOD_CLIENT_MISC})
 list(APPEND DOD_CLIENT_SRC ${DOD_WPNSH_SRC})
 list(APPEND DOD_CLIENT_SRC ${DOD_SHARED_SRC})
 list(APPEND DOD_CLIENT_SRC ${DOD_PM_SRC})
 list(APPEND DOD_CLIENT_SRC ${DOD_GAMSH_SRC})
+list(APPEND DOD_CLIENT_SRC ${MINIUTL_SRC})
 list(APPEND DOD_CLIENT_SRC ${DOD_PARTICLEMAN_SRC})
 
 if (HAVE_STRLCPY)
@@ -32,6 +36,7 @@ endif()
 
 include_directories(
 	include
+	include/misc
 	../cl_dll
 	../common
 	../engine
@@ -39,7 +44,8 @@ include_directories(
 	../dlls
 	../game_shared
 	../public
-	../particleman)
+	../particleman
+	../3rdparty/MiniUTL)
 
 if (WIN32)
 	include_directories (../external/)

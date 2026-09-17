@@ -247,6 +247,7 @@ void Parse_info_doddetect( dod_bspparse_ent *pEnt )
 	char *key;
 	char *value;
 	int i;
+	CDoDParticle *pParticle = NULL;
 
 	vWind[0] = 0.0f;
 	vWind[1] = 0.0f;
@@ -272,7 +273,7 @@ void Parse_info_doddetect( dod_bspparse_ent *pEnt )
 		}
 	}
 
-	g_pDoDParticle->SetGlobalWind( &vWind[0] );
+	pParticle->SetGlobalWind( &vWind[0] );
 }
 
 void Parse_env_model( dod_bspparse_ent *pEnt )

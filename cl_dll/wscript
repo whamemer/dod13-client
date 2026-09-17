@@ -11,8 +11,6 @@ def options(opt):
 	grp.add_option('--disable-goldsrc-support', action = 'store_false', dest = 'GOLDSOURCE_SUPPORT',
 		default=True, help = 'disable GoldSource compatibility on i386 Win/Mac/Linux')
 
-	opt.load('vgui')
-
 def configure(conf):
 	conf.env.USE_VOICEMGR = conf.options.USE_VOICEMGR
 
@@ -35,20 +33,18 @@ def build(bld):
 		'../pm_shared',
 		'../game_shared',
 		'../public',
-		'../particleman]
-	excluded_files = ['GameStudioModelRenderer_Sample.cpp',
-		'game_shared/voice_vgui_tweakdlg.cpp',
-		'game_shared/voice_gamemgr.cpp',
-		'game_shared/voice_status.cpp']
+		'../particleman',
+		'../3rdparty/MiniUTL']
 
-	source = bld.path.ant_glob('**/*.cpp', excl=excluded_files)
-	source += bld.path.parent.ant_glob('game_shared/*.cpp', excl=excluded_files)
+	source = bld.path.ant_glob('**/*.cpp')
 	source += bld.path.parent.ant_glob([
 		'public/safe_snprintf.c',
 		'pm_shared/*.c',
 		'dlls/wpn_shared/*.cpp',
 		'dlls/dod_shared.cpp',
-		'particleman/*.cpp'
+		'particleman/*.cpp',
+		'3rdparty/MiniUTL/*.cpp',
+		'game_shared/*.cpp'
 	])
 
 	if bld.env.DEST_OS == 'win32':
@@ -69,11 +65,6 @@ def build(bld):
 	if 'HAVE_STRLCAT=1' not in defines:
 		source += bld.path.parent.ant_glob('external/openbsd/strlcat.c')
 
-	if bld.env.DEST_OS != 'dos' and not bld.env.ANDROID_APK:
-		install_path = os.path.join(bld.env.GAMEDIR, bld.env.CLIENT_INSTALL_DIR)
-	else:
-		install_path = bld.env.PREFIX
-
 	bld.shlib(
 		source   = source,
 		target   = 'client' + bld.env.POSTFIX,
@@ -82,7 +73,6 @@ def build(bld):
 		includes = includes,
 		defines  = defines,
 		use      = libs,
-		install_path = install_path,
 		idx = bld.get_taskgen_count()
 	)
 

@@ -911,7 +911,6 @@ ClipInfo *CHudAmmo::GetCurrentGun( WEAPON *pw )
 
 extern bool ShowHudElement( int i_hudElement );
 extern int g_iAlive, g_iDeadFlag;
-extern float m_flWeaponHeat;
 
 int CHudAmmo::Draw( float flTime )
 {
@@ -1064,9 +1063,9 @@ int CHudAmmo::Draw( float flTime )
 				gEngfuncs.pfnSPR_DrawHoles( 0, x, gHUD.m_iFontHeight + y - clipHeight, currentGun.FullArea );
 			}
 
-			if( m_flWeaponHeat > 0.0f )
+			if( g_flWeaponHeat > 0.0f )
 			{
-				cappedOverheat = m_flWeaponHeat;
+				cappedOverheat = g_flWeaponHeat;
 
 				if( cappedOverheat > 1.0f )
 					cappedOverheat = 1.0f;
