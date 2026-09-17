@@ -1,0 +1,3 @@
+[submodule "3rdparty/MiniUTL"]
+	path = 3rdparty/MiniUTL
+	url = https://github.com/FWGS/MiniUTL
