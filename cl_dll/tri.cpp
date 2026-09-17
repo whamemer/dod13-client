@@ -196,7 +196,7 @@ void CDoDRocketTrail::Think( float time )
 }
 
 CDoDRocketTrail *CDoDRocketTrail::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
-	const char *classname, bool bDistCull )
+	const char *classname )
 {
 	return NULL;
 }
@@ -207,7 +207,7 @@ void CDoDDirtExploDust::Think( float time )
 }
 
 CDoDDirtExploDust *CDoDDirtExploDust::Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
-	const char *classname, bool bDistCull )
+	const char *classname )
 {
 	return NULL;
 }
@@ -221,5 +221,3 @@ void UpdateRain( void )
 {
 
 }
-
-#endif

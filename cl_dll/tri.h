@@ -14,8 +14,18 @@
 #include "particleman.h"
 #include "CBaseParticle.h"
 
+#define TRI_COLLIDEKILL_ANIM	(1 << 13)
+#define TRI_COLLIDEDAMP			(1 << 14)
+#define TRI_WIND				(1 << 15)
+#define TRI_COLLIDESLIDE		(1 << 16)
+#define TRI_COLLIDEBREAK		(1 << 17)
+#define FTENT_HITSOUNDPHYSICS	(1 << 18)
+#define FTENT_PERSISTPHYSICS	(1 << 19)
+#define FTENT_ARC_BALLISTICS	(0x300000) // FTENT_HITSOUND * FTENT_PERSISTPHYSICS
+
 extern IParticleMan *g_pParticleman;
 
+void CreateExplosionSmokeInside( vec3_t origin );
 void CreateDebrisWallPuff( vec3_t origin, vec3_t vVelocity, vec3_t vColor, int iPuff );
 
 class CBaseDoDParticle : public CBaseParticle
@@ -31,7 +41,7 @@ public:
 	virtual void Spin( float time ) { g_pBaseParticle->Spin( time ); }
 	virtual void CalculateVelocity( float time ) { g_pBaseParticle->CalculateVelocity( time ); }
 	virtual void CheckCollision( float time ) { g_pBaseParticle->CheckCollision( time ); }
-	virtual void Touch( vec3_t *pos, vec3_t *normal, int index ) { g_pBaseParticle->Touch( *pos, *normal, index ); }
+	virtual void Touch( vec3_t *pos, vec3_t *normal, int index ) { g_pBaseParticle->Touch( *pos, *normal, index, false ); }
 	virtual void Die( void ) { g_pBaseParticle->Die(); }
 	virtual void Force( void ) { g_pBaseParticle->Force(); }
 
@@ -78,7 +88,7 @@ class CDoDRocketTrail : public CBaseDoDParticle
 public:
 	virtual void Think( float time );
 	CDoDRocketTrail *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
-		const char *classname, bool bDistCull );
+		const char *classname);
 
 	bool m_bRocketTrail;
 };
@@ -88,7 +98,7 @@ class CDoDDirtExploDust : public CBaseDoDParticle
 public:
 	virtual void Think( float time );
 	CDoDDirtExploDust *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
-		const char *classname, bool bDistCull );
+		const char *classname );
 
 	bool m_bFire;
 	float m_flActivateTime;
@@ -100,7 +110,7 @@ public:
 	virtual void Think( float time );
 	virtual void Touch( vec3_t *pos, vec3_t *normal, int index );
 	CDoDSnowFlake *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
-		const char *classname, bool bDistCull );
+		const char *classname );
 
 	bool m_bSpiral, m_bTouched;
 	float m_flOldTime, m_flFadeOutTime;

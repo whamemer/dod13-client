@@ -89,7 +89,7 @@ void Game_HookEvents( void )
 	gEngfuncs.pfnHookEvent( "events/weapons/colt.sc", EV_FireColt );
 	gEngfuncs.pfnHookEvent( "events/weapons/luger.sc", EV_FireLuger );
 	gEngfuncs.pfnHookEvent( "events/weapons/m1carbine.sc", EV_FireM1Carbine );
-	gEngfuncs.pfnHookEvent( "events/weapons/garand.sc", EV_FireGarand );
+	gEngfuncs.pfnHookEvent( "weapons/garand.sc", EV_FireGarand );
 	gEngfuncs.pfnHookEvent( "events/weapons/scopedkar.sc", EV_FireScopedKar );
 	gEngfuncs.pfnHookEvent( "events/weapons/thompson.sc", EV_FireThompson );
 	gEngfuncs.pfnHookEvent( "events/weapons/mp44.sc", EV_FireMP44 );
@@ -134,4 +134,16 @@ void Game_HookEvents( void )
 	gEngfuncs.pfnHookEvent( "events/effects/overheat.sc", EV_Overheat );
 	gEngfuncs.pfnHookEvent( "events/effects/rockettrail.sc", EV_RocketTrail );
 	gEngfuncs.pfnHookEvent( "events/effects/mortarshell.sc", EV_MortarShell );
+}
+
+/*
+===================
+EV_HookEvents
+
+See if game specific code wants to hook any events.
+===================
+*/
+void EV_HookEvents( void )
+{
+	Game_HookEvents();
 }
