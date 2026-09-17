@@ -195,7 +195,7 @@ void CBipodWeapon::WeaponIdle( void )
 
 bool CBipodWeapon::IsDeployed( void )
 {
-    return IsDeployed();
+    return m_pPlayer->IsInMGDeploy();
 }
 
 float CBipodWeapon::GetBipodSpread( void )
