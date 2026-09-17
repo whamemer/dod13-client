@@ -4,7 +4,7 @@
 //
 // $NoKeywords: $
 //=============================================================================
-
+/*
 #include "GL/gl.h"
 #include "util_vector.h"
 #include "triangleapi.h"
@@ -26,7 +26,7 @@ extern int g_iOnlyClientDraw;
 void RenderDoDFog( void )
 {
 	int foglevel;
-	float fogColor[3];
+	float fogColor[4];
 
 	if( gHUD.GetWaterLevel() <= 2 )
 	{
@@ -75,4 +75,4 @@ void RenderDoDFog( void )
 			}
 		}
 	}
-}
+}*/
