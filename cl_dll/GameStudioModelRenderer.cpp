@@ -27,6 +27,15 @@
 
 #include "dod_shared.h"
 
+#define ANIM_WALK_SEQUENCE 3
+#define ANIM_JUMP_SEQUENCE 6
+#define ANIM_SWIM_1 8
+#define ANIM_SWIM_2 9
+#define ANIM_FIRST_DEATH_SEQUENCE 101
+#define ANIM_LAST_DEATH_SEQUENCE 159
+#define ANIM_FIRST_EMOTION_SEQUENCE 198
+#define ANIM_LAST_EMOTION_SEQUENCE 207
+
 //
 // Override the StudioModelRender virtual member functions here to implement custom bone
 // setup, blending, etc.
@@ -154,32 +163,39 @@ CGameStudioModelRenderer::CGameStudioModelRenderer( void )
 
 mstudioanim_t *CGameStudioModelRenderer::LookupAnimation( mstudioseqdesc_t *pseqdesc, int index )
 {
-	mstudioanim_t *panim;
+	mstudioanim_t *panim = NULL;
 
 	panim = StudioGetAnim( m_pRenderModel, pseqdesc );
 
-	if( index >= 0 && index < pseqdesc->numblends )
-		panim += m_pStudioHeader->numbones * index;
+	if( index < 0 )
+		return panim;
 
+	if( index > ( pseqdesc->numblends - 1 ) )
+		return panim;
+
+	panim += index * m_pStudioHeader->numbones;
 	return panim;
 }
 
 void CGameStudioModelRenderer::StudioSetupBones( void )
 {
-	static float pos[MAXSTUDIOBONES][3];
-	static float q[MAXSTUDIOBONES][4];
-	static float pos2[MAXSTUDIOBONES][3];
-	static float q2[MAXSTUDIOBONES][4];
-	static float pos3[MAXSTUDIOBONES][3];
-	static float q3[MAXSTUDIOBONES][4];
-	static float pos4[MAXSTUDIOBONES][3];
-	static float q4[MAXSTUDIOBONES][4];
-
-	int i, copy;
+	int i;
 	double f;
-	float s, t, dadt;
 
-	cl_entity_t *m_pCurrentEntity = m_pCurrentEntity;
+	mstudiobone_t *pbones;
+	mstudioseqdesc_t *pseqdesc;
+	mstudioanim_t *panim;
+
+	static float pos[MAXSTUDIOBONES][3];
+	static vec4_t q[MAXSTUDIOBONES];
+	float bonematrix[3][4];
+
+	static float pos2[MAXSTUDIOBONES][3];
+	static vec4_t q2[MAXSTUDIOBONES];
+	static float pos3[MAXSTUDIOBONES][3];
+	static vec4_t q3[MAXSTUDIOBONES];
+	static float pos4[MAXSTUDIOBONES][3];
+	static vec4_t q4[MAXSTUDIOBONES];
 
 	if( !m_pCurrentEntity->player )
 	{
@@ -187,424 +203,345 @@ void CGameStudioModelRenderer::StudioSetupBones( void )
 		return;
 	}
 
-	studiohdr_t *m_pStudioHeader = m_pStudioHeader;
-	int sequence = m_pCurrentEntity->curstate.sequence;
-
-	if( sequence >= m_pStudioHeader->numseq || sequence < 0 )
-	{
+	if( m_pCurrentEntity->curstate.sequence >= m_pStudioHeader->numseq )
 		m_pCurrentEntity->curstate.sequence = 0;
-		sequence = 0;
-	}
 
-	mstudioseqdesc_t *pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + sequence;
-	mstudioanim_t *panim = StudioGetAnim( m_pRenderModel, pseqdesc );
+	pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + m_pCurrentEntity->curstate.sequence;
+	panim = StudioGetAnim( m_pRenderModel, pseqdesc );
+
 	f = StudioEstimateFrame( pseqdesc );
+
+	if( m_pPlayerInfo->gaitsequence == ANIM_WALK_SEQUENCE )
+	{
+		if( m_pCurrentEntity->curstate.blending[0] <= 26 )
+		{
+			m_pCurrentEntity->curstate.blending[0] = 0;
+			m_pCurrentEntity->latched.prevseqblending[0] = m_pCurrentEntity->curstate.blending[0];
+		}
+		else
+		{
+			m_pCurrentEntity->curstate.blending[0] -= 26;
+			m_pCurrentEntity->latched.prevseqblending[0] = m_pCurrentEntity->curstate.blending[0];
+		}
+	}
 
 	if( pseqdesc->numblends == 9 )
 	{
-		float flBlendX = m_pCurrentEntity->curstate.blending[0];
-		float flBlendY = m_pCurrentEntity->curstate.blending[1];
-		mstudioanim_t *panimTarget = NULL;
+		float s = m_pCurrentEntity->curstate.blending[0];
+		float t = m_pCurrentEntity->curstate.blending[1];
 
-		if( flBlendX > 127.0f )
+		if( s <= 127.0 )
 		{
-			s = ( flBlendX - 127.0f ) + ( flBlendX - 127.0f );
+			s = ( s * 2.0 );
 
-			if( flBlendY > 127.0f )
+			if( t <= 127.0 )
 			{
-				t = ( flBlendY - 127.0f ) + ( flBlendY - 127.0f );
+				t = ( t * 2.0 );
 
-				StudioCalcRotations( pos, q, pseqdesc, LookupAnimation( pseqdesc, 4 ), f );
-				StudioCalcRotations( pos2, q2, pseqdesc, LookupAnimation( pseqdesc, 5 ), f );
-				StudioCalcRotations( pos3, q3, pseqdesc, LookupAnimation( pseqdesc, 7 ), f );
-				panimTarget = LookupAnimation( pseqdesc, 8 );
+				StudioCalcRotations( pos, q, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 1 );
+				StudioCalcRotations( pos2, q2, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 3 );
+				StudioCalcRotations( pos3, q3, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 4 );
+				StudioCalcRotations( pos4, q4, pseqdesc, panim, f );
 			}
 			else
 			{
-				t = flBlendY + flBlendY;
+				t = 2.0 * ( t - 127.0 );
 
-				StudioCalcRotations( pos, q, pseqdesc, LookupAnimation( pseqdesc, 1 ), f );
-				StudioCalcRotations( pos2, q2, pseqdesc, LookupAnimation( pseqdesc, 2 ), f );
-				StudioCalcRotations( pos3, q3, pseqdesc, LookupAnimation( pseqdesc, 4 ), f );
-				panimTarget = LookupAnimation( pseqdesc, 5 );
+				panim = LookupAnimation( pseqdesc, 3 );
+				StudioCalcRotations( pos, q, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 4 );
+				StudioCalcRotations( pos2, q2, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 6 );
+				StudioCalcRotations( pos3, q3, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 7 );
+				StudioCalcRotations( pos4, q4, pseqdesc, panim, f );
 			}
 		}
 		else
 		{
-			s = flBlendX + flBlendX;
+			s = 2.0 * ( s - 127.0 );
 
-			if( flBlendY <= 127.0f )
+			if( t <= 127.0 )
 			{
-				t = flBlendY + flBlendY;
+				t = ( t * 2.0 );
 
+				panim = LookupAnimation( pseqdesc, 1 );
 				StudioCalcRotations( pos, q, pseqdesc, panim, f );
-				StudioCalcRotations( pos2, q2, pseqdesc, LookupAnimation( pseqdesc, 1 ), f );
-				StudioCalcRotations( pos3, q3, pseqdesc, LookupAnimation( pseqdesc, 3 ), f );
-				panimTarget = LookupAnimation( pseqdesc, 4 );
+				panim = LookupAnimation( pseqdesc, 2 );
+				StudioCalcRotations( pos2, q2, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 4 );
+				StudioCalcRotations( pos3, q3, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 5 );
+				StudioCalcRotations( pos4, q4, pseqdesc, panim, f );
 			}
 			else
 			{
-				t = ( flBlendY - 127.0f ) + ( flBlendY - 127.0f );
+				t = 2.0 * ( t - 127.0 );
 
-				StudioCalcRotations( pos, q, pseqdesc, LookupAnimation( pseqdesc, 3 ), f );
-				StudioCalcRotations( pos2, q2, pseqdesc, LookupAnimation( pseqdesc, 4 ), f );
-				StudioCalcRotations( pos3, q3, pseqdesc, LookupAnimation( pseqdesc, 6 ), f );
-				panimTarget = LookupAnimation( pseqdesc, 7 );
+				panim = LookupAnimation( pseqdesc, 4 );
+				StudioCalcRotations( pos, q, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 5 );
+				StudioCalcRotations( pos2, q2, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 7 );
+				StudioCalcRotations( pos3, q3, pseqdesc, panim, f );
+				panim = LookupAnimation( pseqdesc, 8 );
+				StudioCalcRotations( pos4, q4, pseqdesc, panim, f );
 			}
 		}
 
-		StudioCalcRotations( pos4, q4, pseqdesc, panimTarget, f );
+		s /= 255.0;
+		t /= 255.0;
 
-		float flWeightX = s / 255.0f;
-		StudioSlerpBones( q, pos, q2, pos2, flWeightX );
-		StudioSlerpBones( q3, pos3, q4, pos4, flWeightX );
-
-		float flWeightY = t / 255.0f;
-		StudioSlerpBones( q, pos, q3, pos3, flWeightY );
+		StudioSlerpBones( q, pos, q2, pos2, s );
+		StudioSlerpBones( q3, pos3, q4, pos4, s );
+		StudioSlerpBones( q, pos, q3, pos3, t );
 	}
 	else
 	{
 		StudioCalcRotations( pos, q, pseqdesc, panim, f );
-
-		if( pseqdesc->numblends > 1 )
-		{
-			mstudioanim_t *panim1 = LookupAnimation( pseqdesc, 1 );
-			StudioCalcRotations( pos2, q2, pseqdesc, panim1, f );
-
-			dadt = StudioEstimateInterpolant();
-			float flWeightX = 1.0f - ( ( m_pCurrentEntity->curstate.blending[0] * dadt +
-				( 1.0f - dadt ) * m_pCurrentEntity->latched.prevblending[0] ) ) / 255.0f;
-
-			StudioSlerpBones( q, pos, q2, pos2, flWeightX );
-		}
 	}
 
-	if( m_fDoInterp )
+	if( m_fDoInterp && m_pCurrentEntity->latched.sequencetime && ( m_pCurrentEntity->latched.sequencetime + 0.2 > m_clTime ) && ( m_pCurrentEntity->latched.prevsequence < m_pStudioHeader->numseq ) )
 	{
-		if( m_pCurrentEntity->latched.sequencetime != 0.0f && m_pCurrentEntity->latched.sequencetime + 0.2f > m_clTime )
+		static float pos1b[MAXSTUDIOBONES][3];
+		static vec4_t q1b[MAXSTUDIOBONES];
+		float s = m_pCurrentEntity->latched.prevseqblending[0];
+		float t = m_pCurrentEntity->latched.prevseqblending[1];
+
+		pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + m_pCurrentEntity->latched.prevsequence;
+		panim = StudioGetAnim( m_pRenderModel, pseqdesc );
+
+		if( pseqdesc->numblends == 9 )
 		{
-			int prevsequence = m_pCurrentEntity->latched.prevsequence;
-
-			if( prevsequence < m_pStudioHeader->numseq )
+			if( s <= 127.0 )
 			{
-				byte prevBlendX = m_pCurrentEntity->latched.prevseqblending[0];
-				byte prevBlendY = m_pCurrentEntity->latched.prevseqblending[1];
+				s = ( s * 2.0 );
 
-				mstudioseqdesc_t *pOldSeqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + prevsequence;
-				mstudioanim_t *pOldAnim = StudioGetAnim( m_pRenderModel, pOldSeqdesc );
-				float flPrevFrame = m_pCurrentEntity->latched.prevframe;
-
-				if( pOldSeqdesc->numblends == 9 )
+				if( t <= 127.0 )
 				{
-					int index = 0;
+					t = ( t * 2.0 );
 
-					if( prevBlendX > 127.0f )
-					{
-						s = ( prevBlendX - 127.0f ) + ( prevBlendX - 127.0f );
-
-						if( prevBlendY > 127.0f )
-						{
-							t = ( prevBlendY - 127.0f ) + ( prevBlendY - 127.0f );
-							StudioCalcRotations( pos3, q3, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 4 ), flPrevFrame );
-							StudioCalcRotations( pos2, q2, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 5 ), flPrevFrame );
-							StudioCalcRotations( pos4, q4, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 7 ), flPrevFrame );
-							index = 8;
-						}
-						else
-						{
-							t = prevBlendY + prevBlendY;
-							StudioCalcRotations( pos3, q3, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 1 ), flPrevFrame );
-							StudioCalcRotations( pos2, q2, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 2 ), flPrevFrame );
-							StudioCalcRotations( pos4, q4, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 4 ), flPrevFrame );
-							index = 5;
-						}
-					}
-					else
-					{
-						s = prevBlendX + prevBlendX;
-
-						if( prevBlendY > 127.0f )
-						{
-							t = ( prevBlendY - 127.0f ) + ( prevBlendY - 127.0f );
-							StudioCalcRotations( pos3, q3, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 3 ), flPrevFrame );
-							StudioCalcRotations( pos2, q2, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 4 ), flPrevFrame );
-							StudioCalcRotations( pos4, q4, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 6 ), flPrevFrame );
-							index = 7;
-						}
-						else
-						{
-							t = prevBlendY + prevBlendY;
-							StudioCalcRotations( pos3, q3, pOldSeqdesc, pOldAnim, flPrevFrame );
-							StudioCalcRotations( pos2, q2, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 1 ), flPrevFrame );
-							StudioCalcRotations( pos4, q4, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 3 ), flPrevFrame );
-							index = 4;
-						}
-					}
-
-					StudioCalcRotations( pos, q, pOldSeqdesc, LookupAnimation( pOldSeqdesc, index ), flPrevFrame );
-
-					float flOldWeightX = s / 255.0f;
-					StudioSlerpBones( q3, pos3, q2, pos2, flOldWeightX );
-					StudioSlerpBones( q4, pos4, q, pos, flOldWeightX );
-
-					float flOldWeightY = t / 255.0f;
-					StudioSlerpBones( q3, pos3, q4, pos4, flOldWeightY );
+					StudioCalcRotations( pos1b, q1b, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 1 );
+					StudioCalcRotations( pos2, q2, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 3 );
+					StudioCalcRotations( pos3, q3, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 4 );
+					StudioCalcRotations( pos4, q4, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
 				}
 				else
 				{
-					StudioCalcRotations( pos3, q3, pOldSeqdesc, pOldAnim, flPrevFrame );
+					t = 2.0 * ( t - 127.0 );
 
-					if( pOldSeqdesc->numblends > 1 )
-					{
-						mstudioanim_t *pa1 = LookupAnimation( pOldSeqdesc, 1 );
-						StudioCalcRotations( pos2, q2, pOldSeqdesc, pa1, flPrevFrame );
-
-						float flOldWeightX = ( float ) m_pCurrentEntity->latched.prevseqblending[0] / 255.0f;
-						StudioSlerpBones( q3, pos3, q2, pos2, flOldWeightX );
-
-						if( pOldSeqdesc->numblends == 4 )
-						{
-							StudioCalcRotations( pos4, q4, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 2 ), flPrevFrame );
-							StudioCalcRotations( pos, q, pOldSeqdesc, LookupAnimation( pOldSeqdesc, 3 ), flPrevFrame );
-
-							float flOldWeightX2 = ( float ) m_pCurrentEntity->latched.prevseqblending[0] / 255.0f;
-							StudioSlerpBones( q4, pos4, q, pos, flOldWeightX2 );
-
-							float flOldWeightY = ( float ) m_pCurrentEntity->latched.prevseqblending[1] / 255.0f;
-							StudioSlerpBones( q3, pos3, q4, pos4, flOldWeightY );
-						}
-					}
+					panim = LookupAnimation( pseqdesc, 3 );
+					StudioCalcRotations( pos1b, q1b, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 4 );
+					StudioCalcRotations( pos2, q2, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 6 );
+					StudioCalcRotations( pos3, q3, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 7 );
+					StudioCalcRotations( pos4, q4, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
 				}
-
-				float flInterpWeight = 1.0f - ( m_clTime - m_pCurrentEntity->latched.sequencetime ) / 0.2f;
-				StudioSlerpBones( q, pos, q3, pos3, flInterpWeight );
-			}
-		}
-	}
-
-	m_pCurrentEntity->latched.prevframe = f;
-	mstudiobone_t *pbone = ( mstudiobone_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->boneindex );
-	player_info_t *pPlayerInfo = m_pPlayerInfo;
-	int gaitsequence = pPlayerInfo ? pPlayerInfo->gaitsequence : 0;
-	int numbones = m_pStudioHeader->numbones;
-
-	if( !( ( sequence - 19 ) <= 5 || gaitsequence <= 0 || sequence == 7 || sequence == 8 ) )
-	{
-		if( gaitsequence >= m_pStudioHeader->numseq )
-		{
-			pPlayerInfo->gaitsequence = 0;
-			gaitsequence = 0;
-		}
-
-		mstudioseqdesc_t *pGaitSeqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + gaitsequence;
-		mstudioanim_t *pGaitAnim = StudioGetAnim( m_pRenderModel, pGaitSeqdesc );
-
-		StudioCalcRotations( pos2, q2, pGaitSeqdesc, pGaitAnim, pPlayerInfo->gaitframe );
-
-		if( numbones > 0 )
-		{
-			copy = 1;
-
-			for( i = 0; i < numbones; ++i )
-			{
-				if( i == 8 ) 
-					copy = 0;
-				if( i == 5 || i == 2 ) 
-					copy = 1;
-
-				if( copy )
-				{
-					pos[i][0] = pos2[i][0];
-					pos[i][1] = pos2[i][1];
-					pos[i][2] = pos2[i][2];
-
-					q[i][0] = q2[i][0];
-					q[i][1] = q2[i][1];
-					q[i][2] = q2[i][2];
-					q[i][3] = q2[i][3];
-				}
-			}
-		}
-	}
-
-	if( numbones > 0 )
-	{
-		float bonematrix[3][4];
-
-		for( i = 0; i < numbones; ++i )
-		{
-			QuaternionMatrix( q[i], bonematrix );
-
-			bonematrix[0][3] = pos[i][0];
-			bonematrix[1][3] = pos[i][1];
-			bonematrix[2][3] = pos[i][2];
-
-			if( pbone[i].parent == -1 )
-			{
-				if( IEngineStudio.IsHardware() )
-				{
-					ConcatTransforms( *m_protationmatrix, bonematrix, ( *m_pbonetransform )[i] );
-					MatrixCopy( ( *m_pbonetransform )[i], ( *m_plighttransform )[i] );
-				}
-				else
-				{
-					ConcatTransforms( *m_paliastransform, bonematrix, ( *m_pbonetransform )[i] );
-					ConcatTransforms( *m_protationmatrix, bonematrix, ( *m_plighttransform )[i] );
-				}
-
-				StudioFxTransform( m_pCurrentEntity, ( *m_pbonetransform )[i] );
 			}
 			else
 			{
-				ConcatTransforms( ( *m_pbonetransform )[pbone[i].parent], bonematrix, ( *m_pbonetransform )[i] );
-				ConcatTransforms( ( *m_plighttransform )[pbone[i].parent], bonematrix, ( *m_plighttransform )[i] );
+				s = 2.0 * ( s - 127.0 );
+
+				if( t <= 127.0 )
+				{
+					t = ( t * 2.0 );
+
+					panim = LookupAnimation( pseqdesc, 1 );
+					StudioCalcRotations( pos1b, q1b, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 2 );
+					StudioCalcRotations( pos2, q2, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 4 );
+					StudioCalcRotations( pos3, q3, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 5 );
+					StudioCalcRotations( pos4, q4, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+				}
+				else
+				{
+					t = 2.0 * ( t - 127.0 );
+
+					panim = LookupAnimation( pseqdesc, 4 );
+					StudioCalcRotations( pos1b, q1b, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 5 );
+					StudioCalcRotations( pos2, q2, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 7 );
+					StudioCalcRotations( pos3, q3, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+					panim = LookupAnimation( pseqdesc, 8 );
+					StudioCalcRotations( pos4, q4, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+				}
 			}
+
+			s /= 255.0;
+			t /= 255.0;
+
+			StudioSlerpBones( q1b, pos1b, q2, pos2, s );
+			StudioSlerpBones( q3, pos3, q4, pos4, s );
+			StudioSlerpBones( q1b, pos1b, q3, pos3, t );
+		}
+		else
+		{
+			StudioCalcRotations( pos1b, q1b, pseqdesc, panim, m_pCurrentEntity->latched.prevframe );
+		}
+
+		s = 1.0 - ( m_clTime - m_pCurrentEntity->latched.sequencetime ) / 0.2;
+		StudioSlerpBones( q, pos, q1b, pos1b, s );
+	}
+	else
+	{
+		m_pCurrentEntity->latched.prevframe = f;
+	}
+
+	pbones = ( mstudiobone_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->boneindex );
+
+	if( m_pPlayerInfo && ( m_pCurrentEntity->curstate.sequence < ANIM_FIRST_DEATH_SEQUENCE || 
+		m_pCurrentEntity->curstate.sequence > ANIM_LAST_DEATH_SEQUENCE ) && ( m_pCurrentEntity->curstate.sequence 
+		< ANIM_FIRST_EMOTION_SEQUENCE || m_pCurrentEntity->curstate.sequence > ANIM_LAST_EMOTION_SEQUENCE ) 
+		&& m_pCurrentEntity->curstate.sequence != ANIM_SWIM_1 && m_pCurrentEntity->curstate.sequence != ANIM_SWIM_2 )
+	{
+		int copy = 1;
+
+		if( m_pPlayerInfo->gaitsequence >= m_pStudioHeader->numseq )
+			m_pPlayerInfo->gaitsequence = 0;
+
+		pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + m_pPlayerInfo->gaitsequence;
+
+		panim = StudioGetAnim( m_pRenderModel, pseqdesc );
+		StudioCalcRotations( pos2, q2, pseqdesc, panim, m_pPlayerInfo->gaitframe );
+
+		for( i = 0; i < m_pStudioHeader->numbones; i++ )
+		{
+			if( !strcmp( pbones[i].name, "Bip01 Spine" ) )
+				copy = 0;
+			else if( !strcmp( pbones[pbones[i].parent].name, "Bip01 Pelvis" ) )
+				copy = 1;
+
+			if( copy )
+			{
+				memcpy( pos[i], pos2[i], sizeof( pos[i] ) );
+				memcpy( q[i], q2[i], sizeof( q[i] ) );
+			}
+		}
+	}
+
+	for( i = 0; i < m_pStudioHeader->numbones; i++ )
+	{
+		QuaternionMatrix( q[i], bonematrix );
+
+		bonematrix[0][3] = pos[i][0];
+		bonematrix[1][3] = pos[i][1];
+		bonematrix[2][3] = pos[i][2];
+
+		if( pbones[i].parent == -1 )
+		{
+			if( IEngineStudio.IsHardware() )
+			{
+				ConcatTransforms( ( *m_protationmatrix ), bonematrix, ( *m_pbonetransform )[i] );
+				MatrixCopy( ( *m_pbonetransform )[i], ( *m_plighttransform )[i] );
+			}
+			else
+			{
+				ConcatTransforms( ( *m_paliastransform ), bonematrix, ( *m_pbonetransform )[i] );
+				ConcatTransforms( ( *m_protationmatrix ), bonematrix, ( *m_plighttransform )[i] );
+			}
+
+			StudioFxTransform( m_pCurrentEntity, ( *m_pbonetransform )[i] );
+		}
+		else
+		{
+			ConcatTransforms( ( *m_pbonetransform )[pbones[i].parent], bonematrix, ( *m_pbonetransform )[i] );
+			ConcatTransforms( ( *m_plighttransform )[pbones[i].parent], bonematrix, ( *m_plighttransform )[i] );
 		}
 	}
 }
 
 void CGameStudioModelRenderer::StudioEstimateGait( entity_state_t *pplayer )
 {
+	float dt;
 	vec3_t est_velocity;
-	float dt, flYawDiff, flYaw;
-	bool bIsDeathAnim, bIsProneAnim, bSandbagDeployed;
 
-	bIsDeathAnim = false;
-	bIsProneAnim = false;
+	dt = ( m_clTime - m_clOldTime );
+	dt = max( 0.0, dt );
+	dt = min( 1.0, dt );
 
-	player_info_t *pPlayerInfo = m_pPlayerInfo;
-	cl_entity_t *pCurrentEntity = m_pCurrentEntity;
-	int sequence = pCurrentEntity->curstate.sequence;
-
-	if( ( pPlayerInfo->gaitsequence - 15 ) > 1 && sequence != 17 )
-		bIsDeathAnim = ( sequence == 18 );
-
-	bIsProneAnim = ( ( sequence - 19 ) <= 5 );
-
-	flYaw = m_clTime - m_clOldTime;
-	if( flYaw < 0.0f )
+	if( dt == 0 || m_pPlayerInfo->renderframe == m_nFrameCount )
 	{
-		m_flGaitMovement = 0.0f;
-		return;
-	}
-
-	dt = 1.0f;
-	if( flYaw <= 1.0f )
-	{
-		dt = flYaw;
-		if( flYaw == 0.0f )
-		{
-			m_flGaitMovement = 0.0f;
-			return;
-		}
-	}
-
-	if( pPlayerInfo->renderframe == m_nFrameCount )
-	{
-		m_flGaitMovement = 0.0f;
+		m_flGaitMovement = 0;
 		return;
 	}
 
 	if( m_fGaitEstimation )
 	{
-		est_velocity = pCurrentEntity->origin - pPlayerInfo->prevgaitorigin;
-		pPlayerInfo->prevgaitorigin = pCurrentEntity->origin;
+		VectorSubtract( m_pCurrentEntity->origin, m_pPlayerInfo->prevgaitorigin, est_velocity );
+		VectorCopy( m_pCurrentEntity->origin, m_pPlayerInfo->prevgaitorigin );
+		m_flGaitMovement = est_velocity.Length();
 
-		float flLength = Length( est_velocity );
-		m_flGaitMovement = flLength;
-
-		if( dt <= 0.0f || ( flLength / dt ) < 5.0f )
+		if( dt <= 0 || m_flGaitMovement / dt < 5 )
 		{
-			m_flGaitMovement = 0.0f;
-			est_velocity = { 0.0f, 0.0f, 0.0f };
+			m_flGaitMovement = 0;
+			est_velocity[0] = 0;
+			est_velocity[1] = 0;
 		}
 	}
 	else
 	{
-		est_velocity = pplayer->velocity;
-		m_flGaitMovement = Length( est_velocity ) * dt;
+		VectorCopy( pplayer->velocity, est_velocity );
+		m_flGaitMovement = est_velocity.Length() * dt;
 	}
 
-	studiohdr_t *pStudioHdr = ( studiohdr_t * ) IEngineStudio.Mod_Extradata( pCurrentEntity->model );
-	bSandbagDeployed = IsSandbagAnimation( pCurrentEntity->curstate.sequence, pStudioHdr );
-
-	if( bSandbagDeployed )
+	if( est_velocity[1] == 0 && est_velocity[0] == 0 )
 	{
-		pPlayerInfo->gaityaw = pCurrentEntity->angles[1];
-		return;
-	}
+		float flYawDiff = m_pCurrentEntity->angles[YAW] - m_pPlayerInfo->gaityaw;
+		flYawDiff = flYawDiff - ( int ) ( flYawDiff / 360 ) * 360;
 
-	if( est_velocity[1] != 0.0f || est_velocity[0] != 0.0f )
-	{
-		if( !bIsDeathAnim )
-		{
-			pPlayerInfo->gaityaw = atan2( est_velocity[1], est_velocity[0] ) * 180.0f / M_PI;
-			
-			if( pPlayerInfo->gaityaw > 180.0f )  
-				pPlayerInfo->gaityaw = 180.0f;
+		if( flYawDiff > 180 )
+			flYawDiff -= 360;
 
-			if( pPlayerInfo->gaityaw < -180.0f ) 
-				pPlayerInfo->gaityaw = -180.0f;
-		}
-		return;
-	}
+		if( flYawDiff < -180 )
+			flYawDiff += 360;
 
-	if( !bIsProneAnim && !bIsDeathAnim )
-	{
-		flYawDiff = pCurrentEntity->angles[1] - pPlayerInfo->gaityaw;
-		flYawDiff = flYawDiff - 360.0f * floor( ( flYawDiff + 180.0f ) / 360.0f );
-
-		if( flYawDiff <= -5.0f || flYawDiff >= 5.0f )
-		{
-			if( flYawDiff < -90.0f || flYawDiff > 90.0f )
-				pCurrentEntity->baseline.fuser1 = 3.5f;
-			else
-				pCurrentEntity->baseline.fuser1 = 0.0f;
-		}
+		if( dt < 0.25 )
+			flYawDiff *= dt * 4;
 		else
-		{
-			pCurrentEntity->baseline.fuser1 = 0.05f;
-		}
+			flYawDiff *= dt;
 
-		float flBlendStep;
+		m_pPlayerInfo->gaityaw += flYawDiff;
+		m_pPlayerInfo->gaityaw = m_pPlayerInfo->gaityaw - ( int ) ( m_pPlayerInfo->gaityaw / 360 ) * 360;
 
-		if( dt >= 0.25f )
-			flBlendStep = dt * flYawDiff;
-		else
-			flBlendStep = flYawDiff * ( dt * pCurrentEntity->baseline.fuser1 );
-
-		if( fabs( flBlendStep ) >= 0.1f )
-			pPlayerInfo->gaityaw += flBlendStep;
-
-		pPlayerInfo->gaityaw = pPlayerInfo->gaityaw - 360.0f * floor( pPlayerInfo->gaityaw / 360.0f );
-
-		m_flGaitMovement = 0.0f;
-		return;
+		m_flGaitMovement = 0;
 	}
+	else
+	{
+		m_pPlayerInfo->gaityaw = ( atan2( est_velocity[1], est_velocity[0] ) * 180 / M_PI );
 
-	pPlayerInfo->gaityaw = pPlayerInfo->gaityaw + pCurrentEntity->angles[1] - pPlayerInfo->gaityaw;
+		if( m_pPlayerInfo->gaityaw > 180 )
+			m_pPlayerInfo->gaityaw = 180;
+
+		if( m_pPlayerInfo->gaityaw < -180 )
+			m_pPlayerInfo->gaityaw = -180;
+	}
 }
 
 void CGameStudioModelRenderer::StudioPlayerBlend( mstudioseqdesc_t *pseqdesc, int *pBlend, float *pPitch )
 {
-	float range = 3.0f * ( *pPitch );
+	float range = 45.0;
 
-	if( range <= -45.0f )
-	{
+	*pBlend = ( *pPitch * 3 );
+
+	if( *pBlend <= -range )
 		*pBlend = 255;
-		*pPitch = 0.0f;
-	}
-	else if( range >= 45.0f )
-	{
+	else if( *pBlend >= range )
 		*pBlend = 0;
-		*pPitch = 0.0f;
-	}
 	else
-	{
-		range = ( 45.0f - range ) * 255.0f / 90.0f;
-		*pBlend = ( int ) range;
-		*pPitch = 0.0f;
-	}
+		*pBlend = 255 * ( range - *pBlend ) / ( 2 * range );
+
+	*pPitch = 0;
 }
 
 void CGameStudioModelRenderer::CalculatePitchBlend( entity_state_t *pplayer )
@@ -613,110 +550,87 @@ void CGameStudioModelRenderer::CalculatePitchBlend( entity_state_t *pplayer )
 	int iBlend;
 
 	pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + m_pCurrentEntity->curstate.sequence;
-	StudioPlayerBlend( pseqdesc, &iBlend, &m_pCurrentEntity->angles.x );
 
-	m_pCurrentEntity->latched.prevangles.x = m_pCurrentEntity->angles.x;
+	StudioPlayerBlend( pseqdesc, &iBlend, &m_pCurrentEntity->angles[PITCH] );
+
+	m_pCurrentEntity->latched.prevangles[PITCH] = m_pCurrentEntity->angles[PITCH];
 	m_pCurrentEntity->curstate.blending[1] = iBlend;
-	m_pCurrentEntity->latched.prevblending[1] = iBlend;
-	m_pCurrentEntity->latched.prevseqblending[1] = iBlend;
+	m_pCurrentEntity->latched.prevblending[1] = m_pCurrentEntity->curstate.blending[1];
+	m_pCurrentEntity->latched.prevseqblending[1] = m_pCurrentEntity->curstate.blending[1];
 }
 
 void CGameStudioModelRenderer::CalculateYawBlend( entity_state_t *pplayer )
 {
-	float flYaw, maxyaw, blend_yaw;
+	float flYaw;
 
 	StudioEstimateGait( pplayer );
 
-	if( ( m_pPlayerInfo->gaitsequence - 15 ) > 1 )
+	flYaw = m_pCurrentEntity->angles[YAW] - m_pPlayerInfo->gaityaw;
+	flYaw = fmod( flYaw, 360.0f );
+
+	if( flYaw < -180 )
+		flYaw = flYaw + 360;
+	else if( flYaw > 180 )
+		flYaw = flYaw - 360;
+
+	float maxyaw = 120.0;
+
+	if( flYaw > maxyaw )
 	{
-		int sequence = m_pCurrentEntity->curstate.sequence;
-
-		if( sequence != 17 && sequence != 18 )
-		{
-			flYaw = m_pCurrentEntity->angles.y - m_pPlayerInfo->gaityaw;
-			flYaw = flYaw - 360.0f * floor( ( flYaw + 180.0f ) / 360.0f );
-
-			if( m_flGaitMovement != 0.0f )
-			{
-				maxyaw = 120.0f;
-
-				if( flYaw > maxyaw )
-				{
-					m_pPlayerInfo->gaityaw -= 180.0f;
-					m_flGaitMovement = -m_flGaitMovement;
-					flYaw -= 180.0f;
-				}
-				else if( flYaw < -maxyaw )
-				{
-					m_pPlayerInfo->gaityaw += 180.0f;
-					m_flGaitMovement = -m_flGaitMovement;
-					flYaw += 180.0f;
-				}
-			}
-
-			blend_yaw = ( flYaw / 90.0f ) * 128.0f + 127.0f;
-			int iFinalBlend = 0;
-
-			if( blend_yaw <= 255.0f )
-			{
-				if( blend_yaw >= 0.0f )
-					iFinalBlend = ( int ) ( 255.0f - blend_yaw );
-				else
-					iFinalBlend = 255;
-			}
-
-			m_pCurrentEntity->curstate.blending[0] = iFinalBlend;
-			m_pCurrentEntity->latched.prevblending[0] = iFinalBlend;
-			m_pCurrentEntity->latched.prevseqblending[0] = iFinalBlend;
-			m_pCurrentEntity->angles.y = m_pPlayerInfo->gaityaw;
-
-			if( m_pCurrentEntity->angles.y < 0.0f )
-				m_pCurrentEntity->angles.y += 360.0f;
-
-			m_pCurrentEntity->latched.prevangles[1] = m_pCurrentEntity->angles.y;
-		}
+		m_pPlayerInfo->gaityaw = m_pPlayerInfo->gaityaw - 180;
+		m_flGaitMovement = -m_flGaitMovement;
+		flYaw = flYaw - 180;
 	}
+	else if( flYaw < -maxyaw )
+	{
+		m_pPlayerInfo->gaityaw = m_pPlayerInfo->gaityaw + 180;
+		m_flGaitMovement = -m_flGaitMovement;
+		flYaw = flYaw + 180;
+	}
+
+	float blend_yaw = ( flYaw / 90.0 ) * 128.0 + 127.0;
+
+	blend_yaw = 255.0 - bound( 0.0, blend_yaw, 255.0 );
+
+	m_pCurrentEntity->curstate.blending[0] = ( int ) ( blend_yaw );
+	m_pCurrentEntity->latched.prevblending[0] = m_pCurrentEntity->curstate.blending[0];
+	m_pCurrentEntity->latched.prevseqblending[0] = m_pCurrentEntity->curstate.blending[0];
+
+	m_pCurrentEntity->angles[YAW] = m_pPlayerInfo->gaityaw;
+
+	if( m_pCurrentEntity->angles[YAW] < -0 )
+		m_pCurrentEntity->angles[YAW] += 360;
+
+	m_pCurrentEntity->latched.prevangles[YAW] = m_pCurrentEntity->angles[YAW];
 }
 
 void CGameStudioModelRenderer::StudioProcessGait( entity_state_t *pplayer )
 {
 	mstudioseqdesc_t *pseqdesc;
-	float dt;
 
-	CalculatePitchBlend( pplayer );
 	CalculateYawBlend( pplayer );
-
-	dt = m_clTime - m_clOldTime;
-	if( dt < 0.0f )
-		dt = 0.0f;
-
-	else if( dt > 1.0f )
-		dt = 1.0f;
+	CalculatePitchBlend( pplayer );
 
 	pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) m_pStudioHeader + m_pStudioHeader->seqindex ) + pplayer->gaitsequence;
 
-	if( pseqdesc->linearmovement.x <= 0.0f )
-		m_pPlayerInfo->gaitframe += dt * pseqdesc->fps * m_pCurrentEntity->curstate.framerate;
+	if( pseqdesc->linearmovement[0] > 0 )
+		m_pPlayerInfo->gaitframe += ( m_flGaitMovement / pseqdesc->linearmovement[0] ) * pseqdesc->numframes;
 	else
-		m_pPlayerInfo->gaitframe += ( m_flGaitMovement / pseqdesc->linearmovement.x ) * ( float ) pseqdesc->numframes;
-
-	if( pseqdesc->numframes > 0 )
 	{
-		m_pPlayerInfo->gaitframe -= floor( m_pPlayerInfo->gaitframe / ( float ) pseqdesc->numframes ) * ( float ) pseqdesc->numframes;
-
-		if( m_pPlayerInfo->gaitframe < 0.0f )
-		{
-			m_pPlayerInfo->gaitframe += ( float ) pseqdesc->numframes;
-		}
+		float dt = bound( 0.0, ( m_clTime - m_clOldTime ), 1.0 );
+		m_pPlayerInfo->gaitframe += pseqdesc->fps * dt * m_pCurrentEntity->curstate.framerate;
 	}
+
+	m_pPlayerInfo->gaitframe = m_pPlayerInfo->gaitframe - ( int ) ( m_pPlayerInfo->gaitframe / pseqdesc->numframes ) * pseqdesc->numframes;
+
+	if( m_pPlayerInfo->gaitframe < 0 )
+		m_pPlayerInfo->gaitframe += pseqdesc->numframes;
 }
 
 void CGameStudioModelRenderer::SavePlayerState( entity_state_t *pplayer )
 {
 	client_anim_state_t *st;
-	cl_entity_t *ent;
-
-	ent = IEngineStudio.GetCurrentEntity();
+	cl_entity_t *ent = IEngineStudio.GetCurrentEntity();
 
 	if( !ent )
 		return;
@@ -725,70 +639,62 @@ void CGameStudioModelRenderer::SavePlayerState( entity_state_t *pplayer )
 	st->angles = ent->curstate.angles;
 	st->origin = ent->curstate.origin;
 	st->realangles = ent->angles;
-
 	st->sequence = ent->curstate.sequence;
 	st->gaitsequence = pplayer->gaitsequence;
 	st->animtime = ent->curstate.animtime;
 	st->frame = ent->curstate.frame;
 	st->framerate = ent->curstate.framerate;
 
-	memcpy( st->blending, ent->curstate.blending, sizeof( st->blending ) );
-	memcpy( st->controller, ent->curstate.controller, sizeof( st->controller ) );
+	memcpy( st->blending, ent->curstate.blending, 2 );
+	memcpy( st->controller, ent->curstate.controller, 4 );
 
 	st->lv = ent->latched;
 }
 
-void GetSequenceInfo( studiohdr_t *pstudiohdr, client_anim_state_t *pev, float *pflFrameRate, float *pflGroundSpeed )
+void GetSequenceInfo( void *pmodel, client_anim_state_t *pev, float *pflFrameRate, float *pflGroundSpeed )
 {
-	mstudioseqdesc_t *pseqdesc;
+	studiohdr_t *pstudiohdr;
+	pstudiohdr = ( studiohdr_t * )pmodel;
 
 	if( !pstudiohdr )
 		return;
 
-	int sequence = pev->sequence;
+	mstudioseqdesc_t *pseqdesc;
 
-	if( sequence >= pstudiohdr->numseq || sequence < 0 )
+	if( pev->sequence >= pstudiohdr->numseq )
 	{
-		*pflFrameRate = 0.0f;
-		*pflGroundSpeed = 0.0f;
+		*pflFrameRate = 0.0;
+		*pflGroundSpeed = 0.0;
 		return;
 	}
 
-	pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) pstudiohdr + pstudiohdr->seqindex ) + sequence;
+	pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) pstudiohdr + pstudiohdr->seqindex ) + ( int ) pev->sequence;
 
 	if( pseqdesc->numframes > 1 )
 	{
-		*pflFrameRate = ( 256.0f * pseqdesc->fps ) / ( float ) ( pseqdesc->numframes - 1 );
-
-		float flDistance = sqrt( pseqdesc->linearmovement.x * pseqdesc->linearmovement.x +
-			pseqdesc->linearmovement.y * pseqdesc->linearmovement.y +
-			pseqdesc->linearmovement.z * pseqdesc->linearmovement.z );
- 
-		*pflGroundSpeed = ( flDistance * pseqdesc->fps ) / ( float ) ( pseqdesc->numframes - 1 );
+		*pflFrameRate = 256 * pseqdesc->fps / ( pseqdesc->numframes - 1 );
+		*pflGroundSpeed = sqrt( pseqdesc->linearmovement[0] * pseqdesc->linearmovement[0] + pseqdesc->linearmovement[1] * pseqdesc->linearmovement[1] + pseqdesc->linearmovement[2] * pseqdesc->linearmovement[2] );
+		*pflGroundSpeed = *pflGroundSpeed * pseqdesc->fps / ( pseqdesc->numframes - 1 );
 	}
 	else
 	{
-		*pflFrameRate = 256.0f;
-		*pflGroundSpeed = 0.0f;
+		*pflFrameRate = 256.0;
+		*pflGroundSpeed = 0.0;
 	}
 }
 
-int GetSequenceFlags( studiohdr_t *pstudiohdr, client_anim_state_t *pev )
+int GetSequenceFlags( void *pmodel, client_anim_state_t *pev )
 {
-	mstudioseqdesc_t *pseqdesc;
+	studiohdr_t *pstudiohdr;
+	pstudiohdr = ( studiohdr_t * ) pmodel;
 
-	if( !pstudiohdr )
+	if( !pstudiohdr || pev->sequence >= pstudiohdr->numseq )
 		return 0;
 
-	int sequence = pev->sequence;
+	mstudioseqdesc_t *pseqdesc;
+	pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) pstudiohdr + pstudiohdr->seqindex ) + ( int ) pev->sequence;
 
-	if( sequence < pstudiohdr->numseq && sequence >= 0 )
-	{
-		pseqdesc = ( mstudioseqdesc_t * ) ( ( byte * ) pstudiohdr + pstudiohdr->seqindex ) + sequence;
-		return pseqdesc->flags;
-	}
-
-	return 0;
+	return pseqdesc->flags;
 }
 
 float StudioFrameAdvance( client_anim_state_t *st, float framerate, float flInterval )
@@ -828,68 +734,63 @@ extern void DoD_GetOrientation( float *o, float *a );
 
 void CGameStudioModelRenderer::SetupClientAnimation( entity_state_t *pplayer )
 {
-	static double oldtime = 0.0f;
+	static double oldtime;
+	double curtime, dt;
 
 	client_anim_state_t *st;
-	cl_entity_t *ent;
-	int oldseq;
-	double curtime, dt;
-	float rt, gs;
+	float fr, gs;
 
-	ent = IEngineStudio.GetCurrentEntity();
+	cl_entity_t *ent = IEngineStudio.GetCurrentEntity();
 
 	if( !ent )
 		return;
 
-	st = &g_clientstate;
-
 	curtime = gEngfuncs.GetClientTime();
-	dt = curtime - oldtime;
-
-	if( dt < 0.0 )
-		dt = 0.0;
-
-	else if( dt > 1.0 )
-	{
-		dt = 1.0;
-	}
+	dt = bound( 0.0, ( curtime - oldtime ), 1.0 );
 
 	oldtime = curtime;
+	st = &g_clientstate;
 
-	oldseq = st->sequence;
-	st->framerate = 1.0f;
+	st->framerate = 1.0;
 
+	int oldseq = st->sequence;
 	DoD_GetSequence( &st->sequence, &st->gaitsequence );
-	DoD_GetOrientation( &st->origin.x, &st->angles.x );
-	st->realangles = st->angles;
+	DoD_GetOrientation( ( float * ) &st->origin, ( float * ) &st->angles );
+	VectorCopy( st->angles, st->realangles );
 
 	if( st->sequence != oldseq )
 	{
-		st->frame = 0.0f;
+		st->frame = 0.0;
 		st->lv.prevsequence = oldseq;
 		st->lv.sequencetime = st->animtime;
 
-		memcpy( st->lv.prevseqblending, st->blending, sizeof( st->blending ) );
-		memcpy( st->lv.prevcontroller, st->controller, sizeof( st->controller ) );
+		memcpy( st->lv.prevseqblending, st->blending, 2 );
+		memcpy( st->lv.prevcontroller, st->controller, 4 );
 	}
 
-	studiohdr_t *pstudiohdr = ( studiohdr_t * ) IEngineStudio.Mod_Extradata( ent->model );
-	GetSequenceInfo( pstudiohdr, st, &rt, &gs );
-	st->m_fSequenceLoops = GetSequenceFlags( pstudiohdr, st ) & 1;
-	StudioFrameAdvance( st, rt, ( float ) dt );
+	void *pmodel = ( studiohdr_t * ) IEngineStudio.Mod_Extradata( ent->model );
+
+	if( !pmodel )
+		return;
+
+
+	GetSequenceInfo( pmodel, st, &fr, &gs );
+	st->m_fSequenceLoops = ( ( GetSequenceFlags( pmodel, st ) & STUDIO_LOOPING ) != 0 );
+	StudioFrameAdvance( st, fr, dt );
 
 	ent->angles = st->realangles;
+
 	ent->curstate.angles = st->angles;
 	ent->curstate.origin = st->origin;
+
 	ent->curstate.sequence = st->sequence;
-	ent->curstate.frame = st->frame;
+	pplayer->gaitsequence = st->gaitsequence;
 	ent->curstate.animtime = st->animtime;
+	ent->curstate.frame = st->frame;
 	ent->curstate.framerate = st->framerate;
 
-	pplayer->gaitsequence = st->gaitsequence;
-
-	memcpy( ent->curstate.blending, st->blending, sizeof( ent->curstate.blending ) );
-	memcpy( ent->curstate.controller, st->controller, sizeof( ent->curstate.controller ) );
+	memcpy( ent->curstate.blending, st->blending, 2 );
+	memcpy( ent->curstate.controller, st->controller, 4 );
 
 	ent->latched = st->lv;
 }
@@ -897,9 +798,7 @@ void CGameStudioModelRenderer::SetupClientAnimation( entity_state_t *pplayer )
 void CGameStudioModelRenderer::RestorePlayerState( entity_state_t *pplayer )
 {
 	client_anim_state_t *st;
-	cl_entity_t *ent;
-
-	ent = IEngineStudio.GetCurrentEntity();
+	cl_entity_t *ent = IEngineStudio.GetCurrentEntity();
 
 	if( !ent )
 		return;
@@ -914,25 +813,28 @@ void CGameStudioModelRenderer::RestorePlayerState( entity_state_t *pplayer )
 	st->frame = ent->curstate.frame;
 	st->framerate = ent->curstate.framerate;
 
-	memcpy( st->blending, ent->curstate.blending, sizeof( st->blending ) );
-	memcpy( st->controller, ent->curstate.controller, sizeof( st->controller ) );
+	memcpy( st->blending, ent->curstate.blending, 2 );
+	memcpy( st->controller, ent->curstate.controller, 4 );
 
 	st->lv = ent->latched;
 
-	ent->curstate.angles = g_state.angles;
-	ent->curstate.origin = g_state.origin;
-	ent->angles = g_state.realangles;
-	ent->curstate.sequence = g_state.sequence;
-	ent->curstate.animtime = g_state.animtime;
-	ent->curstate.frame = g_state.frame;
-	ent->curstate.framerate = g_state.framerate;
+	st = &g_state;
 
-	pplayer->gaitsequence = g_state.gaitsequence;
+	ent->angles = st->realangles;
 
-	memcpy( ent->curstate.blending, g_state.blending, sizeof( ent->curstate.blending ) );
-	memcpy( ent->curstate.controller, g_state.controller, sizeof( ent->curstate.controller ) );
+	ent->curstate.angles = st->angles;
+	ent->curstate.origin = st->origin;
 
-	ent->latched = g_state.lv;
+	ent->curstate.sequence = st->sequence;
+	pplayer->gaitsequence = st->gaitsequence;
+	ent->curstate.animtime = st->animtime;
+	ent->curstate.frame = st->frame;
+	ent->curstate.framerate = st->framerate;
+
+	memcpy( ent->curstate.blending, st->blending, 2 );
+	memcpy( ent->curstate.controller, st->controller, 4 );
+
+	ent->latched = st->lv;
 }
 
 extern pmodel_fx_t g_PModelFxInfo[65];
@@ -1001,7 +903,7 @@ int CGameStudioModelRenderer::StudioDrawPlayer( int flags, entity_state_t *pplay
 		StudioSetUpTransform( 0 );
 	}
 
-	if( ( flags & 1 ) != 0 && !IEngineStudio.StudioCheckBBox() )
+	if( ( flags & STUDIO_RENDER ) != 0 && !IEngineStudio.StudioCheckBBox() )
 		return 0;
 
 	*m_pModelsDrawn++;
@@ -1018,7 +920,7 @@ int CGameStudioModelRenderer::StudioDrawPlayer( int flags, entity_state_t *pplay
 		m_pPlayerInfo = NULL;
 	}
 
-	if( ( flags & 2 ) != 0 )
+	if( ( flags & STUDIO_EVENTS ) != 0 )
 	{
 		StudioCalcAttachments();
 		StudioClientEvents();
@@ -1030,7 +932,7 @@ int CGameStudioModelRenderer::StudioDrawPlayer( int flags, entity_state_t *pplay
 		}
 	}
 
-	if( ( flags & 1 ) != 0 )
+	if( ( flags & STUDIO_RENDER ) != 0 )
 	{
 		lighting.plightvec = dir;
 		IEngineStudio.StudioDynamicLight( ent, &lighting );
@@ -1120,71 +1022,56 @@ int CGameStudioModelRenderer::StudioDrawPlayer( int flags, entity_state_t *pplay
 
 void CGameStudioModelRenderer::StudioFxTransform( cl_entity_t *ent, float transform[3][4] )
 {
-	int renderfx, axis, i, j;
-	float offset, flTimeDelta, flScale;
-
-	renderfx = ent->curstate.renderfx;
-
-	if( renderfx < kRenderFxDistort )
-		return;
-
-	if( renderfx > kRenderFxHologram )
+	switch( ent->curstate.renderfx )
 	{
-		if( renderfx == kRenderFxExplode )
-		{
-			if( iRenderStateChanged )
-			{
-				flTimeDelta = m_clTime;
-				iRenderStateChanged = 0;
-				g_flStartScaleTime = flTimeDelta;
-			}
-			else
-			{
-				flTimeDelta = g_flStartScaleTime;
-			}
-
-			flTimeDelta = m_clTime - g_flStartScaleTime;
-
-			if( flTimeDelta > 0.0f )
-			{
-				if( flTimeDelta > 2.0f )
-					flScale = 0.001f;
-				else
-					flScale = 1.0f - flTimeDelta * 0.5f;
-
-				for( i = 0; i < 3; ++i )
-				{
-					for( j = 0; j < 3; ++j )
-					{
-						transform[i][j] *= flScale;
-					}
-				}
-			}
-		}
-	}
-	else if( renderfx == kRenderFxHologram )
+	case kRenderFxDistort:
+	case kRenderFxHologram:
 	{
 		if( gEngfuncs.pfnRandomLong( 0, 49 ) == 0 )
 		{
-			if( gEngfuncs.pfnRandomLong( 0, 49 ) == 0 )
-			{
-				gEngfuncs.pfnRandomLong( 0, 1 );
+			int axis = gEngfuncs.pfnRandomLong( 0, 1 );
 
-				offset = gEngfuncs.pfnRandomFloat( -3.0f, 5.0f );
-				axis = gEngfuncs.pfnRandomLong( 0, 2 );
-				transform[axis][3] += offset;
+			if( axis == 1 )
+				axis = 2;
+
+			VectorScale( transform[axis], gEngfuncs.pfnRandomFloat( 1, 1.484 ), transform[axis] );
+		}
+		else if( gEngfuncs.pfnRandomLong( 0, 49 ) == 0 )
+		{
+			float offset;
+
+			offset = gEngfuncs.pfnRandomFloat( -10, 10 );
+			transform[gEngfuncs.pfnRandomLong( 0, 2 )][3] += offset;
+		}
+
+		break;
+	}
+	case kRenderFxExplode:
+	{
+		if( iRenderStateChanged )
+		{
+			g_flStartScaleTime = m_clTime;
+			iRenderStateChanged = FALSE;
+		}
+
+		float flTimeDelta = m_clTime - g_flStartScaleTime;
+
+		if( flTimeDelta > 0 )
+		{
+			float flScale = 0.001;
+
+			if( flTimeDelta <= 2.0 )
+				flScale = 1.0 - ( flTimeDelta / 2.0 );
+
+			for( int i = 0; i < 3; i++ )
+			{
+				for( int j = 0; j < 3; j++ )
+					transform[i][j] *= flScale;
 			}
 		}
+
+		break;
 	}
-	else if( renderfx == kRenderFxDistort )
-	{
-		i = gEngfuncs.pfnRandomLong( 0, 1 );
-
-		if( i != 1 )
-			i = gEngfuncs.pfnRandomLong( 0, 2 );
-
-		flScale = gEngfuncs.pfnRandomFloat( 1.0f, 1.49f );
-		VectorScale( transform[i], flScale, transform[i] );
 	}
 }
 
@@ -1398,7 +1285,7 @@ model_t *CGameStudioModelRenderer::SwapPWpnModels( cl_entity_t *vplayer, model_t
 			pInfo->iSwitchFrame = -1;
 			bSwitch = false;
 
-			if( WpnInfo[i].leftreload[0] != '\0' )
+			if( WpnInfo[i].leftreload != '\0' )
 			{
 				if( strcasecmp( pweaponmodel->name, WpnInfo[i].leftreload ) == 0 )
 				{
@@ -1417,7 +1304,7 @@ void CGameStudioModelRenderer::AnimatePWpnModels( cl_entity_t *vplayer )
 	// Nothing.
 }
 
-extern void HUD_StudioEvent( const struct mstudioevent_s *event, const struct cl_entity_s *entity );
+extern "C" void HUD_StudioEvent(const struct mstudioevent_s *event, const struct cl_entity_s *entity);
 
 void CGameStudioModelRenderer::StudioClientEvents( void )
 {

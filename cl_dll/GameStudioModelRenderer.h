@@ -31,7 +31,6 @@ public:
 	virtual void StudioEstimateGait( entity_state_t *pplayer );
 	virtual void StudioProcessGait( entity_state_t *pplayer );
 	virtual int StudioDrawPlayer( int flags, entity_state_t *pplayer );
-	virtual int _StudioDrawPlayer( int flags, entity_state_t *pplayer );
 	virtual void StudioFxTransform( cl_entity_t *ent, float transform[3][4] );
 	virtual void StudioPlayerBlend( mstudioseqdesc_t *pseqdesc, int *pBlend, float *pPitch );
 	virtual void CalculateYawBlend( entity_state_t *pplayer );
