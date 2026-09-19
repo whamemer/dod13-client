@@ -48,7 +48,7 @@ int g_iUser3 = 0;
 
 float g_fUser4;
 int g_iVuser1x, g_iVuser1z;
-int g_iMoveType, g_iEffects, g_iOnlyClientDraw;
+int g_iMovetype, g_iEffects, g_iOnlyClientDraw;
 float g_lastFOV = 0.0f, g_fStamina;
 int g_iWeaponBits2;
 

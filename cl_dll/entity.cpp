@@ -27,13 +27,11 @@ void Game_AddObjects( void );
 
 extern vec3_t v_origin;
 
-float g_flGravity;
-
 int g_iAlive = 1;
 int g_iDeadFlag = 0;
 
 extern int g_iWeaponBits2, g_iMovetype, g_iEffects;
-extern float g_fStamina;
+extern float g_fStamina, g_flGravity;
 
 extern "C"
 {

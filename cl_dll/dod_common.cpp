@@ -30,7 +30,7 @@ DECLARE_MESSAGE( m_DoDCommon, ResetSens )
 bool b_cutscene_return;
 int i_lastspectoggle;
 float fl_DeadTargetSwitch;
-extern int i_dodmusic, g_iDeadFlag, g_iVuser1x, g_iUser3, g_iMoveType;
+extern int i_dodmusic, g_iDeadFlag, g_iVuser1x, g_iUser3, g_iMovetype;
 int g_iinjump, g_ionground;
 int g_ihidexhair;
 float i_ProneCounter;
@@ -55,7 +55,7 @@ void __CmdFunc_ClientProne( void )
 			return;
 		}
 
-		if( g_iMoveType != 5 && gHUD.m_flTime > i_ProneCounter )
+		if( g_iMovetype != 5 && gHUD.m_flTime > i_ProneCounter )
 		{
 			gEngfuncs.pfnServerCmd( "sprone" );
 
@@ -209,7 +209,7 @@ float DoDGunGoOnOffScreen( float v_modeloffscreen, ref_params_s *pparams )
 	if( !bMoving )
 	{
 		if( ( g_iUser3 != 0 && ( gHUD.m_iKeyBits & ( IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT) ) 
-			!= 0 ) || ( !g_ionground && g_iinjump ) || g_iMoveType == 5 )
+			!= 0 ) || ( !g_ionground && g_iinjump ) || g_iMovetype == 5 )
 			bMoving = true;
 	}
 
