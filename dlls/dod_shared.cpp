@@ -16,7 +16,7 @@
 #include "cvardef.h"
 #include "dod_shared.h"
 
-extern char weaponnames[64][64] =
+char weaponnames[64][64] =
 {
     "weapon_amerknife",
     "weapon_gerknife",
@@ -54,9 +54,9 @@ extern char weaponnames[64][64] =
     "weapon_satchel"
 };
 
-extern cvar_t *pcvar_classlimitcvars[28];
+cvar_t *pcvar_classlimitcvars[28];
 
-extern char classlimitcvarNames[27][32] =
+char classlimitcvarNames[27][32] =
 {
     "mp_limitalliesgarand",
     "mp_limitalliescarbine",
@@ -86,7 +86,7 @@ extern char classlimitcvarNames[27][32] =
     "mp_limitbritmortar"
 };
 
-extern char *sPlayerModelFiles[6] =
+char *sPlayerModelFiles[6] =
 {
     "models/player.mdl",
     "models/player/us-inf/us-inf.mdl",
@@ -96,7 +96,7 @@ extern char *sPlayerModelFiles[6] =
     "models/player/brit-inf/brit-inf.mdl"
 };
 
-extern char *s_USVoiceFiles[28] =
+char *s_USVoiceFiles[28] =
 {
     "player/usattack.wav",
     "player/ushold.wav",
@@ -127,7 +127,7 @@ extern char *s_USVoiceFiles[28] =
     "player/uspanzerschreck.wav"
 };
 
-extern char *s_BRITVoiceFiles[28] =
+char *s_BRITVoiceFiles[28] =
 {
     "player/britattack.wav",
     "player/brithold.wav",
@@ -158,7 +158,7 @@ extern char *s_BRITVoiceFiles[28] =
     "player/britpanzerschreck.wav"
 };
 
-extern char *s_GERVoiceFiles[29] =
+char *s_GERVoiceFiles[29] =
 {
     "player/gerattack.wav",
     "player/gerhold.wav",
@@ -191,7 +191,7 @@ extern char *s_GERVoiceFiles[29] =
 };
 
 // WHAMER: TODO
-extern int iVoiceToHandSignal[29] =
+int iVoiceToHandSignal[29] =
 {
     0,
     10,
@@ -224,7 +224,7 @@ extern int iVoiceToHandSignal[29] =
     4
 };
 
-extern char *s_VoiceCommands[29][4] =
+char *s_VoiceCommands[29][4] =
 {
     { "", "", "", "" },
     { "voice_attack", "#Voice_subtitle_attack", "#Voice_subtitle_moveout", "" },
@@ -257,7 +257,7 @@ extern char *s_VoiceCommands[29][4] =
     { "voice_bazookaspotted", "#Voice_subtitle_pschreckspotted", "#Voice_subtitle_piatspotted", "#Voice_subtitle_pschreckspotted" }
 };
 
-extern char *s_HandSignalSubtitles[25][3] =
+char *s_HandSignalSubtitles[25][3] =
 {
     { "#Voice_subtitle_sticktogether", "", "" },
     { "#Voice_subtitle_fallback", "", "" },
@@ -286,9 +286,9 @@ extern char *s_HandSignalSubtitles[25][3] =
     { "#Voice_subtitle_ceasefire", "", "" }
 };
 
-extern char *sHandSignals[30];
+char *sHandSignals[30];
 
-extern DodClassInfo_t g_ParaClassInfo[21] =
+DodClassInfo_t g_ParaClassInfo[21] =
 {
     { "", "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "" },
     { "cls_garand", "#class_alliedpara_garand", "us-para", 1, 600, 42, 0, 2, 0, 0, 0, 2, 0, 2, "" },
@@ -313,7 +313,7 @@ extern DodClassInfo_t g_ParaClassInfo[21] =
     { "cls_germortar", "#class_axispara_mortar", "axis-para", 2, 600, 20, 1, 0, 0, 6, 0, 3, 0, 7, "" }
 };
 
-extern DodClassInfo_t g_ClassInfo[28] =
+DodClassInfo_t g_ClassInfo[28] =
 {
     { "", "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "" },
     { "cls_garand", "#class_allied_garand", "us-inf", 1, 600, 42, 0, 2, 0, 0, 2, 0, 0, 3, "" },
@@ -345,7 +345,7 @@ extern DodClassInfo_t g_ClassInfo[28] =
     { "cls_random", "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "" }
 };
 
-extern p_wpninfo_s WpnInfo[41] =
+p_wpninfo_s WpnInfo[41] =
 {
     // WEAPON_NONE 0
     { "", "", "", "", "", "", "", "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0 },
@@ -431,7 +431,7 @@ extern p_wpninfo_s WpnInfo[41] =
     { "models/p_fairbairn.mdl", "models/v_fairbairn.mdl", "models/allied_ammo.mdl", "", "", "", "", "", "knife", "knife", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 20, 0.0, 0.1f, 0.0 },
 };
 
-extern char *sHelmetModels[7] =
+char *sHelmetModels[7] =
 {
     "models/helmet_us.mdl",
     "models/helmet_axis.mdl",
@@ -442,7 +442,7 @@ extern char *sHelmetModels[7] =
     "models/helmet_axis_para.mdl"
 };
 
-extern char *szMapMarkerIcons[15] =
+char *szMapMarkerIcons[15] =
 {
     "sprites/mapmarkers/redx.spr",
     "sprites/mapmarkers/greencheck.spr",
