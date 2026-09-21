@@ -19,4 +19,5 @@
 
 void V_StartPitchDrift( void );
 void V_StopPitchDrift( void );
+float CalcFov( float fov_x, float width, float height );
 #endif // !VIEWH
