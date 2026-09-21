@@ -46,10 +46,97 @@ extern int g_iWeaponBits2;
 
 void WeaponsResource::LoadAllWeaponSprites( void )
 {
+	char *name;
+	int index;
+
 	for( int i = 0; i < MAX_WEAPONS; i++ )
 	{
 		if( rgWeapons[i].iId )
 			LoadWeaponSprites( &rgWeapons[i] );
+	}
+
+	name = "weapon_scopedfg42";
+	index = gHUD.GetSpriteIndex( name );
+	if( index >= 0 )
+	{
+		scoped_fg42.hActive = gHUD.GetSprite( index );
+		scoped_fg42.rcActive = gHUD.m_rgrcRects[index];
+	}
+	else
+	{
+		scoped_fg42.hActive = 0;
+	}
+
+	name = "weapon_fcarb";
+	index = gHUD.GetSpriteIndex( name );
+	if( index >= 0 )
+	{
+		folding_carbine.hActive = gHUD.GetSprite( index );
+		folding_carbine.rcActive = gHUD.m_rgrcRects[index];
+	}
+	else
+	{
+		folding_carbine.hActive = 0;
+	}
+
+	name = "weapon_paraknife";
+	index = gHUD.GetSpriteIndex( name );
+	if( index >= 0 )
+	{
+		gravity_knife.hActive = gHUD.GetSprite( index );
+		gravity_knife.rcActive = gHUD.m_rgrcRects[index];
+	}
+	else
+	{
+		gravity_knife.hActive = 0;
+	}
+
+	name = "weapon_scopedenfield";
+	index = gHUD.GetSpriteIndex( name );
+	if( index >= 0 )
+	{
+		scoped_enfield.hActive = gHUD.GetSprite( index );
+		scoped_enfield.rcActive = gHUD.m_rgrcRects[index];
+	}
+	else
+	{
+		scoped_enfield.hActive = 0;
+	}
+
+	name = "weapon_britknife";
+	index = gHUD.GetSpriteIndex( name );
+	if( index >= 0 )
+	{
+		brit_knife.hActive = gHUD.GetSprite( index );
+		brit_knife.rcActive = gHUD.m_rgrcRects[index];
+	}
+	else
+	{
+		brit_knife.hActive = 0;
+	}
+
+	name = "weapon_britgrenade";
+	index = gHUD.GetSpriteIndex( name );
+	if( index >= 0 )
+	{
+		brit_grenade.hActive = gHUD.GetSprite( index );
+		brit_grenade.rcActive = gHUD.m_rgrcRects[index];
+	}
+	else
+	{
+		brit_grenade.hActive = 0;
+	}
+
+	name = "weapon_gerbinoculars";
+	index = gHUD.GetSpriteIndex( name );
+	if( index >= 0 )
+	{
+		ger_binoculars.hActive = gHUD.GetSprite( index );
+		ger_binoculars.rcActive = gHUD.m_rgrcRects[index];
+	}
+	else
+	{
+		ger_binoculars.hActive = 0;
 	}
 }
 
@@ -292,6 +379,7 @@ int CHudAmmo::Init( void )
 	HOOK_COMMAND( "slot8", Slot8 );
 	HOOK_COMMAND( "slot9", Slot9 );
 	HOOK_COMMAND( "slot10", Slot10 );
+	HOOK_COMMAND( "slot0", Slot10 );
 	HOOK_COMMAND( "cancelselect", Close );
 	HOOK_COMMAND( "invnext", NextWeapon );
 	HOOK_COMMAND( "invprev", PrevWeapon );
@@ -328,32 +416,316 @@ void CHudAmmo::Reset( void )
 
 int CHudAmmo::VidInit( void )
 {
-	// Load sprites for buckets (top row of weapon menu)
+	ClipInfoArray[0].weapon_id = WEAPON_COLT;
+	ClipInfoArray[0].full_index = gHUD.GetSpriteIndex( "clip_colt_full" );
+	ClipInfoArray[0].empty_index = gHUD.GetSpriteIndex( "clip_colt_empty" );
+	ClipInfoArray[0].extra_index = gHUD.GetSpriteIndex( "clip_colt_extra" );
+	ClipInfoArray[0].lastDrop = 0.098039217f;
+	ClipInfoArray[0].subseqDrop = 0.107843140f;
+
+	ClipInfoArray[1].weapon_id = WEAPON_LUGER;
+	ClipInfoArray[1].full_index = gHUD.GetSpriteIndex( "clip_luger_full" );
+	ClipInfoArray[1].empty_index = gHUD.GetSpriteIndex( "clip_luger_empty" );
+	ClipInfoArray[1].extra_index = gHUD.GetSpriteIndex( "clip_luger_extra" );
+	ClipInfoArray[1].lastDrop = 0.189075630f;
+	ClipInfoArray[1].subseqDrop = 0.079800002f;
+
+	ClipInfoArray[2].weapon_id = WEAPON_GARAND;
+	ClipInfoArray[2].full_index = gHUD.GetSpriteIndex( "clip_garand_full" );
+	ClipInfoArray[2].empty_index = gHUD.GetSpriteIndex( "clip_garand_empty" );
+	ClipInfoArray[2].extra_index = gHUD.GetSpriteIndex( "clip_garand_extra" );
+	ClipInfoArray[2].lastDrop = 0.125000000f;
+	ClipInfoArray[2].subseqDrop = 0.104166660f;
+
+	ClipInfoArray[3].weapon_id = WEAPON_SCOPEDKAR;
+	ClipInfoArray[3].full_index = gHUD.GetSpriteIndex( "clip_kar_full" );
+	ClipInfoArray[3].empty_index = gHUD.GetSpriteIndex( "clip_kar_empty" );
+	ClipInfoArray[3].extra_index = gHUD.GetSpriteIndex( "clip_kar_extra" );
+	ClipInfoArray[3].lastDrop = 0.069767445f;
+	ClipInfoArray[3].subseqDrop = 0.186046510f;
+
+	ClipInfoArray[4].weapon_id = WEAPON_THOMPSON;
+	ClipInfoArray[4].full_index = gHUD.GetSpriteIndex( "clip_tommy_full" );
+	ClipInfoArray[4].empty_index = gHUD.GetSpriteIndex( "clip_tommy_empty" );
+	ClipInfoArray[4].extra_index = gHUD.GetSpriteIndex( "clip_tommy_extra" );
+	ClipInfoArray[4].lastDrop = 0.037999999f;
+	ClipInfoArray[4].subseqDrop = 0.030769231f;
+
+	ClipInfoArray[5].weapon_id = WEAPON_MP44;
+	ClipInfoArray[5].full_index = gHUD.GetSpriteIndex( "clip_mp44_full" );
+	ClipInfoArray[5].empty_index = gHUD.GetSpriteIndex( "clip_mp44_empty" );
+	ClipInfoArray[5].extra_index = gHUD.GetSpriteIndex( "clip_mp44_extra" );
+	ClipInfoArray[5].lastDrop = 0.067100003f;
+	ClipInfoArray[5].subseqDrop = 0.030075189f;
+
+	ClipInfoArray[6].weapon_id = WEAPON_SPRING;
+	ClipInfoArray[6].full_index = gHUD.GetSpriteIndex( "clip_spring_full" );
+	ClipInfoArray[6].empty_index = gHUD.GetSpriteIndex( "clip_spring_empty" );
+	ClipInfoArray[6].extra_index = gHUD.GetSpriteIndex( "clip_spring_extra" );
+	ClipInfoArray[6].lastDrop = 0.069767445f;
+	ClipInfoArray[6].subseqDrop = 0.186046510f;
+
+	ClipInfoArray[7].weapon_id = WEAPON_KAR;
+	ClipInfoArray[7].full_index = gHUD.GetSpriteIndex( "clip_kar_full" );
+	ClipInfoArray[7].empty_index = gHUD.GetSpriteIndex( "clip_kar_empty" );
+	ClipInfoArray[7].extra_index = gHUD.GetSpriteIndex( "clip_kar_extra" );
+	ClipInfoArray[7].lastDrop = 0.069767445f;
+	ClipInfoArray[7].subseqDrop = 0.186046510f;
+
+	ClipInfoArray[8].weapon_id = WEAPON_BAR;
+	ClipInfoArray[8].full_index = gHUD.GetSpriteIndex( "clip_bar_full" );
+	ClipInfoArray[8].empty_index = gHUD.GetSpriteIndex( "clip_bar_empty" );
+	ClipInfoArray[8].extra_index = gHUD.GetSpriteIndex( "clip_bar_extra" );
+	ClipInfoArray[8].lastDrop = 0.243478250f;
+	ClipInfoArray[8].subseqDrop = 0.034782607f;
+
+	ClipInfoArray[9].weapon_id = WEAPON_MP40;
+	ClipInfoArray[9].full_index = gHUD.GetSpriteIndex( "clip_mp40_full" );
+	ClipInfoArray[9].empty_index = gHUD.GetSpriteIndex( "clip_mp40_empty" );
+	ClipInfoArray[9].extra_index = gHUD.GetSpriteIndex( "clip_mp40_extra" );
+	ClipInfoArray[9].lastDrop = 0.052000001f;
+	ClipInfoArray[9].subseqDrop = 0.030075189f;
+
+	ClipInfoArray[10].weapon_id = WEAPON_STICKGRENADE;
+	ClipInfoArray[10].full_index = gHUD.GetSpriteIndex( "clip_stick_full" );
+	ClipInfoArray[10].extra_index = gHUD.GetSpriteIndex( "clip_stick_extra" );
+
+	ClipInfoArray[11].weapon_id = WEAPON_HANDGRENADE;
+	ClipInfoArray[11].full_index = gHUD.GetSpriteIndex( "clip_grenade_full" );
+	ClipInfoArray[11].extra_index = gHUD.GetSpriteIndex( "clip_grenade_extra" );
+
+	ClipInfoArray[13].weapon_id = WEAPON_MG42;
+	ClipInfoArray[13].full_index = gHUD.GetSpriteIndex( "clip_mp40_full" );
+	ClipInfoArray[13].empty_index = gHUD.GetSpriteIndex( "clip_mg42_empty" );
+	ClipInfoArray[13].extra_index = gHUD.GetSpriteIndex( "clip_mg42_extra" );
+	ClipInfoArray[13].lastDrop = 0.023000000f;
+	ClipInfoArray[13].subseqDrop = 0.030999999f;
+
+	ClipInfoArray[14].weapon_id = WEAPON_CAL30;
+	ClipInfoArray[14].full_index = gHUD.GetSpriteIndex( "clip_mp40_full" );
+	ClipInfoArray[14].empty_index = gHUD.GetSpriteIndex( "clip_30cal_empty" );
+	ClipInfoArray[14].extra_index = gHUD.GetSpriteIndex( "clip_30cal_extra" );
+	ClipInfoArray[14].lastDrop = 0.023000000f;
+	ClipInfoArray[14].subseqDrop = 0.030999999f;
+
+	ClipInfoArray[15].weapon_id = WEAPON_M1CARBINE;
+	ClipInfoArray[15].full_index = gHUD.GetSpriteIndex( "clip_m1carbine_full" );
+	ClipInfoArray[15].empty_index = gHUD.GetSpriteIndex( "clip_m1carbine_empty" );
+	ClipInfoArray[15].extra_index = gHUD.GetSpriteIndex( "clip_m1carbine_extra" );
+	ClipInfoArray[15].lastDrop = 0.151515160f;
+	ClipInfoArray[15].subseqDrop = 0.045454547f;
+
+	ClipInfoArray[16].weapon_id = WEAPON_MG34;
+	ClipInfoArray[16].full_index = gHUD.GetSpriteIndex( "clip_mp40_full" );
+	ClipInfoArray[16].empty_index = gHUD.GetSpriteIndex( "clip_mg34_empty" );
+	ClipInfoArray[16].extra_index = gHUD.GetSpriteIndex( "clip_mg34_extra" );
+	ClipInfoArray[16].lastDrop = 0.023000000f;
+	ClipInfoArray[16].subseqDrop = 0.030999999f;
+
+	ClipInfoArray[17].weapon_id = WEAPON_GREASEGUN;
+	ClipInfoArray[17].full_index = gHUD.GetSpriteIndex( "clip_grease_full" );
+	ClipInfoArray[17].empty_index = gHUD.GetSpriteIndex( "clip_grease_empty" );
+	ClipInfoArray[17].extra_index = gHUD.GetSpriteIndex( "clip_grease_extra" );
+	ClipInfoArray[17].lastDrop = 0.045000002f;
+	ClipInfoArray[17].subseqDrop = 0.030075189f;
+
+	ClipInfoArray[18].weapon_id = WEAPON_FG42;
+	ClipInfoArray[18].full_index = gHUD.GetSpriteIndex( "clip_fg42_full" );
+	ClipInfoArray[18].empty_index = gHUD.GetSpriteIndex( "clip_fg42_empty" );
+	ClipInfoArray[18].extra_index = gHUD.GetSpriteIndex( "clip_fg42_extra" );
+	ClipInfoArray[18].lastDrop = 0.243478250f;
+	ClipInfoArray[18].subseqDrop = 0.034782607f;
+
+	ClipInfoArray[19].weapon_id = WEAPON_K43;
+	ClipInfoArray[19].full_index = gHUD.GetSpriteIndex( "clip_k43_full" );
+	ClipInfoArray[19].empty_index = gHUD.GetSpriteIndex( "clip_k43_empty" );
+	ClipInfoArray[19].extra_index = gHUD.GetSpriteIndex( "clip_k43_extra" );
+	ClipInfoArray[19].lastDrop = 0.138888900f;
+	ClipInfoArray[19].subseqDrop = 0.074074075f;
+
+	ClipInfoArray[20].weapon_id = WEAPON_ENFIELD;
+	ClipInfoArray[20].full_index = gHUD.GetSpriteIndex( "clip_enfield_full" );
+	ClipInfoArray[20].empty_index = gHUD.GetSpriteIndex( "clip_enfield_empty" );
+	ClipInfoArray[20].extra_index = gHUD.GetSpriteIndex( "clip_enfield_extra" );
+	ClipInfoArray[20].lastDrop = 0.069767445f;
+	ClipInfoArray[20].subseqDrop = 0.186046510f;
+
+	ClipInfoArray[21].weapon_id = WEAPON_STEN;
+	ClipInfoArray[21].full_index = gHUD.GetSpriteIndex( "clip_sten_full" );
+	ClipInfoArray[21].empty_index = gHUD.GetSpriteIndex( "clip_sten_empty" );
+	ClipInfoArray[21].extra_index = gHUD.GetSpriteIndex( "clip_sten_extra" );
+	ClipInfoArray[21].lastDrop = 0.038461540f;
+	ClipInfoArray[21].subseqDrop = 0.030769231f;
+
+	ClipInfoArray[22].weapon_id = WEAPON_BREN;
+	ClipInfoArray[22].full_index = gHUD.GetSpriteIndex( "clip_bren_full" );
+	ClipInfoArray[22].empty_index = gHUD.GetSpriteIndex( "clip_bren_empty" );
+	ClipInfoArray[22].extra_index = gHUD.GetSpriteIndex( "clip_bren_extra" );
+	ClipInfoArray[22].lastDrop = 0.093750000f;
+	ClipInfoArray[22].subseqDrop = 0.020833334f;
+
+	ClipInfoArray[23].weapon_id = WEAPON_WEBLEY;
+	ClipInfoArray[23].full_index = gHUD.GetSpriteIndex( "clip_webley_full" );
+	ClipInfoArray[23].empty_index = gHUD.GetSpriteIndex( "clip_webley_full" );
+	ClipInfoArray[23].extra_index = gHUD.GetSpriteIndex( "clip_webley_extra" );
+	ClipInfoArray[23].lastDrop = 0.000000000f;
+	ClipInfoArray[23].subseqDrop = 0.000000000f;
+
+	ClipInfoArray[24].weapon_id = WEAPON_BAZOOKA;
+	ClipInfoArray[24].full_index = gHUD.GetSpriteIndex( "clip_bazooka_full" );
+	ClipInfoArray[24].empty_index = gHUD.GetSpriteIndex( "clip_bazooka_empty" );
+	ClipInfoArray[24].extra_index = gHUD.GetSpriteIndex( "clip_bazooka_extra" );
+
+	ClipInfoArray[25].weapon_id = WEAPON_PSCHRECK;
+	ClipInfoArray[25].full_index = gHUD.GetSpriteIndex( "clip_pschreck_full" );
+	ClipInfoArray[25].empty_index = gHUD.GetSpriteIndex( "clip_pschreck_empty" );
+	ClipInfoArray[25].extra_index = gHUD.GetSpriteIndex( "clip_pschreck_extra" );
+
+	ClipInfoArray[26].weapon_id = WEAPON_PIAT;
+	ClipInfoArray[26].full_index = gHUD.GetSpriteIndex( "clip_piat_full" );
+	ClipInfoArray[26].empty_index = gHUD.GetSpriteIndex( "clip_piat_empty" );
+	ClipInfoArray[26].extra_index = gHUD.GetSpriteIndex( "clip_piat_extra" );
+
+	ClipInfoArray[27].weapon_id = WEAPON_MORTAR;
+	ClipInfoArray[27].full_index = gHUD.GetSpriteIndex( "clip_mortar" );
+	ClipInfoArray[27].empty_index = gHUD.GetSpriteIndex( "clip_mortar" );
+	ClipInfoArray[27].extra_index = gHUD.GetSpriteIndex( "clip_mortar" );
+
+	for( int i = 0; i != 64; ++i )
+	{
+		if( ClipInfoArray[i].full_index >= 0 )
+		{
+			ClipInfoArray[i].FullSprite = gHUD.m_rghSprites[ClipInfoArray[i].full_index];
+			ClipInfoArray[i].FullArea = &gHUD.m_rgrcRects[ClipInfoArray[i].full_index];
+		}
+		else
+		{
+			ClipInfoArray[i].FullSprite = 0;
+			ClipInfoArray[i].FullArea = NULL;
+		}
+
+		if( ClipInfoArray[i].empty_index >= 0 )
+		{
+			ClipInfoArray[i].EmptySprite = gHUD.m_rghSprites[ClipInfoArray[i].empty_index];
+			ClipInfoArray[i].EmptyArea = &gHUD.m_rgrcRects[ClipInfoArray[i].empty_index];
+		}
+		else
+		{
+			ClipInfoArray[i].EmptySprite = 0;
+			ClipInfoArray[i].EmptyArea = NULL;
+		}
+
+		if( ClipInfoArray[i].extra_index >= 0 )
+		{
+			ClipInfoArray[i].ExtraSprite = gHUD.m_rghSprites[ClipInfoArray[i].extra_index];
+			ClipInfoArray[i].ExtraArea = &gHUD.m_rgrcRects[ClipInfoArray[i].extra_index];
+		}
+		else
+		{
+			ClipInfoArray[i].ExtraSprite = 0;
+			ClipInfoArray[i].ExtraArea = NULL;
+		}
+	}
+
+	BritGrenClipInfo.weapon_id = WEAPON_HANDGRENADE;
+	int iBritGrenExtra = gHUD.GetSpriteIndex( "clip_britgrenade_extra" );
+
+	if( iBritGrenExtra >= 0 )
+	{
+		BritGrenClipInfo.extra_index = iBritGrenExtra;
+		BritGrenClipInfo.ExtraSprite = gHUD.m_rghSprites[iBritGrenExtra];
+		BritGrenClipInfo.ExtraArea = &gHUD.m_rgrcRects[iBritGrenExtra];
+	}
+
+	int HUD_mgbarrel_20 = gHUD.GetSpriteIndex( "hud_barrel" );
+	if( HUD_mgbarrel_20 >= 0 )
+	{
+		MGBarrelHUD = gHUD.m_rghSprites[HUD_mgbarrel_20];
+		MGBarrelHUDArea = &gHUD.m_rgrcRects[HUD_mgbarrel_20];
+	}
+
+	int HUD_mgbarrel2_20 = gHUD.GetSpriteIndex( "hud_barrelo" );
+	if( HUD_mgbarrel2_20 >= 0 )
+	{
+		MGBarrel2HUD = gHUD.m_rghSprites[HUD_mgbarrel2_20];
+		MGBarrel2HUDArea = &gHUD.m_rgrcRects[HUD_mgbarrel2_20];
+	}
+
 	m_HUD_bucket0 = gHUD.GetSpriteIndex( "bucket1" );
 	m_HUD_selection = gHUD.GetSpriteIndex( "selection" );
 
-	ghsprBuckets = gHUD.GetSprite( m_HUD_bucket0 );
-	giBucketWidth = gHUD.GetSpriteRect( m_HUD_bucket0 ).right - gHUD.GetSpriteRect( m_HUD_bucket0 ).left;
-	giBucketHeight = gHUD.GetSpriteRect( m_HUD_bucket0 ).bottom - gHUD.GetSpriteRect( m_HUD_bucket0 ).top;
+	giBucketWidth = 12;
+	giBucketHeight = 12;
 
-	gHR.iHistoryGap = gHUD.GetSpriteRect( m_HUD_bucket0 ).bottom - gHUD.GetSpriteRect( m_HUD_bucket0 ).top;
+	if( m_HUD_bucket0 != -1 )
+	{
+		ghsprBuckets = gHUD.GetSprite( m_HUD_bucket0 );
+		giBucketWidth = gHUD.GetSpriteRect( m_HUD_bucket0 ).right - gHUD.GetSpriteRect( m_HUD_bucket0 ).left;
+		giBucketHeight = gHUD.GetSpriteRect( m_HUD_bucket0 ).bottom - gHUD.GetSpriteRect( m_HUD_bucket0 ).top;
+		gHR.iHistoryGap = gHUD.GetSpriteRect( m_HUD_bucket0 ).bottom - gHUD.GetSpriteRect( m_HUD_bucket0 ).top;
+	}
 
-	// If we've already loaded weapons, let's get new sprites
 	gWR.LoadAllWeaponSprites();
 
-	const int res = GetSpriteRes( ScreenWidth, ScreenHeight );
-	int factor;
-	if( res >= 2560 )
-		factor = 4;
-	else if( res >= 1280 )
-		factor = 3;
-	else if( res >= 640 )
-		factor = 2;
-	else
-		factor = 1;
+	int idxFG42 = gHUD.GetSpriteIndex( "weapon_scopedfg42" );
+	if( idxFG42 >= 0 )
+	{
+		gWR.scoped_fg42.hActive = gHUD.m_rghSprites[idxFG42];
+		gWR.scoped_fg42.rcActive = gHUD.m_rgrcRects[idxFG42];
+	}
 
-	giABWidth = 10 * factor;
-	giABHeight = 2 * factor;
+	int idxFCarb = gHUD.GetSpriteIndex( "weapon_fcarb" );
+	if( idxFCarb >= 0 )
+	{
+		gWR.folding_carbine.hActive = gHUD.m_rghSprites[idxFCarb];
+		gWR.folding_carbine.rcActive = gHUD.m_rgrcRects[idxFCarb];
+	}
+
+	int idxKnife = gHUD.GetSpriteIndex( "weapon_paraknife" );
+	if( idxKnife >= 0 )
+	{
+		gWR.gravity_knife.hActive = gHUD.m_rghSprites[idxKnife];
+		gWR.gravity_knife.rcActive = gHUD.m_rgrcRects[idxKnife];
+	}
+
+	int idxEnfield = gHUD.GetSpriteIndex( "weapon_scopedenfield" );
+	if( idxEnfield >= 0 )
+	{
+		gWR.scoped_enfield.hActive = gHUD.m_rghSprites[idxEnfield];
+		gWR.scoped_enfield.rcActive = gHUD.m_rgrcRects[idxEnfield];
+	}
+
+	int idxBKnife = gHUD.GetSpriteIndex( "weapon_britknife" );
+	if( idxBKnife >= 0 )
+	{
+		gWR.brit_knife.hActive = gHUD.m_rghSprites[idxBKnife];
+		gWR.brit_knife.rcActive = gHUD.m_rgrcRects[idxBKnife];
+	}
+
+	int idxBGren = gHUD.GetSpriteIndex( "weapon_britgrenade" );
+	if( idxBGren >= 0 )
+	{
+		gWR.brit_grenade.hActive = gHUD.m_rghSprites[idxBGren];
+		gWR.brit_grenade.rcActive = gHUD.m_rgrcRects[idxBGren];
+	}
+
+	int idxBino = gHUD.GetSpriteIndex( "weapon_gerbinoculars" );
+	if( idxBino >= 0 )
+	{
+		gWR.ger_binoculars.hActive = gHUD.m_rghSprites[idxBino];
+		gWR.ger_binoculars.rcActive = gHUD.m_rgrcRects[idxBino];
+	}
+
+	if( gHUD.m_scrinfo.iWidth <= 639 )
+	{
+		giABWidth = 10;
+		giABHeight = 2;
+	}
+	else
+	{
+		giABWidth = 20;
+		giABHeight = 4;
+	}
 
 	return 1;
 }
@@ -367,9 +739,10 @@ void CHudAmmo::Think( void )
 	if( gHUD.m_fPlayerDead )
 		return;
 
-	if( gHUD.m_iWeaponBits != gWR.iOldWeaponBits )
+	if( gHUD.m_iWeaponBits != gWR.iOldWeaponBits || gWR.iOldWeaponBits2 != g_iWeaponBits2 )
 	{
 		gWR.iOldWeaponBits = gHUD.m_iWeaponBits;
+		gWR.iOldWeaponBits2 = g_iWeaponBits2;
 
 		for( int i = MAX_WEAPONS-1; i > 0; i-- )
 		{
@@ -377,6 +750,13 @@ void CHudAmmo::Think( void )
 
 			if( p && p->iId )
 			{
+				bool bHasWeapon = false;
+
+				if( p->iId < 32 )
+					bHasWeapon = ( gHUD.m_iWeaponBits & ( 1 << p->iId ) ) != 0;
+				else
+					bHasWeapon = ( g_iWeaponBits2 & ( 1 << ( p->iId - 32 ) ) ) != 0;
+
 				if( gHUD.m_iWeaponBits & ( 1 << p->iId ) )
 					gWR.PickupWeapon( p );
 				else
@@ -384,6 +764,9 @@ void CHudAmmo::Think( void )
 			}
 		}
 	}
+
+	if( m_pWeapon )
+		m_pWeapon->iLastWeaponState = g_iWeaponFlags;
 
 	if( !gpActiveSel )
 		return;
@@ -431,10 +814,9 @@ HSPRITE* WeaponsResource::GetAmmoPicFromWeapon( int iAmmoId, wrect_t& rect )
 // Menu Selection Code
 void WeaponsResource::SelectSlot( int iSlot, int fAdvance, int iDirection )
 {
-	if( gHUD.m_Menu.m_fMenuDisplayed && ( fAdvance  == FALSE ) && ( iDirection == 1 ) )	
+	if( !fAdvance && gHUD.m_Menu.m_fMenuDisplayed && iDirection == 1 )
 	{
-		// menu is overriding slot use commands
-		gHUD.m_Menu.SelectMenuItem( iSlot + 1 );  // slots are one off the key numbers
+		gHUD.m_Menu.SelectMenuItem( iSlot + 1 );
 		return;
 	}
 
@@ -444,18 +826,11 @@ void WeaponsResource::SelectSlot( int iSlot, int fAdvance, int iDirection )
 	if( gHUD.m_fPlayerDead || gHUD.m_iHideHUDDisplay & ( HIDEHUD_WEAPONS | HIDEHUD_ALL ) )
 		return;
 
-	if ( !( gHUD.m_iWeaponBits & ( 1 << ( WEAPON_SUIT ) ) ) )
-		return;
-
-	if( ! ( gHUD.m_iWeaponBits & ~( 1 << ( WEAPON_SUIT ) ) ) )
-		return;
-
 	WEAPON *p = NULL;
 	bool fastSwitch = CVAR_GET_FLOAT( "hud_fastswitch" ) != 0;
 
 	if ( ( gpActiveSel == NULL ) || ( gpActiveSel == (WEAPON *) 1 ) || ( iSlot != gpActiveSel->iSlot ) )
 	{
-		PlaySound( "common/wpn_hudon.wav", 1 );
 		p = GetFirstPos( iSlot );
 
 		if ( p && fastSwitch ) // check for fast weapon switch mode
@@ -474,7 +849,6 @@ void WeaponsResource::SelectSlot( int iSlot, int fAdvance, int iDirection )
 	}
 	else
 	{
-		PlaySound( "common/wpn_moveselect.wav", 1 );
 		if ( gpActiveSel )
 			p = GetNextActivePos( gpActiveSel->iSlot, gpActiveSel->iSlotPos );
 		if ( !p )
@@ -565,20 +939,8 @@ int CHudAmmo::MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf )
 	
 	gHUD.m_iHideHUDDisplay = READ_BYTE();
 
-	if( gEngfuncs.IsSpectateOnly() )
-		return 1;
-
 	if( gHUD.m_iHideHUDDisplay & ( HIDEHUD_WEAPONS | HIDEHUD_ALL ) )
-	{
-		wrect_t nullrc = {0,};
 		gpActiveSel = NULL;
-		SetCrosshair( 0, nullrc, 0, 0, 0 );
-	}
-	else
-	{
-		if( m_pWeapon )
-			SetCrosshair( m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255 );
-	}
 
 	return 1;
 }
@@ -604,27 +966,20 @@ void CHudAmmo::PlayerDied( void )
 int CHudAmmo::MsgFunc_CurWeapon( const char *pszName, int iSize, void *pbuf )
 {
 	wrect_t nullrc = {0,};
-	int fOnTarget = FALSE;
 
 	BEGIN_READ( pbuf, iSize );
 
 	int iState = READ_BYTE();
 	int iId = READ_CHAR();
-	int iClip = READ_CHAR();
+	int iClip = READ_BYTE();
 
-	// detect if we're also on target
-	if( iState > 1 )
-	{
-		fOnTarget = TRUE;
-	}
-
-	if( iId < 1 )
+	if( iId <= 0 )
 	{
 		SetCrosshair( 0, nullrc, 0, 0, 0 );
-		// Clear out the weapon so we don't keep drawing the last active weapon's ammo. - Solokiller
-		m_pWeapon = 0;
 		return 0;
 	}
+
+	gHUD.m_fPlayerDead = FALSE;
 
 	if( g_iUser1 != OBS_IN_EYE )
 	{
@@ -639,36 +994,29 @@ int CHudAmmo::MsgFunc_CurWeapon( const char *pszName, int iSize, void *pbuf )
 
 	WEAPON *pWeapon = gWR.GetWeapon( iId );
 
-	if( !pWeapon )
-		return 0;
-
 	if( iClip < -1 )
-		pWeapon->iClip = abs( iClip );
+	{
+		pWeapon->iClip = -iClip;
+		if( !iState )
+			return 1;
+	}
 	else
+	{
 		pWeapon->iClip = iClip;
-
-	if( iState == 0 )	// we're not the current weapon, so update no more
-		return 1;
+		if( !iState )
+			return 1;
+	}
 
 	m_pWeapon = pWeapon;
 
-	if( !( gHUD.m_iHideHUDDisplay & ( HIDEHUD_WEAPONS | HIDEHUD_ALL ) ) )
+	if( ( gHUD.m_iHideHUDDisplay & ( HIDEHUD_WEAPONS | HIDEHUD_ALL ) ) && gHUD.m_iFOV <= 89 )
 	{
 		if( gHUD.m_iFOV >= 90 )
 		{
-			// normal crosshairs
-			if( fOnTarget && m_pWeapon->hAutoaim )
-				SetCrosshair( m_pWeapon->hAutoaim, m_pWeapon->rcAutoaim, 255, 255, 255 );
+			if( iState > 1 && pWeapon->hZoomedAutoaim )
+				SetCrosshair( pWeapon->hZoomedAutoaim, pWeapon->rcZoomedAutoaim, 255, 255, 255 );
 			else
-				SetCrosshair( m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255 );
-		}
-		else
-		{
-			// zoomed crosshairs
-			if( fOnTarget && m_pWeapon->hZoomedAutoaim )
-				SetCrosshair( m_pWeapon->hZoomedAutoaim, m_pWeapon->rcZoomedAutoaim, 255, 255, 255 );
-			else
-				SetCrosshair( m_pWeapon->hZoomedCrosshair, m_pWeapon->rcZoomedCrosshair, 255, 255, 255 );
+				SetCrosshair( pWeapon->hZoomedCrosshair, pWeapon->rcZoomedCrosshair, 255, 255, 255 );
 		}
 	}
 
@@ -696,8 +1044,6 @@ int CHudAmmo::MsgFunc_WeaponList( const char *pszName, int iSize, void *pbuf )
 	BEGIN_READ( pbuf, iSize );
 	
 	WEAPON Weapon;
-
-	strlcpy( Weapon.szName, READ_STRING(), sizeof( Weapon.szName ));
 
 	Weapon.iAmmoType = (int)READ_CHAR();	
 	
@@ -729,10 +1075,27 @@ int CHudAmmo::MsgFunc_WeaponList( const char *pszName, int iSize, void *pbuf )
 	if( Weapon.iAmmo2Type < -1 || Weapon.iAmmo2Type >= MAX_AMMO_TYPES )
 		return 0;
 
-	strncpy( Weapon.szName, weaponnames[64 * MAX_WEAPONS], 128 );
-	gWR.AddWeapon( &Weapon );
+	if( ( Weapon.iAmmoType == -1 || Weapon.iMax1 ) && ( Weapon.iAmmo2Type == -1 || Weapon.iMax2 ) )
+	{
+		if( Weapon.iClipMax > 0 )
+		{
+			if( Weapon.iId >= 0 && Weapon.iId < WEAPON_GERPARAKNIFE )
+			{
+				strncpy( Weapon.szName, weaponnames[Weapon.iId], 128 );
+			}
+			else
+			{
+				sprintf( Weapon.szName, "weapon_unknown_%d", Weapon.iId );
+			}
 
-	return 1;
+			Weapon.szName[127] = '\0';
+
+			gWR.AddWeapon( &Weapon );
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 //------------------------------------------------------------------------
@@ -796,7 +1159,15 @@ void CHudAmmo::UserCmd_Slot10( void )
 
 void CHudAmmo::UserCmd_Close( void )
 {
-	if( gpActiveSel )
+	if( gHUD.m_Menu.m_fMenuDisplayed )
+	{
+		if( gHUD.m_Menu.CanCancel )
+		{
+			gHUD.m_Menu.m_fMenuDisplayed = 0;
+			gHUD.m_Menu.m_iFlags &= ~HUD_ACTIVE;
+		}
+	}
+	else if( gpActiveSel )
 	{
 		gpLastSel = gpActiveSel;
 		gpActiveSel = NULL;
