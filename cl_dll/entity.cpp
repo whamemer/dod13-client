@@ -61,8 +61,13 @@ HUD_AddEntity
 	Return 0 to filter entity from visible list for rendering
 ========================
 */
-int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *modelname )
+int DLLEXPORT HUD_AddEntity(int type, struct cl_entity_s *ent, const char *modelname)
 {
+	if( !modelname || modelname[0] == '\0' )
+	{
+		return 1;
+	}
+
 	int mapstate = gHUD.GetMinimapState();
 
 	if( gEngfuncs.IsSpectateOnly() || g_iUser1 || mapstate > 0 )
@@ -105,7 +110,7 @@ int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *mode
 				gHUD.m_Spectator.AddOverviewEntityToList( pSpr, ent, gEngfuncs.GetClientTime() + 0.2 );
 		}
 
-		const char *c = strstr( modelname, "hltv_" );
+		const char *c = strstr(modelname, "hltv_");
 		if( c && ( ent->curstate.rendermode != kRenderTransTexture || ent->curstate.renderamt ) )
 		{
 			if( !mapstate || cl_dmshowobjects->value > 0.0f )
@@ -113,26 +118,27 @@ int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *mode
 				char file[76];
 				char sz[128];
 
-				strcpy( file, c );
+				strncpy( file, c, sizeof( file ) - 5 );
+				file[sizeof( file ) - 5] = '\0';
 
-				int len = strlen( file );
-
-				*&file[len] = 0x727073;
-
+				strcat( file, ".spr" );
 				sprintf( sz, "sprites/%s", file );
+
 				gHUD.m_Spectator.m_hsprCustom = gEngfuncs.pfnSPR_Load( sz );
 				gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprCustom, ent, gEngfuncs.GetClientTime() - 1.0 );
 			}
 		}
 	}
 
-	if( g_iUser1 || ( mapstate && cl_dmshowplayers->value > 0.0f ) )
+	if( g_iUser1 || ( mapstate && cl_dmshowplayers->value > 0.0f ))
 	{
 		gHUD.m_Spectator.AddOverviewEntity( type, ent, modelname );
-		return ( g_iUser1 != OBS_IN_EYE && gHUD.m_Spectator.m_pip->value != 2.0f ) || ( ent->index != g_iUser2 );
+
+		if( ( g_iUser1 != OBS_IN_EYE && gHUD.m_Spectator.m_pip->value != 2.0f ) || ( ent->index != g_iUser2 ) )
+			return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 /*
@@ -359,14 +365,19 @@ void DLLEXPORT Event_EjectBrassP( const struct cl_entity_s *entity, int shelltyp
 	vec3_t endpos, forward, right, up, velocity;
 	vec3_t temp = entity->angles;
 	int shellmodel = gEngfuncs.pEventAPI->EV_FindModelIndex( "models/shells.mdl" );
-	TEMPENTITY *te;
+	TEMPENTITY *te = NULL;
 
 	if( cl_bulletejects->value != 0.0f && shelltype <= 3 )
 	{
-		VectorNormalize( &temp.x );
+		VectorNormalize( temp );
 		AngleVectors( temp, forward, right, up );
-		VectorScale( &up.x, 100.0f, &velocity.x );
-		te = gEngfuncs.pEfxAPI->R_TempModel( (float*)&entity->attachment[1].x, &velocity.x, &endpos.x, 2.5, shellmodel, 1);
+		VectorScale( up, 100.0f, velocity );
+
+		endpos[0] = 0.0f;
+		endpos[1] = entity->angles[1];
+		endpos[2] = 0.0f;
+
+		te = gEngfuncs.pEfxAPI->R_TempModel( (float*)&entity->attachment[1], velocity, endpos, 2.5f, shellmodel, 1);
 	}
 
 	if( te )
@@ -383,15 +394,20 @@ void DLLEXPORT Event_EjectBrassV( const struct cl_entity_s *entity, int shelltyp
 {
 	vec3_t endpos, forward, right, up, velocity, temp;
 	int shellmodel = gEngfuncs.pEventAPI->EV_FindModelIndex( "models/shells.mdl" );
-	TEMPENTITY *te;
+	TEMPENTITY *te = NULL;
 
 	if( cl_bulletejects->value != 0.0f && shelltype <= 3 )
 	{
 		AngleVectors( v_angles, forward, right, up );
-		VectorScale( &right.x, gEngfuncs.pfnRandomLong( 60, 80 ), &velocity.x );
-		VectorScale( &up.x, gEngfuncs.pfnRandomLong( 60, 80 ), &temp.x );
+		VectorScale( right, gEngfuncs.pfnRandomLong( 60, 80 ), velocity );
+		VectorScale( up, gEngfuncs.pfnRandomLong( 60, 80 ), temp );
 		velocity = velocity + temp;
-		te = gEngfuncs.pEfxAPI->R_TempModel( ( float * ) &entity->attachment[1].x, &velocity.x, &endpos.x, 2.5, shellmodel, 1 );
+
+		endpos[0] = 0.0f;
+		endpos[1] = entity->angles[1];
+		endpos[2] = 0.0f;
+
+		te = gEngfuncs.pEfxAPI->R_TempModel( ( float * ) &entity->attachment[1], velocity, endpos, 2.5, shellmodel, 1 );
 	}
 
 	if( te )
@@ -1145,10 +1161,10 @@ void DLLEXPORT HUD_TempEntUpdate(
 			}
 			pTemp = pnext;
 		}
-	finish:
-		// Restore state info
-		gEngfuncs.pEventAPI->EV_PopPMStates();
 	}
+finish:
+	// Restore state info
+	gEngfuncs.pEventAPI->EV_PopPMStates();
 }
 
 /*
