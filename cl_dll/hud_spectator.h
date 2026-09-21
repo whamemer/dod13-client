@@ -23,6 +23,17 @@
 #define OVERVIEW_TILE_SIZE		128		// don't change this
 #define OVERVIEW_MAX_LAYERS		1
 
+#define OBS_DRAW_HEALTH		(1 << 0)
+#define OBS_DRAW_NAMES		(1 << 1)
+#define OBS_DRAW_CONE		(1 << 2)
+#define OBS_DRAW_STATUS		(1 << 3)
+#define OBS_AUTO_DIRECTOR	(1 << 4)
+#define OBS_PIP_ALLOWED		(1 << 5)
+#define OBS_STAMINA_DRAW	(1 << 6)
+#define OBS_ALLOW_ROAMING	(1 << 7)
+#define OBS_ALLOW_CHASE		(1 << 8)
+#define OBS_ALLOW_INEYE		(1 << 9)
+
 extern void VectorAngles( const float *forward, float *angles );
 extern "C" void NormalizeAngles( float *angles );
 
@@ -100,13 +111,6 @@ public:
 	void ClearVoiceIconFlags( void );
 	bool ShouldSetVoiceIcon( int index );
 
-	void	AddWaypoint( float time, vec3_t pos, vec3_t angle, float fov, int flags );
-	void	SetCameraView( vec3_t pos, vec3_t angle, float fov );
-	float	GetFOV();
-	bool	GetDirectorCamera( vec3_t &position, vec3_t &angle );
-	void	SetWayInterpolation( cameraWayPoint_t *prev, cameraWayPoint_t *start, cameraWayPoint_t *end, cameraWayPoint_t *next );
-
-
 	int m_hsprMapMarkers[15];
 
 	int m_iDrawCycle;
@@ -155,8 +159,6 @@ public:
 
 private:
 	vec3_t		m_vPlayerPos[MAX_PLAYERS];
-	HSPRITE		m_hsprPlayerBlue;
-	HSPRITE		m_hsprPlayerRed;
 	HSPRITE		m_hsprPlayer;
 	HSPRITE		m_hsprCamera;
 	HSPRITE		m_hsprCameraAllies;
@@ -167,15 +169,11 @@ private:
 	HSPRITE		m_hsprViewcone;
 	HSPRITE		m_hsprUnkownMap;
 	HSPRITE		m_hsprBeam;
-	HSPRITE		m_hCrosshair;
 
-	HSPRITE		m_bAddDrawIconNextFrame[64];	
-
-	wrect_t		m_crosshairRect;
+	bool		m_bAddDrawIconNextFrame[64];	
 
 	struct model_s	*m_MapSprite;	// each layer image is saved in one sprite, where each tile is a sprite frame
 	float		m_flNextObserverInput;
-	float		m_FOV;
 	float		m_zoomDelta;
 	float		m_moveDelta;
 	int		m_lastPrimaryObject;
