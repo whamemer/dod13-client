@@ -376,11 +376,13 @@ public:
 //
 //-----------------------------------------------------
 //
+#define MAX_EXTRA_MAP_ICONS 32 
+
 class CHudDoDMap : public CHudBase
 {
 public:
 	int VidInit( void );
-	void InitHUDData( void ) { return; }
+	void InitHUDData( void );
 	int Draw( float flTime );
 	int Init( void );
 	void DrawOverview( void );
@@ -393,7 +395,7 @@ public:
 	void SetMapState( int mapstate );
 	void GetSmallMapOffset( float &x, float &y, float &z );
 	bool AddMapEntityToMap( HSPRITE sprite, double lifetime, vec3_t *origin );
-	void DrawOverviewIcon( vec3_t *origin, HSPRITE hIcon, int iconScale, vec3_t *angles );
+	void DrawOverviewIcon( vec3_t origin, HSPRITE hIcon, int iconScale, vec3_t angles );
 
 	typedef struct
 	{
@@ -402,7 +404,7 @@ public:
 		double killtime;
 	} map_icon_t;
 
-	map_icon_t m_ExtraOverviewEntities[32];
+	map_icon_t m_ExtraOverviewEntities[MAX_EXTRA_MAP_ICONS];
 
 private:
 	cl_entity_t m_MapTag[64];
@@ -490,11 +492,21 @@ public:
 	// void UpdateWhosTalking( int, qboolean );
 	bool InDeathCamMode( void );
 	void Think( void );
-	//qboolean IsEntityTalking( int );
+
+	qboolean IsEntityTalking( int index )
+	{
+		if( index < 1 || index > MAX_PLAYERS )
+			return false;
+
+		if( m_TargetTalking[index] )
+			return true;
+
+		return false;
+	}
 
 protected:
 	enum
-	{ 
+	{
 		MAX_STATUSTEXT_LENGTH = 128,
 		MAX_STATUSBAR_VALUES = 8,
 		MAX_STATUSBAR_LINES = 2
