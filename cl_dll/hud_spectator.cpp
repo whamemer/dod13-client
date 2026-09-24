@@ -189,7 +189,7 @@ int CHudSpectator::Init()
 	}
 	else
 	{
-		for( int i = 0; i != 64; i++ )
+		for( int i = 0; i != MAX_PLAYERS; i++ )
 		{
 			m_bAddDrawIconNextFrame[i] = 0;
 		}
@@ -359,8 +359,7 @@ int UTIL_FindEntityInMap( const char *name, float *origin, float *angle )
 //-----------------------------------------------------------------------------
 void CHudSpectator::SetSpectatorStartPosition()
 {
-	// search for info_player start
-	if( UTIL_FindEntityInMap( "trigger_camera",  m_cameraOrigin, m_cameraAngles ) )
+	if( UTIL_FindEntityInMap( "info_player_observer",  m_cameraOrigin, m_cameraAngles ) )
 		iJumpSpectator = 1;
 
 	else if( UTIL_FindEntityInMap( "info_player_start",  m_cameraOrigin, m_cameraAngles ) )
@@ -373,7 +372,6 @@ void CHudSpectator::SetSpectatorStartPosition()
 		iJumpSpectator = 1;
 	else
 	{
-		// jump to 0,0,0 if no better position was found
 		VectorCopy( vec3_origin, m_cameraOrigin );
 		VectorCopy( vec3_origin, m_cameraAngles );
 	}
@@ -381,7 +379,7 @@ void CHudSpectator::SetSpectatorStartPosition()
 	VectorCopy( m_cameraOrigin, vJumpOrigin );
 	VectorCopy( m_cameraAngles, vJumpAngles );
 
-	iJumpSpectator = 1;	// jump anyway
+	iJumpSpectator = 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -425,91 +423,16 @@ int CHudSpectator::VidInit()
 		m_bAddDrawIconNextFrame[i] = 0;
 	}
 
-	m_lastPrimaryObject = m_lastSecondaryObject = 0;
-	m_flNextObserverInput = 0.0f;
-	m_lastHudMessage = 0;
-	m_iSpectatorNumber = 0;
-	iJumpSpectator	= 0;
-	g_iUser1 = g_iUser2 = 0;
-
 	return 1;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Input  : flTime - 
-//			intermission - 
 //-----------------------------------------------------------------------------
 int CHudSpectator::Draw( float flTime )
 {
-	int lx;
-
-	char string[256];
-	float *color;
-
-	// draw only in spectator mode
 	if( !g_iUser1 )
 		return 0;
-
-	// if user pressed zoom, aplly changes
-	if( ( m_zoomDelta != 0.0f ) && ( g_iUser1 == OBS_MAP_FREE ) )
-	{
-		m_mapZoom += m_zoomDelta;
-
-		if( m_mapZoom > 3.0f ) 
-			m_mapZoom = 3.0f;
-
-		if( m_mapZoom < 0.5f ) 
-			m_mapZoom = 0.5f;
-	}
-
-	// if user moves in map mode, change map origin
-	if( ( m_moveDelta != 0.0f ) && ( g_iUser1 != OBS_ROAMING ) )
-	{
-		vec3_t right;
-		AngleVectors( v_angles, NULL, right, NULL );
-		VectorNormalize( right );
-		VectorScale( right, m_moveDelta, right );
-
-		VectorAdd( m_mapOrigin, right, m_mapOrigin )
-	}
-
-	// Only draw the icon names only if map mode is in Main Mode
-	if( g_iUser1 < OBS_MAP_FREE ) 
-		return 1;
-
-	if( !m_drawnames->value )
-		return 1;
-
-	// make sure we have player info
-	gHUD.GetAllPlayersInfo();
-
-	// loop through all the players and draw additional infos to their sprites on the map
-	for( int i = 0; i < MAX_PLAYERS; i++ )
-	{
-		if( m_vPlayerPos[i][2] < 0 )	// marked as invisible ?
-			continue;
-
-		// check if name would be in inset window
-		if( m_pip->value != INSET_OFF )
-		{
-			if( m_vPlayerPos[i][0] > XRES_HD( m_OverviewData.insetWindowX ) &&
-					m_vPlayerPos[i][1] > YRES_HD( m_OverviewData.insetWindowY ) &&
-					m_vPlayerPos[i][0] < XRES_HD( m_OverviewData.insetWindowX + m_OverviewData.insetWindowWidth ) &&
-					m_vPlayerPos[i][1] < YRES_HD( m_OverviewData.insetWindowY + m_OverviewData.insetWindowHeight) ) 
-				continue;
-		}
-
-		color = GetClientColor( i + 1 );
-
-		// draw the players name and health underneath
-		strcpy( string, g_PlayerInfoList[i + 1].name );
-
-		lx = strlen( string ) * 3; // 3 is avg. character length :)
-
-		DrawSetTextColor( color[0], color[1], color[2] );
-		DrawConsoleString( m_vPlayerPos[i][0] - lx,m_vPlayerPos[i][1], string );
-	}
 
 	return 1;
 }
@@ -520,11 +443,6 @@ void CHudSpectator::DirectorMessage( int iSize, void *pbuf )
 	char *string;
 
 	BEGIN_READ( pbuf, iSize );
-
-	client_textmessage_t *msg = &m_HUDMessages[m_lastHudMessage];
-	msg->effect = READ_BYTE();
-
-	int iColor = READ_LONG();
 
 	int cmd = READ_BYTE();
 
@@ -576,6 +494,10 @@ void CHudSpectator::DirectorMessage( int iSize, void *pbuf )
 		READ_FLOAT();
 		break;
 	case DRC_CMD_MESSAGE:
+		client_textmessage_t *msg = &m_HUDMessages[m_lastHudMessage];
+		msg->effect = READ_BYTE();
+		int iColor = READ_LONG();
+
 		msg->r1 = ( iColor & 0xFF );
 		msg->g1 = ( iColor >> 8 ) & 0xFF;
 		msg->b1 = ( iColor >> 16 ) & 0xFF;
@@ -625,41 +547,26 @@ void CHudSpectator::DirectorMessage( int iSize, void *pbuf )
 
 void CHudSpectator::FindNextPlayer( bool bReverse )
 {
-	// MOD AUTHORS: Modify the logic of this function if you want to restrict the observer to watching
-	//				only a subset of the players. e.g. Make it check the target's team.
-
-	int		iStart;
-	cl_entity_t * pEnt = NULL;
-
 	// if we are NOT in HLTV mode, spectator targets are set on server
 	if( !gEngfuncs.IsSpectateOnly() )
 	{
 		char cmdstring[256];
-		// forward command to server
-		safe_snprintf( cmdstring, sizeof( cmdstring ),"follownext %i", bReverse ? 1 : 0 );
+		safe_snprintf( cmdstring, sizeof( cmdstring ), "follownext %i", bReverse ? 1 : 0 );
 		gEngfuncs.pfnServerCmd( cmdstring );
 		return;
 	}
 
-	if( g_iUser2 )
-		iStart = g_iUser2;
-	else
-		iStart = 1;
-
+	int iStart = g_iUser2 ? g_iUser2 : 1;
 	g_iUser2 = 0;
 
 	int iCurrent = iStart;
-
-	int iDir = bReverse ? -1 : 1; 
-
-	// make sure we have player info
-	gHUD.GetAllPlayersInfo();
+	int iDir = bReverse ? -1 : 1;
+	cl_entity_t *pEnt = NULL;
 
 	do
 	{
 		iCurrent += iDir;
 
-		// Loop through the clients
 		if( iCurrent > MAX_PLAYERS )
 			iCurrent = 1;
 		if( iCurrent < 1 )
@@ -670,79 +577,64 @@ void CHudSpectator::FindNextPlayer( bool bReverse )
 		if( !IsActivePlayer( pEnt ) )
 			continue;
 
-		// MOD AUTHORS: Add checks on target here.
 		g_iUser2 = iCurrent;
 		break;
 	} while( iCurrent != iStart );
 
-	// Did we find a target?
 	if( !g_iUser2 )
 	{
 		gEngfuncs.Con_DPrintf( "No observer targets.\n" );
-		// take save camera position 
 		VectorCopy( m_cameraOrigin, vJumpOrigin );
 		VectorCopy( m_cameraAngles, vJumpAngles );
 	}
 	else
 	{
-		// use new entity position for roaming
 		VectorCopy( pEnt->origin, vJumpOrigin );
 		VectorCopy( pEnt->angles, vJumpAngles );
 	}
+
 	iJumpSpectator = 1;
 }
 
 void CHudSpectator::FindPlayer( const char *name )
 {
-	// MOD AUTHORS: Modify the logic of this function if you want to restrict the observer to watching
-	//				only a subset of the players. e.g. Make it check the target's team.
-
 	// if we are NOT in HLTV mode, spectator targets are set on server
-	if ( !gEngfuncs.IsSpectateOnly() )
+	if( !gEngfuncs.IsSpectateOnly() )
 	{
 		char cmdstring[256];
-		// forward command to server
-		safe_snprintf( cmdstring, sizeof( cmdstring ), "follow %s", name );
+		safe_snprintf( cmdstring, sizeof( cmdstring ), "follow \"%s\"", name );
 		gEngfuncs.pfnServerCmd( cmdstring );
 		return;
 	}
 
 	g_iUser2 = 0;
+	cl_entity_t *pEnt = NULL;
 
-	// make sure we have player info
-	gHUD.GetAllPlayersInfo();
-
-	cl_entity_t * pEnt = NULL;
-
-	for (int i = 1; i < MAX_PLAYERS; i++ )
+	for( int i = 1; i < MAX_PLAYERS; i++ )
 	{
-
 		pEnt = gEngfuncs.GetEntityByIndex( i );
 
-		if ( !IsActivePlayer( pEnt ) )
-		continue;
+		if( !IsActivePlayer( pEnt ) )
+			continue;
 
-		if(!stricmp(g_PlayerInfoList[pEnt->index].name,name))
+		if( !stricmp( g_PlayerInfoList[pEnt->index].name, name ) )
 		{
 			g_iUser2 = i;
 			break;
 		}
-
 	}
 
 	// Did we find a target?
-	if ( !g_iUser2 )
+	if( !g_iUser2 )
 	{
 		gEngfuncs.Con_DPrintf( "No observer targets.\n" );
-		// take save camera position
-		VectorCopy(m_cameraOrigin, vJumpOrigin);
-		VectorCopy(m_cameraAngles, vJumpAngles);
+		VectorCopy( m_cameraOrigin, vJumpOrigin );
+		VectorCopy( m_cameraAngles, vJumpAngles );
 	}
 	else
 	{
-		// use new entity position for roaming
-		VectorCopy ( pEnt->origin, vJumpOrigin );
-		VectorCopy ( pEnt->angles, vJumpAngles );
+		VectorCopy( pEnt->origin, vJumpOrigin );
+		VectorCopy( pEnt->angles, vJumpAngles );
 	}
 
 	iJumpSpectator = 1;
@@ -754,8 +646,6 @@ void CHudSpectator::HandleButtonsDown( int ButtonPressed )
 
 	int newMainMode = g_iUser1;
 	int newInsetMode = m_pip->value;
-
-	// gEngfuncs.Con_Printf( " HandleButtons:%i\n", ButtonPressed );
 
 	//Not in intermission.
 	if( gHUD.m_iIntermission )
@@ -776,6 +666,16 @@ void CHudSpectator::HandleButtonsDown( int ButtonPressed )
 	{
 		newInsetMode = 0;
 	}
+
+	if( ButtonPressed & IN_FORWARD )
+		m_zoomDelta = 0.1f;
+	else if( ButtonPressed & IN_BACK )
+		m_zoomDelta = -0.1f;
+
+	if( ButtonPressed & IN_MOVELEFT )
+		m_moveDelta = -10.0f;
+	else if( ButtonPressed & IN_MOVERIGHT )
+		m_moveDelta = 10.0f;
 
 	// if not in HLTV mode, buttons are handled server side
 	if( gEngfuncs.IsSpectateOnly() )
@@ -838,7 +738,7 @@ void CHudSpectator::SetModes( int iNewMainMode, int iNewInsetMode )
 	// inset mode is handled only clients side
 	m_pip->value = iNewInsetMode;
 
-	if( iNewMainMode < OBS_CHASE_LOCKED || iNewMainMode > OBS_ROAMING )
+	if( iNewMainMode < OBS_CHASE_LOCKED || iNewMainMode > OBS_IN_EYE )
 	{
 		gEngfuncs.Con_Printf( "Invalid spectator mode.\n" );
 		return;
@@ -850,6 +750,9 @@ void CHudSpectator::SetModes( int iNewMainMode, int iNewInsetMode )
 		// if we are NOT in HLTV mode, main spectator mode is set on server
 		if( !gEngfuncs.IsSpectateOnly() )
 		{
+			if( iNewMainMode == OBS_CHASE_FREE )
+				m_autoDirector->value = 0.0f;
+
 			char cmdstring[256];
 			// forward command to server
 			safe_snprintf( cmdstring, sizeof( cmdstring ),"specmode %i", iNewMainMode );
@@ -869,6 +772,8 @@ void CHudSpectator::SetModes( int iNewMainMode, int iNewInsetMode )
 				FindNextPlayer( false ); // find any target
 		}
 
+		g_iUser1 = iNewMainMode;
+
 		switch( iNewMainMode )
 		{
 			case OBS_CHASE_LOCKED:
@@ -879,16 +784,14 @@ void CHudSpectator::SetModes( int iNewMainMode, int iNewInsetMode )
 				m_autoDirector->value = 0.0f;
 				break;
 			case OBS_ROAMING:	// jump to current vJumpOrigin/angle
-				g_iUser1 = OBS_ROAMING;
+				break;
+			case OBS_IN_EYE:
 				if( g_iUser2 )
 				{
 					V_GetInEyePos( g_iUser2, vJumpOrigin, vJumpAngles );
 					gEngfuncs.SetViewAngles( vJumpAngles );
 					iJumpSpectator = 1;
 				}
-				break;
-			case OBS_IN_EYE:
-				g_iUser1 = OBS_IN_EYE;
 				break;
 		}
 
@@ -901,12 +804,11 @@ void CHudSpectator::SetModes( int iNewMainMode, int iNewInsetMode )
 
 bool CHudSpectator::IsActivePlayer( cl_entity_t *ent )
 {
-	return ( ent &&
-			 ent->player &&
-			 ent->curstate.solid != SOLID_NOT &&
-			 ent != gEngfuncs.GetLocalPlayer() &&
-			 g_PlayerInfoList[ent->index].name != NULL
-			);
+	if( ent && ent->player )
+		gEngfuncs.pfnGetPlayerInfo( ent->index, &g_PlayerInfoList[ent->index] );
+
+	return ( ent && ent->player && ent->curstate.solid != SOLID_NOT && ent != gEngfuncs.GetLocalPlayer() &&
+			 g_PlayerInfoList[ent->index].name != NULL );
 }
 
 bool CHudSpectator::ParseOverviewFile()
@@ -1493,6 +1395,25 @@ bool CHudSpectator::AddOverviewEntityToList( HSPRITE sprite, cl_entity_t *ent, d
 	}
 
 	return false;	// maximum overview entities reached
+}
+
+bool CHudSpectator::AddOverviewEntityToMap( HSPRITE sprite, cl_entity_t *ent, double killTime, vec3_t origin )
+{
+	for( int i = 0; i < MAX_OVERVIEW_ENTITIES; i++ )
+	{
+		if( !m_OverviewEntities[i].entity )
+		{
+			m_OverviewEntities[i].hSprite = sprite;
+			m_OverviewEntities[i].entity = ent;
+			m_OverviewEntities[i].killTime = killTime;
+			m_OverviewEntities[i].b_dodMapTag = true;
+			m_OverviewEntities[i].origin = origin;
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void CHudSpectator::CheckSettings( void )
