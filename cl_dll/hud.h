@@ -643,6 +643,8 @@ struct control_point_t
 	int m_iMapYPos;
 };
 
+#define MAX_CONTROL_POINTS 12
+
 class CObjectiveIcons : public CHudBase
 {
 public:
@@ -684,7 +686,7 @@ public:
 
 	bool IsPointValid( int point )
 	{
-		if( point < 0 || point >= 12 )
+		if( point < 0 || point >= MAX_CONTROL_POINTS )
 			return false;
 
 		return m_eControlPoints[point].valid;
@@ -692,7 +694,7 @@ public:
 
 	void PlayersInArea( int point, int team )
 	{
-		if( point < 0 || point >= 12 )
+		if( point < 0 || point >= MAX_CONTROL_POINTS )
 			return;
 
 		if( m_eControlPoints[point].visible )
@@ -710,7 +712,7 @@ private:
 	int m_CancelProgress;
 	int m_iWaveStatus;
 	float m_fLastTime;
-	control_point_t m_eControlPoints[12];
+	control_point_t m_eControlPoints[MAX_CONTROL_POINTS];
 	int m_nTimerStatus;
 	int m_TimerIcons[11];
 	wrect_t *m_TimerAreas[11];

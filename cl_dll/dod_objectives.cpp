@@ -174,7 +174,7 @@ void CObjectiveIcons::UpdateObjectiveIcons( void )
 {
 	float flTimeDelta = gHUD.m_flTimeDelta;
 
-	for( int i = 0; i < 12; i++ )
+	for( int i = 0; i < MAX_CONTROL_POINTS; i++ )
 	{
 		if( m_eControlPoints[i].valid )
 		{
@@ -307,8 +307,7 @@ int CObjectiveIcons::MsgFunc_StartProg( const char *pszName, int iSize, void *pb
 	int newOwner = READ_BYTE();
 	float time = READ_BYTE();
 
-	if( point < 0 || point >= 12 )
-		return 1;
+	IsPointValid( point );
 
 	control_point_t *pPoint = &m_eControlPoints[point];
 
@@ -370,8 +369,7 @@ int CObjectiveIcons::MsgFunc_CancelProg( const char *pszName, int iSize, void *p
 	int point = READ_BYTE();
 	int owner = READ_BYTE();
 
-	if( point < 0 || point >= 12 )
-		return 1;
+	IsPointValid( point );
 
 	control_point_t *pPoint = &m_eControlPoints[point];
 
@@ -421,7 +419,7 @@ int CObjectiveIcons::MsgFunc_PlayersIn( const char *pszName, int iSize, void *pb
 
 void CObjectiveIcons::ClearAllCapPoints( void )
 {
-	for( int i = 0; i < 12; i++ )
+	for( int i = 0; i < MAX_CONTROL_POINTS; i++ )
 	{
 		control_point_t *pPoint = &m_eControlPoints[i];
 
@@ -449,8 +447,7 @@ void CObjectiveIcons::ClearAllCapPoints( void )
 
 void CObjectiveIcons::ChangeCapPoint( int point, int newowner, int timedCap )
 {
-	if( point < 0 || point >= 12 )
-		return;
+	IsPointValid( point );
 
 	control_point_t *pPoint = &m_eControlPoints[point];
 
