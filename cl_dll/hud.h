@@ -302,30 +302,6 @@ private:
 	int m_HUD_selection;
 };
 
-//
-//-----------------------------------------------------
-//
-class CHudAmmoSecondary : public CHudBase
-{
-public:
-	int Init( void );
-	int VidInit( void );
-	void Reset( void );
-	int Draw(float flTime);
-
-	CHudMsgFunc( SecAmmoVal );
-	CHudMsgFunc( SecAmmoIcon );
-
-private:
-	enum {
-		MAX_SEC_AMMO_VALUES = 4
-	};
-
-	int m_HUD_ammoicon; // sprite indices
-	int m_iAmmoAmounts[MAX_SEC_AMMO_VALUES];
-	float m_fFade;
-};
-
 #define FADE_TIME 100
 
 //
@@ -693,21 +669,39 @@ public:
 	void ChangeCapPoint( int point, int newowner, int timedCap );
 	void StartCapProgress( int point, int newOwner, float time );
 	void CancelCapProgress( int point, int owner );
-	// void PlayersInArea( int, int );
 	void SetNumPlayersInArea( int point, int team, int numlayers, int required );
 	void SetVisible( int point, int visible );
 	void UpdateObjectiveIcons( void );
-	float GetObjectiveTime( void );
-	float GetWaveTime( void );
-	// void SetWaveTime( float );
-	// void SetWaveStatus( int );
-	// int GetWaveStatus( void );
 	void CalcIconLocations( void );
-	// void SetWarmupMode( bool );
-	// bool IsPointValid( int );
 	void DrawDigit( int digit, int x, int y );
 
-private:
+	float GetObjectiveTime( void ) { return m_fTimerSeconds; }
+	void SetWaveTime( float flTime ) { m_flWaveTime = flTime; }
+	float GetWaveTime( void ) { return m_flWaveTime; }
+	void SetWaveStatus( int iStatus ) { m_iWaveStatus = iStatus; }
+	int GetWaveStatus( void ) { return m_iWaveStatus; }
+	void SetWarmupMode( bool bWarmupMode ) { m_bWarmupMode = bWarmupMode; }
+
+	bool IsPointValid( int point )
+	{
+		if( point < 0 || point >= 12 )
+			return false;
+
+		return m_eControlPoints[point].valid;
+	}
+
+	void PlayersInArea( int point, int team )
+	{
+		if( point < 0 || point >= 12 )
+			return;
+
+		if( m_eControlPoints[point].visible )
+		{
+			m_eControlPoints[point].occupyingteam = team;
+		}
+	}
+
+private: 
 	float m_fTimerSeconds;
 	float m_flWaveTime;
 	int m_Init;
@@ -890,6 +884,8 @@ public:
 	HSPRITE MapMarkerSprite;
 	wrect_t *MapMarkerArea;
 	float m_fLastMapMarkerTime;
+	int m_iCreditName;
+	float m_flCreditChangeTime;
 
 private:
 	ClientArea m_Areas[128];
@@ -924,8 +920,6 @@ private:
 	HSPRITE m_hVertHintBacking;
 	wrect_t *m_rectHorizHintBacking;
 	wrect_t *m_rectVertHintBacking;
-	int m_iCreditName;
-	float m_flCreditChangeTime;
 	HSPRITE m_hsprSelectedMarker;
 	float m_flDrawSelectedMarkerTime;
 };
@@ -1007,6 +1001,7 @@ public:
 private:
 	TEMPENTITY *m_teEnvModelTE;
 	env_model_t m_sEnvModels[192];
+	int m_iNumEnvModels;
 };
 
 //
@@ -1264,7 +1259,6 @@ public:
 	CHudDoDCommon	m_DoDCommon;
 	CHudVGUI2Print	m_VGUI2Print;
 	CMortarHud		m_MortarHud;
-	CHudAmmoSecondary	m_AmmoSecondary;
 
 	CHudScoreboard	m_Scoreboard;
 	CHudMOTD	m_MOTD;
