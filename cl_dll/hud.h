@@ -1125,9 +1125,9 @@ class CTrajectoryList
 public:
 	CTrajectoryList( void );
 	~CTrajectoryList( void );
-	void GetTrajectory( vec3_t *launchPos, vec3_t *targetPos, float *pitch1, float *pitch2, float *yaw );
-	void CalculateTrajectory( vec3_t *launchPos, vec3_t *targetPos, float *pitch1, float *pitch2, float *yaw );
-	trajectory_t *AddTrajectory( vec3_t *p_targetPos );
+	void GetTrajectory( vec3_t launchPos, vec3_t targetPos, float *pitch1, float *pitch2, float *yaw );
+	void CalculateTrajectory( vec3_t launchPos, vec3_t targetPos, float *pitch1, float *pitch2, float *yaw );
+	trajectory_t *AddTrajectory( vec3_t targetPos );
 	void InvalidateAllTrajectories( void );
 
 	enum
@@ -1138,7 +1138,7 @@ public:
 
 private:
 	vec3_t m_vecLaunchPos;
-	trajectory_t m_Trajectories[32];
+	trajectory_t m_Trajectories[MAX_TRAJECTORIES];
 };
 
 class CMortarHud : public CHudBase
