@@ -4,12 +4,22 @@
 //
 // $NoKeywords: $
 //=============================================================================
-/*
+
 #include "GL/gl.h"
-#include "util_vector.h"
 #include "triangleapi.h"
+
+#define HSPRITE HSPRITE_DUMMY
 #include "hud.h"
 #include "r_studioint.h"
+#undef HSPRITE
+
+#ifdef WIN32
+#pragma comment(lib, "opengl32.lib")
+#endif
+
+#ifndef glFogi
+#define glFogi(arg1, arg2) glFogf(arg1, (GLfloat)(arg2))
+#endif
 
 extern engine_studio_api_t IEngineStudio;
 
@@ -33,7 +43,7 @@ void RenderDoDFog( void )
 		if( g_iOnlyClientDraw <= 0 && gHUD.GetMinimapState() )
 			foglevel = 0;
 		else
-			foglevel = cl_fog->value;
+			foglevel = ( int ) cl_fog->value;
 
 		if( cl_fog_start->value >= 0.0f )
 		{
@@ -42,17 +52,18 @@ void RenderDoDFog( void )
 				fogColor[0] = cl_fog_red->value;
 				fogColor[1] = cl_fog_green->value;
 				fogColor[2] = cl_fog_blue->value;
+				fogColor[3] = 1.0f;
 
 				if( foglevel == 1 )
 				{
-					if( IEngineStudio.IsHardware() == 1 )
+					if( IEngineStudio.IsHardware() )
 					{
 						fogColor[0] = 0.5f;
 						fogColor[1] = 0.5f;
 						fogColor[2] = 0.5f;
 						fogColor[3] = 1.0f;
-						
-						glFogf( GL_FOG_MODE, ( GLfloat ) GL_LINEAR ); // glFogi() alternate
+
+						glFogi( GL_FOG_MODE, GL_LINEAR );
 						glFogfv( GL_FOG_COLOR, fogColor );
 						glFogf( GL_FOG_DENSITY, cl_fog_density->value );
 						glHint( GL_FOG_HINT, GL_NICEST );
@@ -69,10 +80,10 @@ void RenderDoDFog( void )
 				{
 					gEngfuncs.pTriAPI->Fog( fogColor, cl_fog_start->value, cl_fog_end->value, 1 );
 
-					if( IEngineStudio.IsHardware() == 1 )
+					if( IEngineStudio.IsHardware() )
 						glDisable( GL_FOG );
 				}
 			}
 		}
 	}
-}*/
+}
