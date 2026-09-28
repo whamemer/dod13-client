@@ -47,7 +47,7 @@ extern "C"
 
 #include "tri.h"
 
-extern IParticleMan *g_pParticleman;
+extern IParticleMan *g_pParticleMan;
 extern Queue g_RubbleQueue;
 extern engine_studio_api_t IEngineStudio;
 static float fl_timeMusicLeft;
@@ -449,7 +449,7 @@ void EV_HLDM_GunshotDecalTrace( pmtrace_t *pTrace, char *decalName, float *vecSr
 }
 
 
-TEMPENTITY *g_DeadPlayerModels[64];
+TEMPENTITY *g_DeadPlayerModels[MAX_PLAYERS];
 
 void EV_RoundReset( event_args_t *args )
 {
@@ -471,7 +471,7 @@ void EV_RoundReset( event_args_t *args )
 		}
 	}
 
-	for( int j = 0; j < 64; j++ )
+	for( int j = 0; j < MAX_PLAYERS; j++ )
 	{
 		if( g_DeadPlayerModels[j] )
 		{
@@ -536,7 +536,7 @@ void CreateCorpse( vec3_t vOrigin, vec3_t vAngles, const char *pModel, float flA
 
 		char j = '\0';
 
-		for( int i = 0; i < 64; i++ )
+		for( int i = 0; i < MAX_PLAYERS; i++ )
 		{
 			if( !g_DeadPlayerModels[i] || pBody == g_DeadPlayerModels[i] )
 			{
@@ -563,7 +563,7 @@ void EV_BasicPuff( pmtrace_t *pTrace, float scale )
 {
 	vec3_t origin, vColor, vVelocity;
 
-	vColor = { 175.0f, 175.0f, 175.0f };
+	vColor = Vector( 175.0f, 175.0f, 175.0f );
 	vVelocity = pTrace->plane.normal;
 
 	for( int i = 0; i < 4; i++ )
@@ -626,7 +626,7 @@ void CreateSpark( vec3_t origin, vec3_t vNormal, const char *szSpriteName )
 	vec3_t angles;
 	CDoDParticle *pCustom;
 
-	vec3_t normal = { 0.0f, 0.0f, 1.0f };
+	vec3_t normal = Vector( 0.0f, 0.0f, 1.0f );
 
 	HSPRITE hSprite = gEngfuncs.pfnSPR_Load( szSpriteName );
 	pSprite = ( model_s * ) gEngfuncs.GetSpritePointer( hSprite );
@@ -641,7 +641,7 @@ void CreateSpark( vec3_t origin, vec3_t vNormal, const char *szSpriteName )
 
 	scale = 2.5f;
 
-	pCustom = pCustom->Create( &origin, &normal, pSprite, scale, 255.0f, "dod_particle", 1 );
+	pCustom = pCustom->Create( origin, normal, pSprite, scale, 255.0f, "dod_particle", 1 );
 
 	if( pCustom )
 	{
@@ -653,9 +653,9 @@ void CreateSpark( vec3_t origin, vec3_t vNormal, const char *szSpriteName )
 		pCustom->m_flSize = scale;
 		pCustom->m_flDieTime = 0.05f;
 		pCustom->m_iRendermode = kRenderTransAdd;
-		pCustom->m_iPFlags = 64; 
-		pCustom->SetLightFlag( 0 );
-		pCustom->SetCullFlag( 1 );
+		pCustom->m_iPFlags = PFLAG_DOD_SPARK_INSTANT;
+		pCustom->SetLightFlag( LIGHT_NONE );
+		pCustom->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 	}
 }
 
@@ -745,12 +745,12 @@ void EV_DirtHit( pmtrace_t *pTrace, float fScale )
 		iNum = gEngfuncs.pfnRandomLong( 2, 3 );
 
 		vec3_t p_org = pTrace->endpos;
-		vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 		float size = fScale * 4.0f;
 
 		for( int i = 0; i < iNum; i++ )
 		{
-			pParticle = pParticle->Create( &p_org, &p_normal, pDirt3, size, 160.0f, "dod_particle", 0 );
+			pParticle = pParticle->Create( p_org, p_normal, pDirt3, size, 160.0f, "dod_particle", 0 );
 
 			if( pParticle )
 			{
@@ -780,12 +780,6 @@ void EV_DirtHit( pmtrace_t *pTrace, float fScale )
 					VectorMA( pParticle->m_vVelocity, flSpreadMultiplier, dir, pParticle->m_vVelocity );
 				}
 
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-
-				pParticle->SetCullFlag( iParticleFlags );
-				pParticle->SetLightFlag( iParticleFlags | LIGHT_NONE );
-
-				pParticle->m_iPFlags = 128;
 				pParticle->m_iRendermode = kRenderTransAdd;
 
 				pParticle->m_vColor.x = 83.0f;
@@ -794,11 +788,15 @@ void EV_DirtHit( pmtrace_t *pTrace, float fScale )
 
 				pParticle->m_flGravity = 0.6f;
 				pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
+
+				pParticle->m_iPFlags = PFLAG_DOD_DIRT_DEBRIS;
+				pParticle->SetLightFlag( LIGHT_NONE );
+				pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
 }
-
 
 void EV_SandHit( pmtrace_t *pTrace, float fScale )
 {
@@ -814,12 +812,12 @@ void EV_SandHit( pmtrace_t *pTrace, float fScale )
 		iNum = gEngfuncs.pfnRandomLong( 2, 3 );
 
 		vec3_t p_org = pTrace->endpos;
-		vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 		float size = fScale * 4.0f;
 
 		for( int i = 0; i < iNum; i++ )
 		{
-			pParticle = pParticle->Create( &p_org, &p_normal, pDirt3, size, 140.0f, "dod_particle", 0 );
+			pParticle = pParticle->Create( p_org, p_normal, pDirt3, size, 140.0f, "dod_particle", 0 );
 
 			if( pParticle )
 			{
@@ -849,12 +847,6 @@ void EV_SandHit( pmtrace_t *pTrace, float fScale )
 					VectorMA( pParticle->m_vVelocity, flSpreadMultiplier, dir, pParticle->m_vVelocity );
 				}
 
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-
-				pParticle->SetCullFlag( iParticleFlags );
-				pParticle->SetLightFlag( iParticleFlags | LIGHT_NONE );
-
-				pParticle->m_iPFlags = 128;
 				pParticle->m_iRendermode = kRenderTransAdd;
 
 				pParticle->m_vColor.x = 185.0f;
@@ -863,6 +855,10 @@ void EV_SandHit( pmtrace_t *pTrace, float fScale )
 
 				pParticle->m_flGravity = 0.6f;
 				pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
+
+				pParticle->m_iPFlags = PFLAG_DOD_DIRT_DEBRIS;
+				pParticle->SetLightFlag( LIGHT_NONE );
+				pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 			}
 		}
 	}
@@ -884,12 +880,12 @@ void EV_GrassHit( pmtrace_t *pTrace, float fScale )
 		if( iNum > 0 )
 		{
 			vec3_t p_org = pTrace->endpos;
-			vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 			float size = fScale * 3.0f;
 
 			for( int i = 0; i != iNum; ++i )
 			{
-				pParticle = pParticle->Create( &p_org, &p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
+				pParticle = pParticle->Create( p_org, p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
 
 				if( pParticle )
 				{
@@ -900,18 +896,15 @@ void EV_GrassHit( pmtrace_t *pTrace, float fScale )
 					pParticle->m_vAVelocity.z = 1000.0f;
 					pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 
-					pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_COLLIDEDAMP );
-
-					int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_WATERTRACE;
-
-					pParticle->SetCullFlag( iParticleFlags );
-					pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-					pParticle->m_iPFlags = 128;
 					pParticle->m_iRendermode = kRenderTransTexture;
 
 					pParticle->m_flGravity = 0.7f;
 					pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
+
+					pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_COLLIDEDAMP );
+					pParticle->SetLightFlag( LIGHT_COLOR );
+					pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+					pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 				}
 			}
 		}
@@ -934,12 +927,12 @@ void EV_WoodChips( pmtrace_t *pTrace, float fScale )
 		if( iNum > 0 )
 		{
 			vec3_t p_org = pTrace->endpos;
-			vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 			float size = fScale * 4.0f;
 
 			for( int i = 0; i < iNum; i++ )
 			{
-				pParticle = pParticle->Create( &p_org, &p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
+				pParticle = pParticle->Create( p_org, p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
 
 				if( pParticle )
 				{
@@ -955,18 +948,15 @@ void EV_WoodChips( pmtrace_t *pTrace, float fScale )
 					pParticle->m_vAVelocity.z = 1000.0f;
 					pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 
-					pParticle->SetCollisionFlags( TRI_WATERTRACE );
-
-					int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_WATERTRACE;
-
-					pParticle->SetCullFlag( iParticleFlags );
-					pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-					pParticle->m_iPFlags = 128;
 					pParticle->m_iRendermode = kRenderTransTexture;
 
 					pParticle->m_flGravity = 0.6f;
 					pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
+
+					pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_COLLIDEDAMP );
+					pParticle->SetLightFlag( LIGHT_COLOR );
+					pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+					pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 				}
 			}
 		}
@@ -992,12 +982,12 @@ void EV_GlassShards( pmtrace_t *pTrace, float fScale )
 		if( iNum > 0 )
 		{
 			vec3_t p_org = pTrace->endpos;
-			vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 			float size = fScale * 2.0f;
 
 			for( int i = 0; i < iNum; i++ )
 			{
-				pParticle = pParticle->Create( &p_org, &p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
+				pParticle = pParticle->Create( p_org, p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
 
 				if( pParticle )
 				{
@@ -1013,18 +1003,14 @@ void EV_GlassShards( pmtrace_t *pTrace, float fScale )
 					pParticle->m_vAVelocity.z = 1000.0f;
 					pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 
-					pParticle->SetCollisionFlags( TRI_WATERTRACE );
-
-					int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_WATERTRACE;
-
-					pParticle->SetCullFlag( iParticleFlags );
-					pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-					pParticle->m_iPFlags = 128;
 					pParticle->m_iRendermode = kRenderTransTexture;
 
 					pParticle->m_flGravity = 0.6f;
 					pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
+
+					pParticle->SetCollisionFlags( TRI_WATERTRACE );
+					pParticle->SetLightFlag( LIGHT_COLOR );
+					pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 				}
 			}
 		}
@@ -1033,10 +1019,12 @@ void EV_GlassShards( pmtrace_t *pTrace, float fScale )
 
 void EV_WaterHit( pmtrace_t *pTrace, float fScale )
 {
-	float fTime = gEngfuncs.GetClientTime();
-	model_t *pRipple;
-	model_t *pSplash;
-	model_t *pSprite;
+	if( !IEngineStudio.IsHardware() )
+		return;
+
+	float fTime = ( float ) gEngfuncs.GetClientTime();
+	model_s *pRipple;
+	model_s *pSplash;
 	CDoDParticle *pParticle;
 
 	HSPRITE hRippleSprite = gEngfuncs.pfnSPR_Load( "sprites/ripple.spr" );
@@ -1044,117 +1032,109 @@ void EV_WaterHit( pmtrace_t *pTrace, float fScale )
 
 	if( pRipple )
 	{
-		vec3_t p_normal = { 90.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 90.0f, 0.0f, 0.0f );
 
 		for( int i = 0; i < 3; i++ )
 		{
 			vec3_t vOrg;
-
-			vOrg.x = pTrace->endpos[0] + gEngfuncs.pfnRandomFloat( -20.0f, 30.0f );
-			vOrg.y = pTrace->endpos[1] + gEngfuncs.pfnRandomFloat( -20.0f, 30.0f );
+			vOrg.x = pTrace->endpos[0] + gEngfuncs.pfnRandomFloat( -10.0f, 15.0f );
+			vOrg.y = pTrace->endpos[1] + gEngfuncs.pfnRandomFloat( -10.0f, 15.0f );
 			vOrg.z = pTrace->endpos[2];
 
-			pParticle = pParticle->Create( &vOrg, &p_normal, pRipple, 30.0f, 150.0f, "dod_particle", 0 );
+			pParticle = pParticle->Create( vOrg, p_normal, pRipple, 30.0f, 150.0f, "dod_particle", 0 );
 
 			if( pParticle )
 			{
-				pParticle->m_iPFlags = 64;
 				pParticle->m_iRendermode = kRenderTransAdd;
-
 				pParticle->m_flScaleSpeed = 2.0f;
 				pParticle->m_flFadeSpeed = 4.0f;
 				pParticle->m_flDieTime = fTime + 2.0f;
+				pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
 
-				pParticle->m_vColor.x = 255.0f;
-				pParticle->m_vColor.y = 255.0f;
-				pParticle->m_vColor.z = 255.0f;
+				pParticle->m_iPFlags = PFLAG_DOD_SPARK_INSTANT;
 
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-				pParticle->SetCullFlag( iParticleFlags );
-				pParticle->SetLightFlag( iParticleFlags );
+				pParticle->SetLightFlag( LIGHT_NONE );
+				pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 			}
 		}
 	}
 
-	HSPRITE hSplashSprite = gEngfuncs.pfnSPR_Load( "sprites/bazookapuff.spr" );
+	HSPRITE hSplashSprite = gEngfuncs.pfnSPR_Load( "sprites/effects/adrian/water_big.spr" );
 	pSplash = ( model_s * ) gEngfuncs.GetSpritePointer( hSplashSprite );
+
+	if( !pSplash )
+	{
+		hSplashSprite = gEngfuncs.pfnSPR_Load( "sprites/bazookapuff.spr" );
+		pSplash = ( model_s * ) gEngfuncs.GetSpritePointer( hSplashSprite );
+	}
 
 	if( pSplash )
 	{
-		vec3_t p_normal = { 90.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 90.0f, 0.0f, 0.0f );
 
 		for( int j = 0; j < 3; j++ )
 		{
 			vec3_t vStart;
-
 			vStart.x = pTrace->endpos[0];
 			vStart.y = pTrace->endpos[1];
 			vStart.z = pTrace->endpos[2] + ( ( float ) j * 5.0f );
 
-			pParticle = pParticle->Create( &vStart, &p_normal, pSplash, 40.0f, 80.0f, "dod_particle", 0 );
+			pParticle = pParticle->Create( vStart, p_normal, pSplash, 40.0f, 80.0f, "dod_particle", 0 );
 
 			if( pParticle )
 			{
-				pParticle->m_vVelocity.x = gEngfuncs.pfnRandomFloat( -50.0f, 70.0f );
-				pParticle->m_vVelocity.y = gEngfuncs.pfnRandomFloat( -50.0f, 70.0f );
-				pParticle->m_vVelocity.z = gEngfuncs.pfnRandomFloat( 100.0f, 140.0f );
+				pParticle->m_vVelocity.x = gEngfuncs.pfnRandomFloat( -40.0f, 50.0f );
+				pParticle->m_vVelocity.y = gEngfuncs.pfnRandomFloat( -40.0f, 50.0f );
+				pParticle->m_vVelocity.z = gEngfuncs.pfnRandomFloat( 60.0f, 80.0f );
 
 				pParticle->m_vAVelocity.z = gEngfuncs.pfnRandomFloat( -2.0f, 2.0f );
-
-				pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_ANIMATEDIE | TRI_COLLIDEDAMP | TRI_COLLIDESLIDE 
-					| TRI_COLLIDEBREAK );
-
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-				pParticle->SetCullFlag( iParticleFlags );
-				pParticle->SetLightFlag( iParticleFlags );
 
 				pParticle->m_iRendermode = kRenderTransAdd;
 				pParticle->m_flMass = 1.0f;
 				pParticle->m_flGravity = 0.4f;
-
-				pParticle->m_vColor.x = 255.0f;
-				pParticle->m_vColor.y = 255.0f;
-				pParticle->m_vColor.z = 255.0f;
-
+				pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
 				pParticle->m_flDieTime = fTime + 1.0f;
+
+				pParticle->SetCollisionFlags( TRI_COLLIDESLIDE | TRI_COLLIDEDAMP | TRI_COLLIDEKILL_ANIM | TRI_WATERTRACE );
+				pParticle->SetLightFlag( LIGHT_NONE );
+				pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
 
-	HSPRITE hBubbleSprite = gEngfuncs.pfnSPR_Load( "sprites/bubble.spr" );
-	pSprite = ( model_s * ) gEngfuncs.GetSpritePointer( hBubbleSprite );
+	HSPRITE hSubSplashSprite = gEngfuncs.pfnSPR_Load( "sprites/wsplash3.spr" );
+	model_s *pSubSplash = ( model_s * ) gEngfuncs.GetSpritePointer( hSubSplashSprite );
 
-	if( pSprite )
+	if( pSubSplash )
 	{
-		vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
-		float flScale = 20.0f;
+		vec3_t p_normal = Vector( 90.0f, 0.0f, 0.0f );
 
 		for( int k = 0; k < 3; k++ )
 		{
-			vec3_t vStart = pTrace->endpos;
+			vec3_t vStart;
+			vStart.x = pTrace->endpos[0] + gEngfuncs.pfnRandomFloat( -5.0f, 5.0f );
+			vStart.y = pTrace->endpos[1] + gEngfuncs.pfnRandomFloat( -5.0f, 5.0f );
+			vStart.z = pTrace->endpos[2];
 
-			pParticle = pParticle->Create( &vStart, &p_normal, pSprite, flScale, 100.0f, "dod_particle", 0 );
+			pParticle = pParticle->Create( vStart, p_normal, pSubSplash, 8.0f, 200.0f, "dod_particle", 0 );
 
 			if( pParticle )
 			{
-				pParticle->m_vVelocity.x = gEngfuncs.pfnRandomFloat( -20.0f, 20.0f );
-				pParticle->m_vVelocity.y = gEngfuncs.pfnRandomFloat( -20.0f, 20.0f );
-				pParticle->m_vVelocity.z = gEngfuncs.pfnRandomFloat( 30.0f, 60.0f );
-
-				pParticle->SetCollisionFlags( TRI_WATERTRACE );
-
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_ANIMATEDIE;
-				pParticle->SetCullFlag( iParticleFlags );
-				pParticle->SetLightFlag( iParticleFlags );
+				pParticle->m_vVelocity.x = gEngfuncs.pfnRandomFloat( -80.0f, 80.0f );
+				pParticle->m_vVelocity.y = gEngfuncs.pfnRandomFloat( -80.0f, 80.0f );
+				pParticle->m_vVelocity.z = gEngfuncs.pfnRandomFloat( 100.0f, 150.0f );
 
 				pParticle->m_iRendermode = kRenderTransAdd;
-				pParticle->m_flGravity = -0.1f;
+				pParticle->m_flMass = 1.0f;
+				pParticle->m_flGravity = 0.8f;
+				pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
+				pParticle->m_flDieTime = fTime + 0.5f;
 
-				pParticle->m_vColor.x = 255.0f;
-				pParticle->m_vColor.y = 255.0f;
-				pParticle->m_vColor.z = 255.0f;
-
-				pParticle->m_flDieTime = fTime + 1.5f;
+				pParticle->SetCollisionFlags( TRI_COLLIDESLIDE | TRI_COLLIDEDAMP | TRI_COLLIDEKILL_ANIM | TRI_WATERTRACE );
+				pParticle->SetLightFlag( LIGHT_NONE );
+				pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
@@ -1180,7 +1160,7 @@ void EV_LeavesHit( pmtrace_t *pTrace, float fScale )
 	if( pLeaf1 && pFoliage && pLeaf2 )
 	{
 		vec3_t p_org = pTrace->endpos;
-		vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 
 		iNum = gEngfuncs.pfnRandomLong( 2, 3 );
 
@@ -1190,7 +1170,7 @@ void EV_LeavesHit( pmtrace_t *pTrace, float fScale )
 
 			for( int i = 0; i < iNum; i++ )
 			{
-				pParticle = pParticle->Create( &p_org, &p_normal, pFoliage, size, 255.0f, "dod_particle", 0 );
+				pParticle = pParticle->Create( p_org, p_normal, pFoliage, size, 255.0f, "dod_particle", 0 );
 
 				if( pParticle )
 				{
@@ -1206,18 +1186,15 @@ void EV_LeavesHit( pmtrace_t *pTrace, float fScale )
 					pParticle->m_vAVelocity.z = 1000.0f;
 					pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 
-					pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_WIND );
-
-					int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_WATERTRACE;
-					pParticle->SetCullFlag( iParticleFlags );
-					pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-					pParticle->m_iPFlags = 64;
 					pParticle->m_iRendermode = kRenderTransTexture;
 
 					pParticle->m_flGravity = 0.2f;
 					pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
 					pParticle->m_flDampingTime = gEngfuncs.GetClientTime() + 0.1f;
+
+					pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_WIND );
+					pParticle->SetLightFlag( LIGHT_COLOR );
+					pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 
 					pParticle->AddGlobalWind();
 				}
@@ -1234,7 +1211,7 @@ void EV_LeavesHit( pmtrace_t *pTrace, float fScale )
 			{
 				model_t *pModel = ( gEngfuncs.pfnRandomLong( 0, 1 ) == 0 ) ? pLeaf1 : pLeaf2;
 
-				pParticle = pParticle->Create( &p_org, &p_normal, pModel, size, 255.0f, "dod_particle", 0 );
+				pParticle = pParticle->Create( p_org, p_normal, pModel, size, 255.0f, "dod_particle", 0 );
 
 				if( pParticle )
 				{
@@ -1255,18 +1232,17 @@ void EV_LeavesHit( pmtrace_t *pTrace, float fScale )
 					pParticle->m_vAngles.y = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 					pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 
-					pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_WIND );
-
-					int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_WATERTRACE;
-					pParticle->SetCullFlag( iParticleFlags );
-					pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-					pParticle->m_iPFlags = 64;
 					pParticle->m_iRendermode = kRenderTransTexture;
 
 					pParticle->m_flGravity = 0.2f;
 					pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
 					pParticle->m_flDampingTime = gEngfuncs.GetClientTime() + 0.1f;
+
+					pParticle->m_iPFlags = PFLAG_DOD_SPARK_INSTANT;
+
+					pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_WIND );
+					pParticle->SetLightFlag( LIGHT_COLOR );
+					pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 
 					pParticle->AddGlobalWind();
 				}
@@ -1286,12 +1262,12 @@ void EV_SnowHit( pmtrace_t *pTrace, float fScale )
 	if( pSplash )
 	{
 		vec3_t p_org = pTrace->endpos;
-		vec3_t p_normal = { 90.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 90.0f, 0.0f, 0.0f );
 		float size = 10.0f * fScale;
 
 		for( int i = 0; i < 5; i++ )
 		{
-			pParticle = pParticle->Create( &p_org, &p_normal, pSplash, size, 140.0f, "dod_particle", 0 );
+			pParticle = pParticle->Create( p_org, p_normal, pSplash, size, 140.0f, "dod_particle", 0 );
 
 			if( pParticle )
 			{
@@ -1301,22 +1277,18 @@ void EV_SnowHit( pmtrace_t *pTrace, float fScale )
 
 				pParticle->m_vAVelocity.z = gEngfuncs.pfnRandomFloat( -6.0f, 5.0f );
 
-				pParticle->SetCollisionFlags( TRI_WATERTRACE | TRI_ANIMATEDIE | TRI_COLLIDEDAMP | TRI_COLLIDESLIDE | TRI_COLLIDEBREAK );
-
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_WATERTRACE;
-				pParticle->SetCullFlag( iParticleFlags );
-				pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-				pParticle->m_iPFlags = 128;
 				pParticle->m_iRendermode = kRenderTransAdd;
 				pParticle->m_flMass = 1.0f;
 				pParticle->m_flGravity = 0.4f;
 
-				pParticle->m_vColor.x = 255.0f;
-				pParticle->m_vColor.y = 255.0f;
-				pParticle->m_vColor.z = 255.0f;
+				pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
 
 				pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 1.0f;
+
+				pParticle->SetCollisionFlags( TRI_COLLIDESLIDE | TRI_COLLIDEDAMP | TRI_COLLIDEKILL_ANIM | TRI_WATERTRACE );
+				pParticle->SetLightFlag( LIGHT_COLOR );
+				pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
@@ -1338,12 +1310,12 @@ void EV_TileHit( pmtrace_t *pTrace, float fScale )
 		if( iNum > 0 )
 		{
 			vec3_t p_org = pTrace->endpos;
-			vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 			float size = fScale * 1.5f;
 
 			for( int i = 0; i < iNum; i++ )
 			{
-				pParticle = pParticle->Create( &p_org, &p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
+				pParticle = pParticle->Create( p_org, p_normal, pSprite, size, 255.0f, "dod_particle", 0 );
 
 				if( pParticle )
 				{
@@ -1359,18 +1331,15 @@ void EV_TileHit( pmtrace_t *pTrace, float fScale )
 					pParticle->m_vAVelocity.z = 1000.0f;
 					pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 
-					pParticle->SetCollisionFlags( TRI_WATERTRACE );
-
-					int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_WATERTRACE;
-
-					pParticle->SetCullFlag( iParticleFlags );
-					pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-					pParticle->m_iPFlags = 128;
 					pParticle->m_iRendermode = kRenderTransTexture;
 
 					pParticle->m_flGravity = 0.6f;
 					pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
+
+					pParticle->SetCollisionFlags( TRI_WATERTRACE );
+					pParticle->SetLightFlag( LIGHT_COLOR );
+					pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+					pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 				}
 			}
 		}
@@ -2141,11 +2110,6 @@ void EV_Fire30CAL( event_args_t *args )
 //======================
 void EV_FireGarand( event_args_t *args )
 {
-	// test link
-	gEngfuncs.Con_Printf( ">>> READY idx: %d, iparam1: %d\n", args->entindex, args->iparam1 );
-	gEngfuncs.pEventAPI->EV_PlaySound( args->entindex, args->origin, CHAN_STATIC, "common/wpn_hudon.wav", 1.0f, ATTN_NORM, 0, 100 );
-	// end
-
 	int idx = args->entindex;
 	int empty = args->bparam1;
 	float flSpread_x = args->fparam1;
@@ -2184,7 +2148,7 @@ void EV_FireGarand( event_args_t *args )
 			gEngfuncs.pEventAPI->EV_WeaponAnimation( iAnimIndex, EV_GetWeaponBody() );
 			gHUD.DoRecoil( WEAPON_GARAND );
 		}
-
+		
 		EV_MuzzleFlash( idx, RIFLE );
 
 		gEngfuncs.pEventAPI->EV_PlaySound( idx, origin, CHAN_WEAPON, "weapons/garand_shoot.wav", 
@@ -3330,18 +3294,12 @@ void P_ExplosionFlash( event_args_t *args )
 
 		org.z += 16.0f;
 
-		vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 
-		pParticle = pParticle->Create( &org, &p_normal, pSprite, 100.0f, 234.0f, "dod_particle", 0 );
+		pParticle = pParticle->Create( org, p_normal, pSprite, 100.0f, 234.0f, "dod_particle", 0 );
 
 		if( pParticle )
 		{
-			pParticle->SetCollisionFlags( ( 1 << 13 ) | TRI_COLLIDEDAMP | TRI_COLLIDESLIDE );
-
-			int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-			pParticle->SetCullFlag( iParticleFlags );
-			pParticle->SetLightFlag( iParticleFlags );
-
 			pParticle->m_iPFlags = 0;
 			pParticle->m_iRendermode = kRenderTransAdd;
 			pParticle->m_iFrame = 0;
@@ -3349,6 +3307,11 @@ void P_ExplosionFlash( event_args_t *args )
 			pParticle->m_flScaleSpeed = 2.0f;
 
 			pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 2.0f;
+
+			pParticle->SetCollisionFlags( TRI_COLLIDESLIDE | TRI_COLLIDEDAMP | TRI_COLLIDEKILL_ANIM );
+			pParticle->SetLightFlag( LIGHT_NONE );
+			pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+			pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 		}
 	}
 	else
@@ -3452,7 +3415,7 @@ void EV_WaterExplosion( event_args_t *args )
 	CDoDDirtExploDust *pSmoke;
 	CDoDParticle *pParticle;
 
-	vec3_t vNormal = { 0.0f, 0.0f, 1.0f };
+	vec3_t vNormal = Vector( 0.0f, 0.0f, 1.0f );
 	vec3_t vAngles, vForward, vRight, vUp;
 
 	VectorCopy( args->origin, vOrigin );
@@ -3479,23 +3442,19 @@ void EV_WaterExplosion( event_args_t *args )
 
 		if( pSprite )
 		{
-			vec3_t p_normal = { 0.0f, 0.0f, 1.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 1.0f );
 
 			vStart.x = flRandX + vOrigin.x;
 			vStart.y = flRandY + vOrigin.y;
 			vStart.z = flHeight + flWaterSurfaceZ;
 
-			pSmoke = pSmoke->Create( &vStart, &p_normal, pSprite, flScale, 255.0f, "dod_dirtexplo" );
+			pSmoke = pSmoke->Create( vStart, p_normal, pSprite, flScale, 255.0f, "dod_dirtexplo" );
 
 			if( pSmoke )
 			{
 				pSmoke->m_iRendermode = kRenderTransTexture;
 				pSmoke->m_flGravity = 0.2f;
 				pSmoke->m_flSize = flScale;
-
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-				pSmoke->SetCullFlag( iParticleFlags );
-				pSmoke->SetLightFlag( iParticleFlags );
 
 				pSmoke->m_vAVelocity.x = 0.0f;
 				pSmoke->m_vAVelocity.y = 0.0f;
@@ -3506,9 +3465,7 @@ void EV_WaterExplosion( event_args_t *args )
 				pSmoke->m_iFrame = gEngfuncs.pfnRandomFloat( 0.0f, 3.0f );
 				pSmoke->m_flScaleSpeed = gEngfuncs.pfnRandomFloat( 2.5f, 3.5f );
 
-				pSmoke->m_vColor.x = 200.0f;
-				pSmoke->m_vColor.y = 200.0f;
-				pSmoke->m_vColor.z = 225.0f;
+				pSmoke->m_vColor = Vector( 200.0f, 200.0f, 225.0f );
 
 				float flSpreadUp = gEngfuncs.pfnRandomFloat( 25.0f, 45.0f );
 				float flSpeedUp = gEngfuncs.pfnRandomFloat( -1.0f, 1.0f ) * flSpreadUp;
@@ -3525,6 +3482,10 @@ void EV_WaterExplosion( event_args_t *args )
 				pSmoke->m_bFire = false;
 				pSmoke->m_flFadeSpeed = -1.0f;
 				pSmoke->m_flActivateTime = gEngfuncs.pfnRandomFloat( 0.07f, 0.11f );
+
+				pSmoke->SetLightFlag( LIGHT_NONE );
+				pSmoke->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pSmoke->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
@@ -3534,25 +3495,19 @@ void EV_WaterExplosion( event_args_t *args )
 
 	flScale = gEngfuncs.pfnRandomFloat( 400.0f, 550.0f );
 
-	vec3_t p_normal = { 90.0f, 0.0f, 0.0f };
+	vec3_t p_normal = Vector( 90.0f, 0.0f, 0.0f );
 
 	vStart.x = vOrigin.x;
 	vStart.y = vOrigin.y;
 	vStart.z = ( 0.5f * flScale ) - 10.0f + flWaterSurfaceZ;
 
-	pParticle = pParticle->Create( &vStart, &p_normal, pSprite, flScale, 255.0f, "dod_particle", 0 );
+	pParticle = pParticle->Create( vStart, p_normal, pSprite, flScale, 255.0f, "dod_particle", 0 );
 
 	if( pParticle )
 	{
 		pParticle->m_iRendermode = kRenderTransAdd;
 
-		int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-		pParticle->SetCullFlag( iParticleFlags );
-		pParticle->SetLightFlag( iParticleFlags | LIGHT_COLOR );
-
-		pParticle->m_vColor.x = 255.0f;
-		pParticle->m_vColor.y = 255.0f;
-		pParticle->m_vColor.z = 255.0f;
+		pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
 
 		pParticle->m_flGravity = 0.5f;
 		pParticle->m_flFadeSpeed = 10.0f;
@@ -3561,6 +3516,9 @@ void EV_WaterExplosion( event_args_t *args )
 		pParticle->m_vVelocity.x = 0.0f;
 		pParticle->m_vVelocity.y = 0.0f;
 		pParticle->m_vVelocity.z = gEngfuncs.pfnRandomFloat( 400.0f, 500.0f );
+
+		pParticle->SetLightFlag( LIGHT_NONE );
+		pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 	}
 }
 
@@ -3594,7 +3552,7 @@ void EV_DirtTrailCallback( tempent_s *ent, float frametime, float currenttime )
 		float flRandY = gEngfuncs.pfnRandomFloat( -60.0f, 60.0f );
 		float flRandZ = gEngfuncs.pfnRandomFloat( -60.0f, 60.0f );
 
-		vec3_t vecBaseOrigin = { ent->entity.baseline.origin[0], ent->entity.baseline.origin[1], ent->entity.baseline.origin[2] };
+		vec3_t vecBaseOrigin = Vector( ent->entity.baseline.origin[0], ent->entity.baseline.origin[1], ent->entity.baseline.origin[2] );
 		flSpeed = vecBaseOrigin.Length() * 0.9f;
 
 		vecBaseOrigin.Normalize();
@@ -3604,40 +3562,37 @@ void EV_DirtTrailCallback( tempent_s *ent, float frametime, float currenttime )
 
 		if( pSprite )
 		{
-			vec3_t p_normal = { 0.0f, 0.0f, 1.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 1.0f );
 			vec3_t p_org;
 
 			p_org.x = vOrigin.x + flRandX;
 			p_org.y = vOrigin.y + flRandY;
 			p_org.z = vOrigin.z + flRandZ;
 
-			pSmoke = pSmoke->Create( &p_org, &p_normal, pSprite, flScale, 135.0f, "dod_trailsmoke" );
+			pSmoke = pSmoke->Create( p_org, p_normal, pSprite, flScale, 135.0f, "dod_trailsmoke" );
 
 			if( pSmoke )
 			{
 				pSmoke->m_flGravity = gEngfuncs.pfnRandomFloat( 0.15f, 0.25f );
 				pSmoke->m_flSize = flScale;
 
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-				pSmoke->SetCullFlag( iParticleFlags );
-				pSmoke->SetLightFlag( iParticleFlags );
-
-				pSmoke->SetCollisionFlags( TRI_WATERTRACE | TRI_COLLIDEDAMP );
-
 				pSmoke->m_iRendermode = kRenderTransTexture;
 				pSmoke->m_flDieTime = gEngfuncs.GetClientTime() + 8.0f;
 				pSmoke->m_iFrame = gEngfuncs.pfnRandomFloat( 4.0f, 8.0f );
 				pSmoke->m_bRocketTrail = false;
 
-				pSmoke->m_vColor.x = 155.0f;
-				pSmoke->m_vColor.y = 155.0f;
-				pSmoke->m_vColor.z = 140.0f;
+				pSmoke->m_vColor = Vector( 155.0f, 155.0f, 140.0f );
 
 				pSmoke->m_vAVelocity.x = 0.0f;
 				pSmoke->m_vAVelocity.y = 0.0f;
 				pSmoke->m_vAVelocity.z = gEngfuncs.pfnRandomFloat( -4.0f, 5.0f );
 
 				pSmoke->m_flMass = gEngfuncs.pfnRandomFloat( 2.0f, 3.0f );
+
+				pSmoke->SetCollisionFlags( TRI_COLLIDEKILL | TRI_WATERTRACE );
+				pSmoke->SetLightFlag( LIGHT_NONE );
+				pSmoke->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pSmoke->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
@@ -3705,26 +3660,20 @@ void EV_DirtExplosion( event_args_t *args )
 
 		if( pSprite )
 		{
-			vec3_t p_normal = { 0.0f, 0.0f, 1.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 1.0f );
 			vec3_t p_org;
 
 			p_org.x = flRandX + vOrigin.x;
 			p_org.y = flRandX + vOrigin.y;
 			p_org.z = flHeight + vOrigin.z;
 
-			pSmoke = pSmoke->Create( &p_org, &p_normal, pSprite, flScale, 225.0f, "dod_dirtexplo" );
+			pSmoke = pSmoke->Create( p_org, p_normal, pSprite, flScale, 225.0f, "dod_dirtexplo" );
 
 			if( pSmoke )
 			{
 				pSmoke->m_iRendermode = kRenderTransTexture;
 				pSmoke->m_flGravity = 0.25f;
 				pSmoke->m_flSize = flScale;
-
-				pSmoke->SetCollisionFlags( TRI_WATERTRACE | TRI_COLLIDEDAMP );
-
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-				pSmoke->SetCullFlag( iParticleFlags );
-				pSmoke->SetLightFlag( iParticleFlags );
 
 				pSmoke->m_vAVelocity.x = 0.0f;
 				pSmoke->m_vAVelocity.y = 0.0f;
@@ -3735,9 +3684,7 @@ void EV_DirtExplosion( event_args_t *args )
 				pSmoke->m_flDieTime = gEngfuncs.GetClientTime() + 10.0f;
 				pSmoke->m_flScaleSpeed = gEngfuncs.pfnRandomFloat( 0.0f, 3.0f );
 
-				pSmoke->m_vColor.x = 155.0f;
-				pSmoke->m_vColor.y = 155.0f;
-				pSmoke->m_vColor.z = 140.0f;
+				pSmoke->m_vColor = Vector( 155.0f, 155.0f, 140.0f );
 
 				float flSpreadUp = gEngfuncs.pfnRandomFloat( 25.0f, 45.0f );
 				float flSpeedUp = gEngfuncs.pfnRandomFloat( -1.0f, 1.0f ) * flSpreadUp;
@@ -3753,6 +3700,11 @@ void EV_DirtExplosion( event_args_t *args )
 				pSmoke->m_bFire = false;
 				pSmoke->m_flFadeSpeed = -1.0f;
 				pSmoke->m_flActivateTime = gEngfuncs.pfnRandomFloat( 0.06f, 0.12f );
+
+				pSmoke->SetCollisionFlags( TRI_COLLIDEDAMP | TRI_WATERTRACE );
+				pSmoke->SetLightFlag( LIGHT_NONE );
+				pSmoke->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pSmoke->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
@@ -3762,26 +3714,23 @@ void EV_DirtExplosion( event_args_t *args )
 
 	flScale = gEngfuncs.pfnRandomFloat( 100.0f, 150.0f );
 
-	vec3_t p_normal = { 90.0f, 0.0f, 0.0f };
+	vec3_t p_normal = Vector( 90.0f, 0.0f, 0.0f );
 
-	pParticle = pParticle->Create( &vStart, &p_normal, pSprite, flScale, 255.0f, "dod_particle", 0 );
+	pParticle = pParticle->Create( vStart, p_normal, pSprite, flScale, 255.0f, "dod_particle", 0 );
 
 	if( pParticle )
 	{
 		pParticle->m_iRendermode = kRenderTransTexture;
 
-		int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-		pParticle->SetCullFlag( iParticleFlags );
-		pParticle->SetLightFlag( iParticleFlags );
-
-		pParticle->m_vColor.x = 255.0f;
-		pParticle->m_vColor.y = 255.0f;
-		pParticle->m_vColor.z = 200.0f;
+		pParticle->m_vColor = Vector( 255.0f, 255.0f, 200.0f );
 
 		pParticle->m_flGravity = 0.0f;
 		pParticle->m_flFadeSpeed = 36.0f;
 		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 0.1f;
 		pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 500.0f );
+
+		pParticle->SetLightFlag( LIGHT_NONE );
+		pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 
 		P_Rubble( args );
 
@@ -3979,7 +3928,7 @@ void EV_Smoke( event_args_t *args )
 	vec3_t vOrigin;
 	vec3_t vPOrigin;
 
-	vec3_t vAnglesDummy = { 0.0f, 90.0f, 0.0f };
+	vec3_t vAnglesDummy = Vector( 0.0f, 90.0f, 0.0f );
 	vec3_t vForwardDummy, vRightDummy, vUpDummy;
 
 	AngleVectors( vAnglesDummy, vForwardDummy, vRightDummy, vUpDummy );
@@ -4296,7 +4245,7 @@ void P_Rubble( event_args_t *args )
 
 	VectorCopy( args->origin, vOrigin );
 
-	vec3_t vNormal = { 0.0f, 0.0f, 1.0f };
+	vec3_t vNormal = Vector( 0.0f, 0.0f, 1.0f );
 	ammount = gEngfuncs.pfnRandomLong( 32, 42 );
 
 	if( ammount >= 0 )
@@ -4344,7 +4293,7 @@ void P_ExplosionSmoke( event_args_t *args )
 {
 	vec3_t vPOrigin;
 
-	vec3_t vAngles = { 0.0f, 270.0f, 0.0f };
+	vec3_t vAngles = Vector( 0.0f, 270.0f, 0.0f );
 	vec3_t vForward, vRight, vUp;
 
 	gEngfuncs.pfnAngleVectors( vAngles, vForward, vRight, vUp );
@@ -4427,7 +4376,7 @@ void CreateFlyingRubble( vec3_t origin, bool bLargeRubble, float vVelocityx, flo
 		return;
 	}
 
-	pParticle = pParticle->Create( &origin, &vNormal, pSprite, fSize, 190.0f, "dod_particle", 1 );
+	pParticle = pParticle->Create( origin, vNormal, pSprite, fSize, 190.0f, "dod_particle", 1 );
 
 	if( pParticle )
 	{
@@ -4439,18 +4388,20 @@ void CreateFlyingRubble( vec3_t origin, bool bLargeRubble, float vVelocityx, flo
 
 		pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 
-		pParticle->SetCollisionFlags( 0x33020u );
-		pParticle->SetLightFlag( 0 );
-		pParticle->SetCullFlag( 1 );
-
 		pParticle->m_iRendermode = kRenderTransTexture;
 		pParticle->m_flScaleSpeed = 0.0f;
 		pParticle->m_flDampingTime = 0.0f;
 		pParticle->m_iFrame = 0;
 		pParticle->m_flMass = 1.0f;
 		pParticle->m_flGravity = 0.5f;
-		pParticle->m_iPFlags = 5120;
 		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 7.0f;
+
+		pParticle->m_iPFlags = PFLAG_DOD_SHRINK_DIE | PFLAG_DOD_WATER_RIPPLE;
+
+		pParticle->SetCollisionFlags( TRI_COLLIDESLIDE | TRI_COLLIDEKILL_ANIM | TRI_WATERTRACE );
+		pParticle->SetLightFlag( LIGHT_INTENSITY );
+		pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+		pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 	}
 }
 
@@ -4509,26 +4460,20 @@ void EV_RocketTrailCallback( tempent_s *ent, float frametime, float currenttime 
 
 		if( pSprite )
 		{
-			vec3_t p_normal = { 0.0f, 0.0f, 1.0f };
+			vec3_t p_normal = Vector( 0.0f, 0.0f, 1.0f );
 			vec3_t p_org;
 
 			p_org.x = vOrigin.x + flRandX;
 			p_org.y = vOrigin.y + flRandY;
 			p_org.z = vOrigin.z + flRandZ;
 
-			pSmoke = pSmoke->Create( &p_org, &p_normal, pSprite, flScale, 200.0f, "dod_trailsmoke" );
+			pSmoke = pSmoke->Create( p_org, p_normal, pSprite, flScale, 200.0f, "dod_trailsmoke" );
 
 			if( pSmoke )
 			{
 				pSmoke->m_flGravity = -0.01f;
 				pSmoke->m_iRendermode = kRenderTransTexture;
 				pSmoke->m_flSize = flScale;
-
-				pSmoke->SetCollisionFlags( TRI_WATERTRACE );
-
-				int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-				pSmoke->SetCullFlag( iParticleFlags );
-				pSmoke->SetLightFlag( iParticleFlags );
 
 				pSmoke->m_vAVelocity.x = 0.0f;
 				pSmoke->m_vAVelocity.y = 0.0f;
@@ -4547,6 +4492,11 @@ void EV_RocketTrailCallback( tempent_s *ent, float frametime, float currenttime 
 				pSmoke->m_flFadeSpeed = -1.0f;
 
 				VectorCopy( vVelocity, pSmoke->m_vVelocity );
+
+				pSmoke->SetCollisionFlags( TRI_WATERTRACE );
+				pSmoke->SetLightFlag( LIGHT_NONE );
+				pSmoke->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+				pSmoke->SetRenderFlag( RENDER_FACEPLAYER );
 			}
 		}
 	}
@@ -4639,7 +4589,6 @@ void EV_MortarShell( event_args_t *args )
 	}
 }
 
-
 void EV_OverheatCallback( tempent_s *ent, float frametime, float currenttime )
 {
 	model_s *pSprite;
@@ -4729,10 +4678,10 @@ void EV_OverheatCallback( tempent_s *ent, float frametime, float currenttime )
 
 	if( pSprite )
 	{
-		vec3_t p_normal = { 90.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 90.0f, 0.0f, 0.0f );
 
 		CDoDParticle *pFactory = NULL;
-		pParticle = pFactory->Create( &p_org, &p_normal, pSprite, flScale, 180.0f, "dod_particle", 0 );
+		pParticle = pFactory->Create( p_org, p_normal, pSprite, flScale, 180.0f, "dod_particle", 0 );
 
 		if( pParticle )
 		{
@@ -4740,18 +4689,12 @@ void EV_OverheatCallback( tempent_s *ent, float frametime, float currenttime )
 
 			pDoDParticle->m_iRendermode = kRenderTransTexture;
 
-			int iParticleFlags = TRI_COLLIDEBRUSHENTS | TRI_SPIRAL | TRI_ANIMATEDIE;
-			pDoDParticle->SetCullFlag( iParticleFlags );
-			pDoDParticle->SetLightFlag( iParticleFlags );
-
 			pDoDParticle->m_flGravity = -0.015f;
 			pDoDParticle->m_flFadeSpeed = 2.0f;
 			pDoDParticle->m_flScaleSpeed = 1.0f;
 			pDoDParticle->m_flDieTime = gEngfuncs.GetClientTime() + 10.0f;
 
-			pDoDParticle->m_vColor.x = 255.0f;
-			pDoDParticle->m_vColor.y = 255.0f;
-			pDoDParticle->m_vColor.z = 255.0f;
+			pDoDParticle->m_vColor = vec3_t( 255.0f, 255.0f, 255.0f );
 
 			pDoDParticle->m_vAVelocity.x = 0.0f;
 			pDoDParticle->m_vAVelocity.y = 0.0f;
@@ -4761,6 +4704,10 @@ void EV_OverheatCallback( tempent_s *ent, float frametime, float currenttime )
 			pDoDParticle->m_flFadeSpeed = -1.0f;
 
 			VectorCopy( vVelocity, pDoDParticle->m_vVelocity );
+
+			pParticle->SetLightFlag( LIGHT_NONE );
+			pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
+			pParticle->SetRenderFlag( RENDER_FACEPLAYER );
 
 			CDoDRocketTrail *pRocketTrail = ( CDoDRocketTrail * ) pParticle;
 			pRocketTrail->m_bRocketTrail = true;

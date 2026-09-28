@@ -37,12 +37,6 @@ extern "C"
 {
 	int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *modelname );
 	void DLLEXPORT HUD_CreateEntities( void );
-	void DLLEXPORT Event_EjectBrassP( const struct cl_entity_s *entity, int shelltype );
-	void DLLEXPORT Event_EjectBrassV( const struct cl_entity_s *entity, int shelltype );
-	void DLLEXPORT Event_MuzzleFlash( const struct cl_entity_s *entity, int options );
-	void DLLEXPORT Event_MuzzleSmoke( const struct cl_entity_s *entity, int options );
-	void DLLEXPORT Event_BazookaSmoke( const struct cl_entity_s *entity );
-	void DLLEXPORT Event_PIATSmoke( const struct cl_entity_s *entity );
 	void DLLEXPORT HUD_StudioEvent( const struct mstudioevent_s *event, const struct cl_entity_s *entity );
 	void DLLEXPORT HUD_TxferLocalOverrides( struct entity_state_s *state, const struct clientdata_s *client );
 	void DLLEXPORT HUD_ProcessPlayerState( struct entity_state_s *dst, const struct entity_state_s *src );
@@ -118,13 +112,22 @@ int DLLEXPORT HUD_AddEntity(int type, struct cl_entity_s *ent, const char *model
 				char file[76];
 				char sz[128];
 
-				strncpy( file, c, sizeof( file ) - 5 );
-				file[sizeof( file ) - 5] = '\0';
+				snprintf( file, sizeof( file ), "%s", c );
+				char *dot = strchr( file, '.' );
+
+				if( dot ) 
+					*dot = '\0';
 
 				strcat( file, ".spr" );
 				sprintf( sz, "sprites/%s", file );
 
-				gHUD.m_Spectator.m_hsprCustom = gEngfuncs.pfnSPR_Load( sz );
+				HSPRITE hLoadedCustom = gEngfuncs.pfnSPR_Load( sz );
+
+				if( hLoadedCustom != 0 )
+					gHUD.m_Spectator.m_hsprCustom = hLoadedCustom;
+				else
+					gHUD.m_Spectator.m_hsprCustom = gHUD.m_Spectator.m_hsprCamera;
+
 				gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprCustom, ent, gEngfuncs.GetClientTime() - 1.0 );
 			}
 		}
@@ -360,7 +363,7 @@ Event_EjectBrassP
 extern cvar_t *cl_bulletejects;
 extern vec3_t v_angles;
 
-void DLLEXPORT Event_EjectBrassP( const struct cl_entity_s *entity, int shelltype )
+void Event_EjectBrassP( const struct cl_entity_s *entity, int shelltype )
 {
 	vec3_t endpos, forward, right, up, velocity;
 	vec3_t temp = entity->angles;
@@ -390,7 +393,7 @@ Event_EjectBrassV
 
 =========================
 */
-void DLLEXPORT Event_EjectBrassV( const struct cl_entity_s *entity, int shelltype )
+void Event_EjectBrassV( const struct cl_entity_s *entity, int shelltype )
 {
 	vec3_t endpos, forward, right, up, velocity, temp;
 	int shellmodel = gEngfuncs.pEventAPI->EV_FindModelIndex( "models/shells.mdl" );
@@ -420,7 +423,7 @@ Event_MuzzleFlash
 
 =========================
 */
-void DLLEXPORT Event_MuzzleFlash( const struct cl_entity_s *entity, int options )
+void Event_MuzzleFlash( const struct cl_entity_s *entity, int options )
 {
 	vec3_t origin, forward, right, up;
 	vec3_t temp, org, normal;
@@ -463,15 +466,15 @@ void DLLEXPORT Event_MuzzleFlash( const struct cl_entity_s *entity, int options 
 	org = origin + temp;
 
 	float size1 = finalScale * 20.0f;
-	pParticle = pParticle->Create( &org, &normal, pSprite, size1, 255.0f, "dod_particle", 1 );
+	pParticle = pParticle->Create( org, normal, pSprite, size1, 255.0f, "dod_particle", 1 );
 
 	if( pParticle )
 	{
-		pParticle->m_vVelocity = { 0.0f, 0.0f, 0.0f };
+		pParticle->m_vVelocity = Vector( 0.0f, 0.0f, 0.0f );
 		pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 0.0001f;
 		pParticle->m_iRendermode = kRenderTransAdd;
-		pParticle->m_vColor = { 255.0f, 255.0f, 255.0f };
+		pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
 
 		pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 		pParticle->SetLightFlag( LIGHT_NONE );
@@ -482,15 +485,15 @@ void DLLEXPORT Event_MuzzleFlash( const struct cl_entity_s *entity, int options 
 	org = origin + temp;
 
 	float size2 = finalScale * 40.0f;
-	pParticle = pParticle->Create( &org, &normal, pSprite, size2, 255.0f, "dod_particle", 1 );
+	pParticle = pParticle->Create( org, normal, pSprite, size2, 255.0f, "dod_particle", 1 );
 
 	if( pParticle )
 	{
-		pParticle->m_vVelocity = { 0.0f, 0.0f, 0.0f };
+		pParticle->m_vVelocity = Vector( 0.0f, 0.0f, 0.0f );
 		pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
 		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 0.0001f;
 		pParticle->m_iRendermode = kRenderTransAdd;
-		pParticle->m_vColor = { 255.0f, 255.0f, 255.0f };
+		pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
 		pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 		pParticle->SetLightFlag( LIGHT_NONE );
 	}
@@ -502,12 +505,12 @@ void DLLEXPORT Event_MuzzleFlash( const struct cl_entity_s *entity, int options 
 	if( flashtype == 3 )
 	{
 		float sizeMG = finalScale * 120.0f;
-		pParticle = pParticle->Create( &org, &normal, pMGSprite, sizeMG, 210.0f, "dod_particle", 1 );
+		pParticle = pParticle->Create( org, normal, pMGSprite, sizeMG, 210.0f, "dod_particle", 1 );
 	}
 	else
 	{
 		float sizeNormal = finalScale * 60.0f;
-		pParticle = pParticle->Create( &org, &normal, pSprite, sizeNormal, 255.0f, "dod_particle", 1 );
+		pParticle = pParticle->Create( org, normal, pSprite, sizeNormal, 255.0f, "dod_particle", 1 );
 
 		if( pParticle )
 			pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 360.0f );
@@ -515,10 +518,10 @@ void DLLEXPORT Event_MuzzleFlash( const struct cl_entity_s *entity, int options 
 
 	if( pParticle )
 	{
-		pParticle->m_vVelocity = { 0.0f, 0.0f, 0.0f };
+		pParticle->m_vVelocity = Vector( 0.0f, 0.0f, 0.0f );
 		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 0.0001f;
 		pParticle->m_iRendermode = kRenderTransAdd;
-		pParticle->m_vColor = { 255.0f, 255.0f, 255.0f };
+		pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
 		pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 		pParticle->SetLightFlag( LIGHT_NONE );
 	}
@@ -530,7 +533,7 @@ Event_MuzzleSmoke
 
 =========================
 */
-void DLLEXPORT Event_MuzzleSmoke( const struct cl_entity_s *entity, int options )
+void Event_MuzzleSmoke( const struct cl_entity_s *entity, int options )
 {
 	vec3_t forward, right, up;
 	vec3_t org, normal, temp;
@@ -564,7 +567,7 @@ void DLLEXPORT Event_MuzzleSmoke( const struct cl_entity_s *entity, int options 
 		org = entity->attachment[0];
 		memset( &normal, 0, sizeof( normal ) );
 
-		pParticle = pParticle->Create( &org, &normal, pSprite, size, 20.0f, "dod_particle", 1 );
+		pParticle = pParticle->Create( org, normal, pSprite, size, 20.0f, "dod_particle", 1 );
 
 		if( pParticle )
 		{
@@ -579,7 +582,7 @@ void DLLEXPORT Event_MuzzleSmoke( const struct cl_entity_s *entity, int options 
 			pParticle->m_flScaleSpeed = 6.0f;
 			pParticle->m_iFrame = 0;
 			pParticle->m_iFramerate = 15;
-			pParticle->m_vColor = { 200.0f, 200.0f, 200.0f };
+			pParticle->m_vColor = Vector( 200.0f, 200.0f, 200.0f );
 			pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 5.0f;
 			pParticle->SetCollisionFlags( TRI_COLLIDEKILL_ANIM | TRI_COLLIDEDAMP | TRI_COLLIDESLIDE );
 			pParticle->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
@@ -595,13 +598,12 @@ Event_BazookaSmoke
 
 =========================
 */
-void DLLEXPORT Event_BazookaSmoke( const struct cl_entity_s *entity )
+void Event_BazookaSmoke( const struct cl_entity_s *entity )
 {
 	vec3_t org, normal;
 	model_s *pSprite;
 	float flScale;
 	CDoDRocketTrail *pSmoke;
-
 
 	pSprite = (model_s *)gEngfuncs.GetSpritePointer( gEngfuncs.pfnSPR_Load( "sprites/effects/adrian/bazooka_smoke.spr" ) );
 
@@ -611,13 +613,13 @@ void DLLEXPORT Event_BazookaSmoke( const struct cl_entity_s *entity )
 
 		normal[0] = 0.0f; normal[1] = 0.0f; normal[2] = 1.0f;
 
-		for( int i = 0; i > 2; i++ )
+		for( int i = 0; i < 2; i++ )
 		{
 			org[0] = entity->attachment[i].x;
 			org[1] = entity->attachment[i].y;
 			org[2] = entity->attachment[i].z;
 
-			pSmoke = pSmoke->Create( &org, &normal, pSprite, flScale, 200.0f, "dod_trailsmoke" );
+			pSmoke = pSmoke->Create( org, normal, pSprite, flScale, 200.0f, "dod_trailsmoke" );
 
 			if( pSmoke )
 			{
@@ -634,11 +636,11 @@ void DLLEXPORT Event_BazookaSmoke( const struct cl_entity_s *entity )
 				pSmoke->m_flMass = gEngfuncs.pfnRandomFloat( 2.0f, 3.0f );
 				pSmoke->m_flDieTime = gEngfuncs.GetClientTime() + 10.0f;
 				pSmoke->m_flScaleSpeed = 2.0f;
-				pSmoke->m_vColor = { 25.0f, 25.0f, 25.0f };
+				pSmoke->m_vColor = Vector( 25.0f, 25.0f, 25.0f );
 				pSmoke->m_iFrame = gEngfuncs.pfnRandomFloat( 10.0f, 15.0f );
 				pSmoke->m_bRocketTrail = true;
 				pSmoke->m_flFadeSpeed = -1.0f;
-				pSmoke->m_vVelocity = { 0.0f, 0.0f, 0.0f };
+				pSmoke->m_vVelocity = Vector( 0.0f, 0.0f, 0.0f );
 
 				pSmoke->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 				pSmoke->SetLightFlag( LIGHT_NONE );
@@ -653,7 +655,7 @@ Event_PIATSmoke
 
 =========================
 */
-void DLLEXPORT Event_PIATSmoke( const struct cl_entity_s *entity )
+void Event_PIATSmoke( const struct cl_entity_s *entity )
 {
 	vec3_t org, normal;
 	model_s *pSprite;
@@ -674,7 +676,7 @@ void DLLEXPORT Event_PIATSmoke( const struct cl_entity_s *entity )
 		org[1] = entity->attachment[0].y;
 		org[2] = entity->attachment[0].z;
 
-		pSmoke = pSmoke->Create( &org, &normal, pSprite, flScale, 200.0f, "dod_trailsmoke" );
+		pSmoke = pSmoke->Create( org, normal, pSprite, flScale, 200.0f, "dod_trailsmoke" );
 
 		if( pSmoke )
 		{
@@ -690,11 +692,11 @@ void DLLEXPORT Event_PIATSmoke( const struct cl_entity_s *entity )
 			pSmoke->m_flMass = gEngfuncs.pfnRandomFloat( 2.0f, 3.0f );
 			pSmoke->m_flDieTime = gEngfuncs.GetClientTime() + 10.0f;
 			pSmoke->m_flScaleSpeed = 2.0f;
-			pSmoke->m_vColor = { 25.0f, 25.0f, 25.0f };
+			pSmoke->m_vColor = Vector( 25.0f, 25.0f, 25.0f );
 			pSmoke->m_iFrame = gEngfuncs.pfnRandomFloat( 10.0f, 15.0f );
 			pSmoke->m_bRocketTrail = true;
 			pSmoke->m_flFadeSpeed = -1.0f;
-			pSmoke->m_vVelocity = { 0.0f, 0.0f, 0.0f };
+			pSmoke->m_vVelocity = Vector( 0.0f, 0.0f, 0.0f );
 
 			pSmoke->SetCullFlag( CULL_FRUSTUM_SPHERE | CULL_PVS );
 			pSmoke->SetLightFlag( LIGHT_NONE );
@@ -1141,8 +1143,8 @@ void DLLEXPORT HUD_TempEntUpdate(
 
 				if( pTemp->flags & FTENT_INFINITE )
 				{
-					pTemp->entity.model->mins = { -999.0f, -999.0f, -999.0f };
-					pTemp->entity.model->maxs = { 999.0f, 999.0f, 999.0f };
+					pTemp->entity.model->mins = Vector( -999.0f, -999.0f, -999.0f );
+					pTemp->entity.model->maxs = Vector( 999.0f, 999.0f, 999.0f );
 					Callback_AddVisibleEntity( &pTemp->entity );
 				}
 

@@ -27,6 +27,7 @@
 #include "pm_shared.h"
 
 #include "tri.h"
+#include "fx_flags.h"
 
 #define IS_FIRSTPERSON_SPEC ( g_iUser1 == OBS_IN_EYE || ( g_iUser1 && ( gHUD.m_Spectator.m_pip->value == INSET_IN_EYE ) ) )
 
@@ -188,7 +189,7 @@ void EV_BazookaSmoke( cl_entity_t *ent )
 
 	for( i = 0; i < 8; ++i )
 	{
-		vec3_t p_normal = { 0.0f, 0.0f, 0.0f };
+		vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
 
 		if( ( i & 1 ) != 0 )
 		{
@@ -207,23 +208,22 @@ void EV_BazookaSmoke( cl_entity_t *ent )
 		float flSpeed = ( float ) speeds[i];
 		float flRandModifier = gEngfuncs.pfnRandomFloat( -1.0f, 1.0f );
 
-		pParticle = pParticle->Create( &org, &p_normal, pSprite, 90.0f, 80.0f, "dod_particle", 1 );
+		pParticle = pParticle->Create( org, p_normal, pSprite, 90.0f, 80.0f, "dod_particle", 1 );
 
 		if( !pParticle )
 			break;
 
-		pParticle->SetCollisionFlags( 0x16020u );
-		pParticle->SetLightFlag( 0 );
-		pParticle->SetCullFlag( 1 );
+		pParticle->SetCollisionFlags( TRI_COLLIDESLIDE | TRI_COLLIDEDAMP | TRI_COLLIDEKILL_ANIM | TRI_WATERTRACE );
+		pParticle->SetLightFlag( PARTICLE_LIGHT_DEFAULT );
+		pParticle->SetCullFlag( CULL_FRUSTUM_POINT );
+
 		pParticle->m_iRendermode = kRenderTransAdd;
 		pParticle->m_flFadeSpeed = 0.7f;
 		pParticle->m_flScaleSpeed = 1.1f;
 		pParticle->m_flDampingTime = 0.5f;
 		pParticle->m_iFrame = 0;
 		pParticle->m_iFramerate = 2;
-		pParticle->m_vColor.x = 200.0f;
-		pParticle->m_vColor.y = 200.0f;
-		pParticle->m_vColor.z = 200.0f;
+		pParticle->m_vColor = Vector( 200.0f, 200.0f, 200.0f );
 
 		vel.x = forward.x * flSpeed + up.x * flRandModifier;
 		vel.y = forward.y * flSpeed + up.y * flRandModifier;

@@ -25,10 +25,25 @@
 #define FTENT_CUSTOMGRAVITY		(1 << 21)
 #define FTENT_ARC_BALLISTICS	(FTENT_INFINITE | FTENT_CUSTOMGRAVITY)
 
-extern IParticleMan *g_pParticleman;
+// for m_iPFlags
+#define PFLAG_DOD_SMOKE_CORE         (1 << 0)
+#define PFLAG_DOD_SPARK_INSTANT      (1 << 6)
+#define PFLAG_DOD_DIRT_DEBRIS        (1 << 7)
+#define PFLAG_DOD_WIND_AFFECTED      (1 << 8)
+#define PFLAG_DOD_EXPLOSION_PULSE    (1 << 9)
+#define PFLAG_DOD_WATER_RIPPLE       (1 << 10)
+#define PFLAG_DOD_WEATHER_RAIN       (1 << 11)
+#define PFLAG_DOD_SHRINK_DIE         (1 << 12)
+#define PFLAG_DOD_VELOCITY_ROTATE    (1 << 13)
+#define PFLAG_DOD_COLLIDE_SPLASH     (1 << 14)
 
+extern IParticleMan *g_pParticleMan;
+
+void CreateExplosionSmoke( vec3_t origin, vec3_t vVelocity, bool bInsideSmoke, bool bSpawnInside, bool bBlowable );
 void CreateExplosionSmokeInside( vec3_t origin );
 void CreateDebrisWallPuff( vec3_t origin, vec3_t vVelocity, vec3_t vColor, int iPuff );
+void UpdateSnow( void );
+void UpdateRain( void );
 
 class CBaseDoDParticle : public CBaseParticle
 {
@@ -61,8 +76,8 @@ public:
 	virtual void Think( float time );
 	virtual void Force( void );
 	virtual void Die( void );
-	virtual void Touch( vec3_t *pos, vec3_t *normal, int index );
-	CDoDParticle *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness, 
+	virtual void Touch( vec3_t pos, vec3_t normal, int index );
+	CDoDParticle *Create( vec3_t pos, vec3_t normal, model_s *sprite, float size, float brightness, 
 		const char *classname, bool bDistCull );
 
 	bool m_bInsideSmoke;
@@ -74,7 +89,7 @@ public:
 
 	int m_iPFlags;
 
-	static vec3_t m_vGlobalWind;
+	vec3_t m_vGlobalWind;
 };
 
 class TriangleWallPuff : public CBaseParticle
@@ -89,7 +104,7 @@ class CDoDRocketTrail : public CBaseDoDParticle
 {
 public:
 	virtual void Think( float time );
-	CDoDRocketTrail *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
+	CDoDRocketTrail *Create( vec3_t pos, vec3_t normal, model_s *sprite, float size, float brightness,
 		const char *classname);
 
 	bool m_bRocketTrail;
@@ -99,7 +114,7 @@ class CDoDDirtExploDust : public CBaseDoDParticle
 {
 public:
 	virtual void Think( float time );
-	CDoDDirtExploDust *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
+	CDoDDirtExploDust *Create( vec3_t pos, vec3_t normal, model_s *sprite, float size, float brightness,
 		const char *classname );
 
 	bool m_bFire;
@@ -110,8 +125,8 @@ class CDoDSnowFlake : public CDoDParticle
 {
 public:
 	virtual void Think( float time );
-	virtual void Touch( vec3_t *pos, vec3_t *normal, int index );
-	CDoDSnowFlake *Create( vec3_t *pos, vec3_t *normal, model_s *sprite, float size, float brightness,
+	virtual void Touch( vec3_t pos, vec3_t normal, int index );
+	CDoDSnowFlake *Create( vec3_t pos, vec3_t normal, model_s *sprite, float size, float brightness,
 		const char *classname );
 
 	bool m_bSpiral, m_bTouched;
