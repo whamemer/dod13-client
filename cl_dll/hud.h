@@ -941,6 +941,8 @@ private:
 //
 //-----------------------------------------------------
 //
+#define MAX_SHOOTERS	64
+
 typedef struct particle_shooter_s
 {
 	int id;
@@ -981,7 +983,7 @@ public:
 	CHudMsgFunc( PShoot );
 
 private:
-	particle_shooter_s m_sShooters[64];
+	particle_shooter_s m_sShooters[MAX_SHOOTERS];
 	int m_iNumShooters;
 };
 
@@ -1028,14 +1030,16 @@ public:
 	int VidInit( void );
 	void CreateRainParticle( float *origin );
 	void CreateSnowParticle( float *origin );
-	//void SetRainSprite( model_s *pModel );
-	//void SetSnowSprite( model_s *pModel );
-	//void SetSplashSprite( model_s *pModel );
-	//void SetRippleSprite( model_s *pModel );
-	//model_s *GetRainSprite( void );
-	//model_s *GetSnowSprite( void );
-	//model_s *GetSplashSprite( void );
-	//model_s *GetRippleSprite( void );
+
+	void SetRainSprite( model_s *pModel ) { m_pRainSprite = pModel; }
+	void SetSnowSprite( model_s *pModel ) { m_pSnowSprite = pModel; }
+	void SetSplashSprite( model_s *pModel ) { m_pSplashSprite = pModel; }
+	void SetRippleSprite( model_s *pModel ) { m_pRippleSprite = pModel; }
+
+	model_s *GetRainSprite( void ) { return m_pRainSprite; }
+	model_s *GetSnowSprite( void ) { return m_pSnowSprite; }
+	model_s *GetSplashSprite( void ) { return m_pSplashSprite; }
+	model_s *GetRippleSprite( void ) { return m_pRippleSprite; }
 
 private:
 	model_s *m_pRainSprite;

@@ -139,7 +139,7 @@ public:
 	qboolean                   m_chatEnabled;
 	vec3_t                     m_cameraOrigin;
 	vec3_t                     m_cameraAngles;
-	model_t					   *m_MapSprite;
+	model_s					   *m_MapSprite;
 	vec3_t                     m_vPlayerPos[64]; 
 
 	HSPRITE                    m_hsprUnkownMap;

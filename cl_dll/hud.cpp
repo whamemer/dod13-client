@@ -117,7 +117,7 @@ cvar_t *cl_dmshowflags;
 cvar_t *cl_dmshowobjects;
 cvar_t *cl_dmshowgrenades;
 extern cvar_t *cl_numshotrubble;
-cvar_t *cl_weatherdis;
+extern cvar_t *cl_weatherdis;
 cvar_t *cl_autoreload;
 
 void ShutdownInput( void );
@@ -514,7 +514,6 @@ void CHud::Init( void )
 	m_Message.Init();
 	m_StatusBar.Init();
 	m_DeathNotice.Init();
-	m_AmmoSecondary.Init();
 	m_TextMessage.Init();
 	m_StatusIcons.Init();
 	m_DoDCrossHair.Init();
@@ -728,7 +727,6 @@ void CHud::VidInit( void )
 	m_Message.VidInit();
 	m_StatusBar.VidInit();
 	m_DeathNotice.VidInit();
-	m_AmmoSecondary.VidInit();
 	m_TextMessage.VidInit();
 	m_StatusIcons.VidInit();
 	m_DoDCrossHair.VidInit();

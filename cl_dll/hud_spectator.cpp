@@ -494,6 +494,7 @@ void CHudSpectator::DirectorMessage( int iSize, void *pbuf )
 		READ_FLOAT();
 		break;
 	case DRC_CMD_MESSAGE:
+	{
 		client_textmessage_t *msg = &m_HUDMessages[m_lastHudMessage];
 		msg->effect = READ_BYTE();
 		int iColor = READ_LONG();
@@ -526,6 +527,7 @@ void CHudSpectator::DirectorMessage( int iSize, void *pbuf )
 
 		m_lastHudMessage = ( m_lastHudMessage + 1 ) % MAX_SPEC_HUD_MESSAGES;
 		break;
+	}
 	case DRC_CMD_SOUND:
 		string = READ_STRING();
 		f1 = READ_FLOAT();
