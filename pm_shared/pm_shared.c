@@ -31,12 +31,10 @@
 #include "pm_movevars.h"
 #include "pm_debug.h"
 
-#if CLIENT_DLL
 // Spectator Mode
 int iJumpSpectator;
 extern float vJumpOrigin[3];
 extern float vJumpAngles[3];
-#endif
 
 static int pm_shared_initialized = 0;
 
@@ -1870,7 +1868,6 @@ void PM_SpectatorMove( void )
 	
 	if( pmove->iuser1 == OBS_ROAMING )
 	{
-#if CLIENT_DLL
 		// jump only in roaming mode
 		if( iJumpSpectator )
 		{
@@ -1880,7 +1877,6 @@ void PM_SpectatorMove( void )
 			iJumpSpectator	= 0;
 			return;
 		}
-#endif
 		// Move around in normal spectator method
 		speed = Length( pmove->velocity );
 		if( speed < 1 )

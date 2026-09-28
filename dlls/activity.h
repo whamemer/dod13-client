@@ -107,7 +107,6 @@ typedef enum {
 	DOD_BUTTSTOCK
 } Activity;
 
-#if !CLIENT_DLL
 typedef struct
 {
 	int type;
@@ -115,6 +114,5 @@ typedef struct
 } activity_map_t;
 
 extern activity_map_t activity_map[];
-#endif
 
 #endif	//ACTIVITY_H
