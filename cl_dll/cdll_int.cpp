@@ -321,10 +321,12 @@ int DLLEXPORT HUD_UpdateClientData( client_data_t *pcldata, float flTime )
 Called at start and end of demos to restore to "non"HUD state.
 ==========================
 */
+bool b_StopDemo;
 
 void DLLEXPORT HUD_Reset( void )
 {
 	gHUD.VidInit();
+	b_StopDemo = false;
 }
 
 /*
@@ -350,7 +352,8 @@ Called when a player starts or stops talking.
 
 void DLLEXPORT HUD_VoiceStatus( int entindex, qboolean bTalking )
 {
-
+	GetClientVoice()->UpdateSpeakerStatus( entindex, bTalking );
+	gHUD.m_StatusBar.UpdateWhosTalking( entindex, bTalking );
 }
 
 /*

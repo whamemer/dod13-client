@@ -489,9 +489,16 @@ public:
 	void CreateEntities( void );
 	void DrawEntitiesOverTeam( void );
 	void DrawEntitiesOverTarget( void );
-	// void UpdateWhosTalking( int, qboolean );
 	bool InDeathCamMode( void );
 	void Think( void );
+
+	void UpdateWhosTalking( int index, qboolean bTalking )
+	{
+		if( index < 1 || index > MAX_PLAYERS )
+			return;
+
+		m_TargetTalking[index] = bTalking;
+	}
 
 	qboolean IsEntityTalking( int index )
 	{
