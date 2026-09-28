@@ -48,11 +48,14 @@ int CHudMessage::Init( void )
 	return 1;
 }
 
-// WHAMER: TODO: vgui2
 int CHudMessage::VidInit( void )
 {
 	m_HUD_title_half = gHUD.GetSpriteIndex( "title_half" );
 	m_HUD_title_life = gHUD.GetSpriteIndex( "title_life" );
+
+	m_Fonts[0] = gHUD.m_scrinfo.iCharHeight;
+	m_Fonts[1] = gHUD.m_scrinfo.iCharHeight;
+	m_Fonts[2] = gHUD.m_scrinfo.iCharHeight;
 
 	return 1;
 }
@@ -489,10 +492,6 @@ int CHudMessage::MsgFunc_HudText( const char *pszName,  int iSize, void *pbuf )
 	char *pString = READ_STRING();
 	int hintMessage = READ_BYTE();
 
-	/* WHAMER: TODO: vgui2
-	if( hintMessage > 0 && gDoDViewPortInterface )
-		gDoDViewPortInterface->DeathMsg( pString );*/
-
 	MessageAdd( pString, gHUD.m_flTime, hintMessage, m_Fonts[0] );
 
 	// Remember the time -- to fix up level transitions
@@ -520,7 +519,6 @@ int CHudMessage::MsgFunc_GameTitle( const char *pszName,  int iSize, void *pbuf 
 	return 1;
 }
 
-
 void CHudMessage::MessageAdd( client_textmessage_t * newMessage )
 {
 	m_parms.time = gHUD.m_flTime;
@@ -542,10 +540,6 @@ void CHudMessage::MessageAdd( client_textmessage_t * newMessage )
 
 void CHudMessage::HintMessageAdd( const char *pText )
 {
-	/* WHAMER: TODO: vgui2
-	if( hintMessage > 0 && gDoDViewPortInterface )
-		gDoDViewPortInterface->DeathMsg( pText );*/
-
 	m_parms.time = gHUD.m_flTime;
 
 	if( !( m_iFlags & HUD_ACTIVE ) )
