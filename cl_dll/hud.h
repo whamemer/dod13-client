@@ -1100,22 +1100,23 @@ class CHudVGUI2Print : public CHudBase
 public:
 	int Init( void );
 	int VidInit( void );
+	int Draw( float flTime );
+
 	int DrawVGUI2String( char *charMsg, int x, int y, float r, float g, float b );
 	int DrawVGUI2StringReverse( char *charMsg, int x, int y, float r, float g, float b );
-	int DrawVGUI2String( wchar_t *msg, int x, int y, float r, float g, float b );
-	int DrawVGUI2StringReverse( wchar_t *msg, int x, int y, float r, float g, float b );
+
 	void VGUI2HudPrintArgs( char *charMsg, char *sstr1, char *sstr2, char *sstr3, char *sstr4, int x, int y, float r, float g, float b );
 	void VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b );
+
 	int GetHudFontHeight( void );
-	void GetStringSize( const wchar_t *string, int *width, int *height );
-	int Draw( float flTime );
-	// vgui2::HFont GetFont( void );
+	void GetStringSize( const char *string, int *width, int *height );
 
 private:
 	float m_flVGUI2StringTime;
-	wchar_t m_wCharBuf[512];
+	char  m_szCharBuf[512];
 	float m_fR, m_fG, m_fB;
-	int m_iX, m_iY;
+	int   m_iX, m_iY;
+
 	unsigned long m_Fonts[3];
 };
 
