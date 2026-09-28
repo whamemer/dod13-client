@@ -51,7 +51,7 @@ if (WIN32)
 	include_directories (../external/)
 endif()
 
-add_definitions(-DCLIENT_WEAPONS -DCLIENT_DLL -DSTDINT_H=<cstdint>)
+add_definitions(-DSTDINT_H=<cstdint>)
 
 if(NOT MSVC)
 	add_definitions(-DLINUX -D_LINUX)
