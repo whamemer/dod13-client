@@ -1,3 +1,18 @@
+/***
+*
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
+*
+*	This product contains software technology licensed from Id
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	All Rights Reserved.
+*
+*   Use, distribution, and modification of this source code and/or resulting
+*   object code is restricted to non-commercial enhancements to products from
+*   Valve LLC.  All other use, distribution, or modification is prohibited
+*   without written permission from Valve LLC.
+*
+****/
+
 //
 // sten.cpp
 //
@@ -78,32 +93,32 @@ void CSTEN::PrimaryAttack( void )
         PlayEmptySound();
         m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.15f;
     }
-    else if( !m_fInAttack )
+    else if( m_iClip <= 0 )
     {
-        if( m_iClip < 0 )
+        if( !m_fInAttack )
         {
             PlayEmptySound();
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.15f;
             m_fInAttack = TRUE;
         }
-        else
-        {
-            m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
-            m_pPlayer->m_iWeaponVolume = NORMAL_GUN_VOLUME;
-            --m_iClip;
+    }
+    else
+    {
+        m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
+        m_pPlayer->m_iWeaponVolume = NORMAL_GUN_VOLUME;
+        --m_iClip;
 
-            if( m_pPlayer->pev->origin.Length() > 45.0f )
-                flSpread = WpnInfo[WEAPON_STEN].base_accuracy + 0.1f;
+        flSpread = WpnInfo[WEAPON_STEN].base_accuracy;
 
-            Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_STEN, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
-            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireSten, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+        Vector vecSrc = m_pPlayer->GetGunPosition();
+        FireBulletsNC( vecSrc, ( Vector ) gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_STEN, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
-            m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_STEN].anim_firedelay;
-            m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.1f;
-            m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
-            RemoveStamina( 1.0f, m_pPlayer );
-        }
+        PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_usFireSten, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+
+        m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_STEN].anim_firedelay;
+        m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.1f;
+        m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
+        RemoveStamina( 1.0f, m_pPlayer );
     }
 }
 

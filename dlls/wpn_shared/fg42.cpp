@@ -1,3 +1,18 @@
+/***
+*
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
+*
+*	This product contains software technology licensed from Id
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	All Rights Reserved.
+*
+*   Use, distribution, and modification of this source code and/or resulting
+*   object code is restricted to non-commercial enhancements to products from
+*   Valve LLC.  All other use, distribution, or modification is prohibited
+*   without written permission from Valve LLC.
+*
+****/
+
 //
 // fg42.cpp
 //
@@ -47,7 +62,7 @@ void CFG42::Precache( void )
 int CFG42::GetItemInfo( ItemInfo *p )
 {
     p->pszName = STRING( pev->classname );
-    p->pszAmmo1 = "ammo_16mm";
+    p->pszAmmo1 = "ammo_55mm";
     p->iMaxAmmo1 = WpnInfo[WEAPON_FG42].ammo_maxcarry;
     p->pszAmmo2 = NULL;
     p->iMaxAmmo2 = -1;
@@ -81,7 +96,7 @@ void CFG42::PrimaryAttack( void )
         PlayEmptySound();
         m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.15f;
     }
-    else if( m_iClip < 0 )
+    else if( m_iClip <= 0 )
     {
         if( !m_fInAttack )
         {
@@ -95,43 +110,31 @@ void CFG42::PrimaryAttack( void )
         m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
         m_pPlayer->m_iWeaponVolume = NORMAL_GUN_VOLUME;
 
-        flSpread = WpnInfo[WEAPON_FG42].base_accuracy;
-
-        if( m_iWeaponState & WPNSTATE_SCOPED )
-        {
-            if( GetFOV() <= 0 )
-                flSpread = WpnInfo[WEAPON_FG42].base_accuracy;
-            else
-                flSpread = WpnInfo[WEAPON_FG42].base_accuracy2;
-        }
-
-        if( m_pPlayer->pev->origin.Length() > 45.0f )
-            flSpread += WpnInfo[WEAPON_FG42].accuracy_penalty;
-
-        if( m_iWeaponState & WPNSTATE_SCOPED )
-            GetFOV();
+        if( IsDeployed() || ( m_iWeaponState & WPNSTATE_SCOPED && GetFOV() > 0 ) )
+            flSpread = WpnInfo[WEAPON_FG42].base_accuracy2;
         else
-            IsDeployed();
-            m_pPlayer->GetGunPosition();
+            flSpread = WpnInfo[WEAPON_FG42].base_accuracy;
 
-            Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_FG42, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
-            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireFG42, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, GetFOV() > 0 );
+        Vector vecSrc = m_pPlayer->GetGunPosition();
+        FireBulletsNC( vecSrc, ( Vector ) gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_FG42, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+        --m_iClip;
 
-            if( GetFOV() >= 0)
-                m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_FG42].anim_firedelay;
-            else
-                m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_SCOPED_FG42].anim_firedelay;
-            
-            m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.1f;
-            m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
+        PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_usFireFG42, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, GetFOV() > 0 );
 
-            if( GetFOV() > 0 || m_iClip < 0 )
-            {
-                SetThink( &CBasePlayerWeapon::ThinkZoomOut );
-                pev->nextthink = gpGlobals->time + 0.5f;
-            }
-            RemoveStamina( 1.0f, m_pPlayer );
+        if( !( m_iWeaponState & WPNSTATE_SCOPED ) )
+            m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_FG42].anim_firedelay;
+        else
+            m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_SCOPED_FG42].anim_firedelay;
+
+        m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.1f;
+        m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
+
+        if( GetFOV() > 0 && m_iClip <= 0 )
+        {
+            SetThink( &CBasePlayerWeapon::ThinkZoomOut );
+            pev->nextthink = gpGlobals->time + 0.5f;
+        }
+        RemoveStamina( 1.0f, m_pPlayer );
     }
 }
 

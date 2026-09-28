@@ -1,3 +1,18 @@
+/***
+*
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
+*
+*	This product contains software technology licensed from Id
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	All Rights Reserved.
+*
+*   Use, distribution, and modification of this source code and/or resulting
+*   object code is restricted to non-commercial enhancements to products from
+*   Valve LLC.  All other use, distribution, or modification is prohibited
+*   without written permission from Valve LLC.
+*
+****/
+
 //
 // bipod.cpp
 //
@@ -40,12 +55,12 @@ BOOL CBipodWeapon::Deploy( void )
     m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 1.0f;
 
     int iAnim = GetDrawAnim();
-    return CBasePlayerWeapon::DefaultDeploy( WpnInfo[m_iId].vmodel, WpnInfo[m_iId].pmodel, iAnim, WpnInfo[m_iId].szAnimExt, WpnInfo[m_iId].szAnimReloadExt, 0, 0 );
+    return CBasePlayerWeapon::DefaultDeploy( WpnInfo[m_iId].vmodel, WpnInfo[m_iId].pmodel, iAnim, WpnInfo[m_iId].szAnimExt, WpnInfo[m_iId].szAnimReloadExt, 0 );
 }
 
 BOOL CBipodWeapon::CanHolster( void )
 {
-    return IsDeployed();
+    return m_pPlayer->IsInMGDeploy();
 }
 
 void CBipodWeapon::Holster( int skiplocal )
@@ -64,7 +79,7 @@ void CBipodWeapon::PrimaryAttack( void )
         return;
     }
 
-    if( m_iClip < 0 )
+    if( m_iClip <= 0 )
     {
         if( !m_fInAttack )
         {
@@ -75,20 +90,23 @@ void CBipodWeapon::PrimaryAttack( void )
     }
     else
     {
-        ItemInfo bipod[40];
-        GetItemInfo( bipod );
+        ItemInfo bipod;
+        GetItemInfo( &bipod );
 
-        if( m_fInAttack )
-            return;
-        
-        if( m_flWeaponHeat >= 99.0f )
+        if( ( bipod.iFlags & ITEM_FLAG_HEAT ) != 0 )
         {
-            m_fInAttack = TRUE;
-            return;
-        }
+            if( m_fInAttack )
+                return;
 
-        if( m_flWeaponHeat >= 95.0f )
-            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_iOverheatEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+            if( m_flWeaponHeat >= 99.0f )
+            {
+                m_fInAttack = TRUE;
+                return;
+            }
+
+            if( m_flWeaponHeat >= 95.0f )
+                PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_iOverheatEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+        }
 
         m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
         m_pPlayer->m_iWeaponVolume = NORMAL_GUN_VOLUME;
@@ -100,30 +118,37 @@ void CBipodWeapon::PrimaryAttack( void )
 
         if( !IsDeployed() )
         {
-            if( m_pPlayer->pev->origin.Length() > 45.0f )
+            if( m_pPlayer->pev->velocity.Length() > 45.0f )
                 flSpread = flSpread + WpnInfo[m_iId].accuracy_penalty;
         }
 
-        int iBulletType;
+        int iBulletType = bipod.iBulletId;
         Vector vecSrc = m_pPlayer->GetGunPosition();
 
-        FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+        FireBulletsNC( vecSrc, ( Vector ) gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
         m_iClip -= 1;
 
         if( m_iId == WEAPON_MG42 )
         {
-            m_iClip -= 2;
-            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed + 5 );
-            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_iFireEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, 0, 0 );
-
-            m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
-            m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
-            m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
-            m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
-
-            if( !IsDeployed() )
-                RemoveStamina( 1.0f, m_pPlayer );
+            m_iClip -= 1;
+            FireBulletsNC( vecSrc, ( Vector ) gpGlobals->v_forward, flSpread, 8192.0f, iBulletType, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed + 5 );
+            PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_iFireEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, 0, 0 );
         }
+
+        PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_iFireEvent, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, 0, 0 );
+
+        if( ( bipod.iFlags & ITEM_FLAG_HEAT ) != 0 )
+        {
+            m_flWeaponHeat += 3.0f;
+        }
+
+        m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
+        m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
+        m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + WpnInfo[m_iId].anim_firedelay;
+        m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
+
+        if( !IsDeployed() )
+            RemoveStamina( 1.0f, m_pPlayer );
     }
 }
 

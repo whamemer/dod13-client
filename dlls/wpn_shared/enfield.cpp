@@ -1,3 +1,18 @@
+/***
+*
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
+*
+*	This product contains software technology licensed from Id
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	All Rights Reserved.
+*
+*   Use, distribution, and modification of this source code and/or resulting
+*   object code is restricted to non-commercial enhancements to products from
+*   Valve LLC.  All other use, distribution, or modification is prohibited
+*   without written permission from Valve LLC.
+*
+****/
+
 //
 // enfield.cpp
 //
@@ -104,7 +119,7 @@ void CENFIELD::PrimaryAttack( void )
     }
     else if( !m_fInAttack )
     {
-        if( m_iClip < 0 )
+        if( m_iClip <= 0 )
         {
             PlayEmptySound();
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.15f;
@@ -113,7 +128,7 @@ void CENFIELD::PrimaryAttack( void )
         else
         {
             m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
-            m_pPlayer->m_iWeaponVolume = NORMAL_GUN_VOLUME;
+            m_pPlayer->m_iWeaponVolume = 600;
             --m_iClip;
             flSpread = WpnInfo[WEAPON_ENFIELD].base_accuracy;
 
@@ -125,20 +140,20 @@ void CENFIELD::PrimaryAttack( void )
                     flSpread = WpnInfo[WEAPON_SCOPEDENFIELD].base_accuracy2;
             }
 
-            if( m_pPlayer->pev->origin.Length() > 45.0f )
+            if( m_pPlayer->pev->velocity.Length() > 45.0f )
                 flSpread += WpnInfo[WEAPON_ENFIELD].accuracy_penalty;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_ENFIELD, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+            FireBulletsNC( vecSrc, ( Vector ) gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_ENFIELD, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
 
             if( m_iWeaponState & WPNSTATE_SCOPED )
             {
-                PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireScopedEnfield, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, GetFOV() > 0 );
+                PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_usFireScopedEnfield, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, GetFOV() > 0 );
                 m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_SCOPEDENFIELD].anim_firedelay;
             }
             else
             {
-                PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireEnfield, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+                PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_usFireEnfield, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
                 m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_ENFIELD].anim_firedelay;
             }
 
@@ -146,11 +161,12 @@ void CENFIELD::PrimaryAttack( void )
             m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_ENFIELD].anim_firedelay;
             m_fInAttack = TRUE;
             m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
-            flBoltHideXHair = WpnInfo[WEAPON_ENFIELD].anim_firedelay;
+
+            flBoltHideXHair = WpnInfo[WEAPON_KAR].anim_firedelay;
 
             if( m_iWeaponState & WPNSTATE_SCOPED || GetFOV() > 0 )
             {
-                if( m_iClip < 0 )
+                if( m_iClip <= 0 )
                     SetThink( &CBasePlayerWeapon::ThinkZoomOut );
                 else
                     SetThink( &CENFIELD::ThinkZoomOutIn );
@@ -175,7 +191,7 @@ void CENFIELD::SecondaryAttack( void )
     {
         RifleMeleeAttack( m_pPlayer, WEAPON_ENFIELD );
         m_pPlayer->SetAnimation( PLAYER_ATTACK2 );
-        PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireEnfield, 0.0f, g_vecZero, g_vecZero, 0, 0, 1, 0, m_iClip == 0, 0 );
+        PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_usFireEnfield, 0.0f, g_vecZero, g_vecZero, 0, 0, 1, 0, m_iClip == 0, 0 );
         m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.1f;
         m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.1f;
     }
@@ -188,6 +204,8 @@ void CENFIELD::Reload( void )
 
     if( m_iWeaponState & WPNSTATE_SCOPED )
     {
+        SetThink( NULL );
+
         if( GetFOV() > 0 )
         {
             m_pPlayer->m_iFOV = ZoomOut();

@@ -1,3 +1,18 @@
+/***
+*
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
+*
+*	This product contains software technology licensed from Id
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	All Rights Reserved.
+*
+*   Use, distribution, and modification of this source code and/or resulting
+*   object code is restricted to non-commercial enhancements to products from
+*   Valve LLC.  All other use, distribution, or modification is prohibited
+*   without written permission from Valve LLC.
+*
+****/
+
 //
 // spring.cpp
 //
@@ -74,11 +89,11 @@ void CSPRING::PrimaryAttack( void )
     if( PlayerIsWaterSniping() )
     {
         PlayEmptySound();
-        m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.4f;
+        m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.15f;
     }
     else if( !m_fInAttack )
     {
-        if( m_iClip < 0 )
+        if( m_iClip <= 0 )
         {
             PlayEmptySound();
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.15f;
@@ -89,25 +104,29 @@ void CSPRING::PrimaryAttack( void )
             m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
             m_pPlayer->m_iWeaponVolume = NORMAL_GUN_VOLUME;
             --m_iClip;
-            flSpread = WpnInfo[WEAPON_SPRING].base_accuracy;
 
-            if( m_pPlayer->pev->origin.Length() > 45.0f )
-                flSpread += WpnInfo[WEAPON_SPRING].accuracy_penalty;
+            if( GetFOV() <= 0 )
+                flSpread = WpnInfo[WEAPON_SPRING].base_accuracy;
+            else
+                flSpread = WpnInfo[WEAPON_SPRING].base_accuracy2;
 
             Vector vecSrc = m_pPlayer->GetGunPosition();
-            FireBulletsNC( vecSrc, (Vector)gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_SPRING, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
-            PLAYBACK_EVENT_FULL( 1, ENT( m_pPlayer->pev ), m_usFireSpring, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
+            FireBulletsNC( vecSrc, ( Vector ) gpGlobals->v_forward, flSpread, 8192.0f, BULLET_PLAYER_SPRING, 3, 0, m_pPlayer->pev, m_pPlayer->random_seed );
+
+            PLAYBACK_EVENT_FULL( FEV_NOTHOST, ENT( m_pPlayer->pev ), m_usFireSpring, 0.0f, g_vecZero, g_vecZero, 0, 0, 0, 0, m_iClip == 0, 0 );
 
             m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_SPRING].anim_firedelay;
             m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.1f;
             m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_SPRING].anim_firedelay;
             m_fInAttack = TRUE;
-            m_flTimeWeaponIdle = RANDOM_FLOAT( 10.0f, 15.0f ) + UTIL_WeaponTimeBase();
-            flBoltHideXHair = WpnInfo[WEAPON_SPRING].anim_firedelay;
+
+            m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + WpnInfo[WEAPON_SPRING].anim_firedelay;
+
+            flBoltHideXHair = WpnInfo[WEAPON_KAR].anim_firedelay;
 
             if( GetFOV() > 0 )
             {
-                if( m_iClip < 0 )
+                if( m_iClip <= 0 )
                     SetThink( &CSPRING::ThinkZoomOut );
                 else
                     SetThink( &CSPRING::ThinkZoomOutIn );
