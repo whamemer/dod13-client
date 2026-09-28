@@ -190,38 +190,37 @@ char *s_GERVoiceFiles[29] =
     "player/gerpiat.wav"
 };
 
-// WHAMER: TODO
 int iVoiceToHandSignal[29] =
 {
-    0,
-    10,
-    15,
-    1,
-    9,
-    11,
-    0,
-    13,
-    20,
-    25,
-    3,
-    2,
-    5,
-    8,
-    1,
-    4,
-    7,
-    6,
-    12,
-    20,
-    18,
-    21,
-    22,
-    23,
-    24,
-    5,
-    20,
-    4,
-    4
+    HS_STICK_TOGETHER,   // [0]  "Stick together!"
+    HS_MOVE_OUT,         // [10] "Move out!"
+    HS_CEASE_FIRE,       // [15] "Cease fire!" / "Get down!"
+    HS_FALL_BACK,        // [1]  "Fall back!"
+    HS_FLANK_LEFT,       // [9]  "Flank left!"
+    HS_FLANK_RIGHT,      // [11] "Flank right!"
+    HS_STICK_TOGETHER,   // [0]  "Covering fire!"
+    HS_COVERING_FIRE,    // [13] "Spread out!"
+    HS_ENEMY_AHEAD,      // [20] "Enemy ahead!"
+    HS_CEASE_FIRE,       // [25] "Need ammo!"
+    HS_NO_SIR,           // [3]  "Negative" / "No"
+    HS_NO_SIR,           // [2] 
+    HS_BACKUP,           // [5]  "Fall in!" / "Assemble"
+    HS_GRENADE,          // [8]  "Fire in the hole!" / "Grenade!"
+    HS_FALL_BACK,        // [1]  "Go left!"
+    HS_SNIPER,           // [4]  "Go, go, go!"
+    HS_ENEMY_LEFT,       // [7]  "Point!"
+    HS_ENEMY_RIGHT,      // [6]  "Look there"
+    HS_AREA_CLEAR,       // [12] "Status report!"
+    HS_ENEMY_AHEAD,      // [20] "Contact!"
+    HS_ENEMY_SPOTTED,    // [18] "Take cover!"
+    HS_ENEMY_AHEAD,      // [21] "Medic!"
+    HS_ENEMY_BEHIND,     // [22] "Thanks!"
+    HS_MG_AHEAD,         // [23] "Sorry!"
+    HS_MG_MOVEUP,        // [24] "Drop your weapon!"
+    HS_BACKUP,           // [5]  "All right, let's go!"
+    HS_ENEMY_AHEAD,      // [20] "Acknowledge!"
+    HS_SNIPER,           // [4]
+    HS_SNIPER            // [4]
 };
 
 char *s_VoiceCommands[29][4] =
