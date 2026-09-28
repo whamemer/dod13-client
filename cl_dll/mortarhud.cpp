@@ -13,7 +13,7 @@
 *
 ****/
 //
-//  mortar.cpp - implementation of the CMortarHud class
+//  mortarhud.cpp - implementation of the CMortarHud && CTrajectoryList class
 //
 
 #include "hud.h"
@@ -22,7 +22,9 @@
 #include "pi_constant.h"
 
 extern vec3_t v_angles;
-const float g_flMortarInitialVelocity, g_flMortarGravity;
+
+const float g_flMortarInitialVelocity = 1000.0f;
+const float g_flMortarGravity = 480.0f;
 
 float VecToYaw( float *vec )
 {
@@ -172,7 +174,7 @@ trajectory_t *CTrajectoryList::AddTrajectory( vec3_t targetPos )
 	if( !t )
 		t = &m_Trajectories[0];
 
-	targetPos = t->vTargetPos;
+	VectorCopy( &targetPos.x, t->vTargetPos );
 	t->fLastUsedTime = time;
 
 	CalculateTrajectory( m_vecLaunchPos, targetPos, &t->fPitch1, &t->fPitch2, &t->fYaw );
@@ -200,9 +202,9 @@ void CTrajectoryList::CalculateTrajectory( vec3_t launchPos, vec3_t targetPos, f
 	double rr = r * r;
 	double hh = h * h;
 
-	double g = 480.00003;
-	double vSquared = 1000000.0;
-	const float radToDeg = 57.29578f;
+	double g = ( double ) g_flMortarGravity;
+	double vSquared = ( double ) ( g_flMortarInitialVelocity * g_flMortarInitialVelocity );
+	const float radToDeg = 180.0f / M_PI;
 
 	double gh = g * h;
 	double totalDistSq = hh + rr;
@@ -213,16 +215,23 @@ void CTrajectoryList::CalculateTrajectory( vec3_t launchPos, vec3_t targetPos, f
 	{
 		double sqrtA = sqrt( A );
 
-		double denominator = ( rr * vSquared ) / ( totalDistSq * 2.0e12 );
+		double denominator = g * rr;
 
-		double u1 = ( vSquared + gh + sqrtA ) * denominator;
-		double u2 = ( vSquared + gh - sqrtA ) * denominator;
+		if( denominator != 0.0 )
+		{
+			double u1 = ( vSquared + gh + sqrtA ) / denominator;
+			double u2 = ( vSquared + gh - sqrtA ) / denominator;
 
-		if( u1 >= 0.0 )
-			*pitch1 = acos( sqrt( u1 ) ) * radToDeg;
+			if( u1 >= 0.0 && u1 <= 1.0 )
+				*pitch1 = acos( sqrt( u1 ) ) * radToDeg;
+			else
+				*pitch1 = -1.0f;
 
-		if( u2 >= 0.0 )
-			*pitch2 = acos( sqrt( u2 ) ) * radToDeg;
+			if( u2 >= 0.0 && u2 <= 1.0 )
+				*pitch2 = acos( sqrt( u2 ) ) * radToDeg;
+			else
+				*pitch2 = -1.0f;
+		}
 	}
 	else
 	{
