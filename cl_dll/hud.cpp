@@ -424,28 +424,28 @@ void CHud::Init( void )
 	HOOK_MESSAGE( Spectator );
 	HOOK_MESSAGE( AllowSpec );
 
-	hud_takesshots = CVAR_CREATE( "hud_takesshots", "0", FCVAR_USERINFO );
-	max_rubble = CVAR_CREATE( "max_rubble", "240", FCVAR_ARCHIVE );
+	hud_takesshots = CVAR_CREATE( "hud_takesshots", "0", FCVAR_ARCHIVE );
+	max_rubble = CVAR_CREATE( "max_rubble", "240", 0 );
 
-	cl_corpsestay = CVAR_CREATE( "cl_corpsestay", "10", FCVAR_USERINFO );
-	cl_dmsmallmap = CVAR_CREATE( "cl_dmsmallmap", "1", FCVAR_USERINFO );
-	cl_dmshowmarkers = CVAR_CREATE( "cl_dmshowmarkers", "1", FCVAR_USERINFO );
-	cl_dmshowplayers = CVAR_CREATE( "cl_dmshowplayers", "1", FCVAR_USERINFO );
-	cl_dmshowflags = CVAR_CREATE( "cl_dmshowflags", "1", FCVAR_USERINFO );
-	cl_dmshowobjects = CVAR_CREATE( "cl_dmshowobjects", "1", FCVAR_USERINFO );
-	cl_dmshowgrenades = CVAR_CREATE( "cl_dmshowgrenades", "1", FCVAR_USERINFO );
-	cl_numshotrubble = CVAR_CREATE( "cl_numshotrubble", "5", FCVAR_USERINFO );
-	cl_weatherdis = CVAR_CREATE( "cl_weatherdis", "1700", FCVAR_USERINFO );
+	cl_corpsestay = CVAR_CREATE( "cl_corpsestay", "10", FCVAR_ARCHIVE );
+	cl_dmsmallmap = CVAR_CREATE( "cl_dmsmallmap", "1", FCVAR_ARCHIVE );
+	cl_dmshowmarkers = CVAR_CREATE( "cl_dmshowmarkers", "1", FCVAR_ARCHIVE );
+	cl_dmshowplayers = CVAR_CREATE( "cl_dmshowplayers", "1", FCVAR_ARCHIVE );
+	cl_dmshowflags = CVAR_CREATE( "cl_dmshowflags", "1", FCVAR_ARCHIVE );
+	cl_dmshowobjects = CVAR_CREATE( "cl_dmshowobjects", "1", FCVAR_ARCHIVE );
+	cl_dmshowgrenades = CVAR_CREATE( "cl_dmshowgrenades", "1", FCVAR_ARCHIVE );
+	cl_numshotrubble = CVAR_CREATE( "cl_numshotrubble", "5", FCVAR_ARCHIVE );
+	cl_weatherdis = CVAR_CREATE( "cl_weatherdis", "1700", FCVAR_ARCHIVE );
 
-	_cl_minimap = CVAR_CREATE( "_cl_minimap", "2", FCVAR_EXTDLL );
-	_cl_minimapzoom = CVAR_CREATE( "_cl_minimapzoom", "1", FCVAR_USERINFO );
+	_cl_minimap = CVAR_CREATE( "_cl_minimap", "2", FCVAR_ARCHIVE | FCVAR_USERINFO );
+	_cl_minimapzoom = CVAR_CREATE( "_cl_minimapzoom", "1", FCVAR_ARCHIVE );
 
-	zoom_sensitivity_ratio = CVAR_CREATE( "zoom_sensitivity_ratio", "1.2", FCVAR_USERINFO );
+	zoom_sensitivity_ratio = CVAR_CREATE( "zoom_sensitivity_ratio", "1.2", FCVAR_ARCHIVE );
 
-	_ah = CVAR_CREATE( "_ah", "1", FCVAR_EXTDLL );
+	_ah = CVAR_CREATE( "_ah", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
 
-	cl_hudfont = CVAR_CREATE( "cl_hudfont", "1", FCVAR_USERINFO );
-	hud_fastswitch = CVAR_CREATE( "hud_fastswitch", "0", FCVAR_USERINFO );
+	cl_hudfont = CVAR_CREATE( "cl_hudfont", "1", FCVAR_ARCHIVE );
+	hud_fastswitch = CVAR_CREATE( "hud_fastswitch", "0", FCVAR_ARCHIVE );
 
 	cl_lw = gEngfuncs.pfnGetCvarPointer( "cl_lw" );
 	r_drawentities = gEngfuncs.pfnGetCvarPointer( "r_drawentities" );
@@ -471,7 +471,7 @@ void CHud::Init( void )
 
 	m_pCvarStealMouse = CVAR_CREATE( "hud_capturemouse", "1", FCVAR_ARCHIVE );
 	m_pCvarDraw = CVAR_CREATE( "hud_draw", "1", FCVAR_ARCHIVE );
-	cl_autoreload = CVAR_CREATE( "cl_autoreload", "1", FCVAR_EXTDLL );
+	cl_autoreload = CVAR_CREATE( "cl_autoreload", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
 
 	CVAR_CREATE( "cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
 	default_fov = CVAR_CREATE( "default_fov", "90", FCVAR_ARCHIVE );
@@ -1039,14 +1039,14 @@ void CHud::PlaySoundOnChan( char *name, float fVol, int chan )
 
 void CHud::InitMapBounds( void )
 {
-	m_iMapWidth = gHUD.m_scrinfo.iWidth * 0.625f;
-	m_iMapHeight = gHUD.m_scrinfo.iHeight * 0.625f;
-	m_iMapX = gHUD.m_scrinfo.iWidth / 2 - ( gHUD.m_scrinfo.iWidth * 0.625f ) / 2;
-	m_iMapY = gHUD.m_scrinfo.iHeight / 2 - ( gHUD.m_scrinfo.iHeight * 0.625f ) / 2;
-	m_iSmallMapWidth = gHUD.m_scrinfo.iWidth * 0.24f;
-	m_iSmallMapHeight = gHUD.m_scrinfo.iHeight * 0.24f;
-	m_iSmallMapX = gHUD.m_scrinfo.iWidth - gHUD.m_scrinfo.iWidth * 0.24 - gHUD.m_scrinfo.iWidth / 640.0f + gHUD.m_scrinfo.iWidth / 640.0f + 0.5f;
-	m_iSmallMapY = gHUD.m_scrinfo.iHeight / 480.0f + gHUD.m_scrinfo.iHeight / 480.0f + 0.5f;
+	m_iMapWidth = ScreenWidth * 0.625f;
+	m_iMapHeight = ScreenHeight * 0.625f;
+	m_iMapX = ScreenWidth / 2 - ( ScreenWidth * 0.625f ) / 2;
+	m_iMapY = ScreenHeight / 2 - ( ScreenHeight * 0.625f ) / 2;
+	m_iSmallMapWidth = ScreenWidth * 0.24f;
+	m_iSmallMapHeight = ScreenHeight * 0.24f;
+	m_iSmallMapX = ScreenWidth - ScreenWidth * 0.24 - ScreenWidth / 640.0f + ScreenWidth / 640.0f + 0.5f;
+	m_iSmallMapY = ScreenHeight / 480.0f + ScreenHeight / 480.0f + 0.5f;
 }
 
 void CHud::GetMapBounds( int &x, int &y, int &w, int &h )
@@ -1082,7 +1082,7 @@ void CHud::GetMapBounds( int &x, int &y, int &w, int &h )
 	y = m_iSmallMapY;
 
 	if( g_iUser1 )
-		y = gHUD.m_scrinfo.iHeight / 480.0f * 54.0f + 0.5f + m_iSmallMapY;
+		y = ScreenHeight / 480.0f * 54.0f + 0.5f + m_iSmallMapY;
 
 	w = m_iSmallMapWidth;
 	h = m_iSmallMapHeight;
@@ -1151,10 +1151,9 @@ float CHud::GetMortarUnDeployTime( void )
 	return m_fMortarUnDeployTime;
 }
 
-// WHAMER: TODO: vgui2
 void CHud::PostMortarValue( float value )
 {
-	
+	// Nothing.
 }
 
 extern int g_iWeaponFlags;

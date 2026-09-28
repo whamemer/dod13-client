@@ -716,7 +716,7 @@ int CHudAmmo::VidInit( void )
 		gWR.ger_binoculars.rcActive = gHUD.m_rgrcRects[idxBino];
 	}
 
-	if( gHUD.m_scrinfo.iWidth <= 639 )
+	if( ScreenWidth <= 639 )
 	{
 		giABWidth = 10;
 		giABHeight = 2;
@@ -1288,7 +1288,7 @@ int CHudAmmo::Draw( float flTime )
 	int x, y, r, g, b;
 	int clipHeight, clipWidth, ExtraClipWidth, ExtraClipHeight;
 	int numGrens, i_eclip, fullclips, remainder;
-	int height, barrelHeight, barrely;
+	int barrelHeight, barrely;
 
 	WEAPON *pw;
 	ClipInfo currentGun;
@@ -1336,9 +1336,7 @@ int CHudAmmo::Draw( float flTime )
 	if( currentGun.weapon_id == WEAPON_NONE )
 		return 0;
 
-	height = gHUD.m_scrinfo.iHeight;
-
-	y = height - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
+	y = ScreenHeight - gHUD.m_iFontHeight - gHUD.m_iFontHeight / 2;
 
 	if( pw->iAmmoType <= 0 )
 		return 0;
@@ -1372,7 +1370,7 @@ int CHudAmmo::Draw( float flTime )
 
 			if( ShowHudElement( 3 ) && numGrens > 0 )
 			{
-				x = gHUD.m_scrinfo.iWidth - ExtraClipWidth - 30;
+				x = ScreenWidth - ExtraClipWidth - 30;
 
 				gEngfuncs.pfnSPR_Set( sprite, r, g, b );
 				gEngfuncs.pfnSPR_DrawHoles( 0, x, gHUD.m_iFontHeight + y - ExtraClipHeight, grenArea );
@@ -1388,7 +1386,7 @@ int CHudAmmo::Draw( float flTime )
 		{
 			numGrens = gWR.CountAmmo( pw->iAmmoType );
 
-			x = gHUD.m_scrinfo.iWidth - ( ExtraClipWidth + clipWidth ) - 30;
+			x = ScreenWidth - ( ExtraClipWidth + clipWidth ) - 30;
 
 			if( ShowHudElement( 3 ) )
 			{
@@ -1417,7 +1415,7 @@ int CHudAmmo::Draw( float flTime )
 	{
 		if( ShowHudElement( 3 ) )
 		{
-			x = gHUD.m_scrinfo.iWidth - clipWidth - 30;
+			x = ScreenWidth - clipWidth - 30;
 
 			fullclips = pw->iClip / 10;
 			remainder = pw->iClip % 10;
@@ -1688,7 +1686,7 @@ int CHudAmmo::DrawWList( float flTime )
 int CHudAmmo::DrawWeaponList( float flTime )
 {
 	int x, y, r, g, b;
-	int height, width, iSlotHeight, averageHeight;
+	int width, iSlotHeight, averageHeight;
 	int iSlot, numdrawn, iPos;
 
 	WEAPON *pWpn;
@@ -1698,10 +1696,7 @@ int CHudAmmo::DrawWeaponList( float flTime )
 	if( !gpActiveSel )
 		return 0;
 
-	height = gHUD.m_scrinfo.iHeight;
-	width = gHUD.m_scrinfo.iWidth;
-
-	averageHeight = height / 2 - 150;
+	averageHeight = ScreenHeight / 2 - 150;
 	iSlotHeight = averageHeight;
 
 	for( iSlot = 0; iSlot < 5; iSlot++ )
@@ -1718,7 +1713,7 @@ int CHudAmmo::DrawWeaponList( float flTime )
 			iSlotHeight += 50;
 			numdrawn++;
 
-			x = width + pWpn->rcActive.left - 5 - pWpn->rcActive.right;
+			x = ScreenWidth + pWpn->rcActive.left - 5 - pWpn->rcActive.right;
 
 			r = g = b = ( gpActiveSel == pWpn ) ? 255 : 80;
 

@@ -564,7 +564,7 @@ int CObjectiveIcons::Draw( float flTime )
 		int y, digitY;
 		if( g_iUser1 )
 		{
-			y = ( gHUD.m_scrinfo.iHeight / 480.0f * 54.0f ) + 0.5f;
+			y = ( ScreenHeight / 480.0f * 54.0f ) + 0.5f;
 			digitY = y + 6;
 		}
 		else

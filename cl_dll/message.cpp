@@ -60,8 +60,6 @@ int CHudMessage::VidInit( void )
 	return 1;
 }
 
-//vgui2::HFont CHudMessage::GetFont( void );
-
 void CHudMessage::Reset( void )
 {
  	memset( m_pMessages, 0, sizeof(m_pMessages[0]) * maxHUDMessages );

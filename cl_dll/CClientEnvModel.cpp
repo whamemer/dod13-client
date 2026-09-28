@@ -81,7 +81,7 @@ void CClientEnvModel::AddEnvModel( env_model_t *pModel )
 	if( !pModel )
 		return;
 
-	if( m_iNumEnvModels > 191 )
+	if( m_iNumEnvModels >= MAX_ENV_MODELS )
 	{
 		gEngfuncs.Con_DPrintf( "CClientEnvModel::AddEnvModel: Too many static env_models! Limit is %d\n", 192 );
 		return;
@@ -152,7 +152,7 @@ void CClientEnvModel::Think( void )
 		if( m_teEnvModelTE->die >= 0.0f )
 			return;
 
-		org = { 0.0f, 0.0f, 0.0f };
+		org = Vector( 0.0f, 0.0f, 0.0f );
 		modelindex = 0;
 		
 		// WHAMER: Hello, Day Of Defeat author!
@@ -160,7 +160,7 @@ void CClientEnvModel::Think( void )
 	}
 	else
 	{
-		org = { 0.0f, 0.0f, 0.0f };
+		org = Vector( 0.0f, 0.0f, 0.0f );
 		modelindex = 0;
 	}
 

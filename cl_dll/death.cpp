@@ -112,12 +112,12 @@ int CHudDeathNotice::Draw( float flTime )
 	gHUD.GetMapBounds( mapX, mapY, mapWidth, mapHeight );
 	if( gHUD.GetMinimapState() == 2 )
 	{
-		float scaleY = ( float ) gHUD.m_scrinfo.iHeight / 480.0f;
+		float scaleY = ( float ) ScreenHeight / 480.0f;
 		yPos = mapHeight + mapY + ( int ) ( scaleY + scaleY + 0.5f );
 	}
 	else if( g_iUser1 )
 	{
-		float scaleY = ( float ) gHUD.m_scrinfo.iHeight / 480.0f;
+		float scaleY = ( float ) ScreenHeight / 480.0f;
 		yPos = ( int ) ( scaleY * 42.0f + 0.5f ) + 20;
 	}
 
@@ -141,7 +141,7 @@ int CHudDeathNotice::Draw( float flTime )
 
 		int victimLen = ConsoleStringLen( rgDeathNoticeList[i].szVictim );
 		wrect_t *pRect = &gHUD.m_rgrcRects[id];
-		int spriteX = gHUD.m_scrinfo.iWidth - victimLen - ( pRect->right - pRect->left ) - pRect->right;
+		int spriteX = ScreenWidth - victimLen - ( pRect->right - pRect->left ) - pRect->right;
 
 		if( !rgDeathNoticeList[i].iSuicide )
 		{

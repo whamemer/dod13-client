@@ -197,7 +197,7 @@ int CHudSayText::GetTextPrintY( void )
 	{
 		if( !gEngfuncs.IsSpectateOnly() )
 		{
-			iRetVal = gHUD.m_scrinfo.iHeight - ( gHUD.m_iFontHeight * 2.75f );
+			iRetVal = ScreenHeight - ( gHUD.m_iFontHeight * 2.75f );
 			return iRetVal - 5 * line_height - ( line_height * 0.5f );
 		}
 	}

@@ -258,7 +258,7 @@ void CHudScope::DrawTriApiScope( void )
 			return;
 
 		float fov_x = ( in_fov != 0 ) ? ( float ) in_fov : 90.0f;
-		float fov_y = CalcFov( fov_x, ( float ) gHUD.m_scrinfo.iWidth, ( float ) gHUD.m_scrinfo.iHeight );
+		float fov_y = CalcFov( fov_x, ( float ) ScreenHeight, ( float ) ScreenHeight );
 		float dist = 5.0f;
 
 		float width = tan( fov_x / 360.0f * M_PI ) * dist * 1.1f;

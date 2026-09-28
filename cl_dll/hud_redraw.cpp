@@ -369,7 +369,7 @@ int CHud::DrawHudStringReverse( int xpos, int ypos, int iMinX, const char *szStr
 		xpos -= gHUD.m_scrinfo.charWidths[(unsigned char)*szIt];
 	if( xpos < iMinX )
 		xpos = iMinX;
-	DrawHudString( xpos, ypos, gHUD.m_scrinfo.iWidth, szString, r, g, b );
+	DrawHudString( xpos, ypos, ScreenWidth, szString, r, g, b );
 	return xpos;
 }
 

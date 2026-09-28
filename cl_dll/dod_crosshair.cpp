@@ -41,8 +41,8 @@ int CHudDoDCrossHair::Init( void )
 {
 	HOOK_MESSAGE( ClanTimer );
 	gHUD.AddHudElem( this );
-	m_iYPos = gHUD.m_scrinfo.iHeight / 2;
-	m_iXPos = gHUD.m_scrinfo.iWidth / 2;
+	m_iYPos = ScreenHeight / 2;
+	m_iXPos = ScreenWidth / 2;
 	m_iFlags |= HUD_ACTIVE;
 	m_fMoveTime = 0.0f;
 	return 1;
@@ -151,8 +151,8 @@ void CHudDoDCrossHair::DrawDynamicCrossHair( void )
 
 	CrossHairWidth = GetCrossHairWidth();
 
-	iHalfWidth = gHUD.m_scrinfo.iWidth / 2;
-	iHalfHeight = gHUD.m_scrinfo.iHeight / 2;
+	iHalfWidth = ScreenWidth / 2;
+	iHalfHeight = ScreenHeight / 2;
 	frame = 0;
 
 	gEngfuncs.pfnSPR_Set( CrossSprite2dot, 255, 255, 255 );
@@ -229,8 +229,8 @@ void CHudDoDCrossHair::DrawCustomCrossHair( int style )
 	HSPRITE sprite = m_hCustomCrosshair;
 	gEngfuncs.pfnSPR_Set( sprite, 255, 255, 255 );
 
-	int x = ( gHUD.m_scrinfo.iWidth / 2 ) - ( w / 2 );
-	int y = ( gHUD.m_scrinfo.iHeight / 2 ) - ( h / 2 );
+	int x = ( ScreenWidth / 2 ) - ( w / 2 );
+	int y = ( ScreenHeight / 2 ) - ( h / 2 );
 
 	gEngfuncs.pfnSPR_DrawHoles( 0, x, y, &area );
 }
@@ -380,8 +380,8 @@ void CHudDoDCrossHair::DrawSpectatorCrossHair( void )
 		w = area.right - area.left;
 		h = area.bottom - area.top;
 
-		int x = ( gHUD.m_scrinfo.iWidth / 2 ) - ( w / 2 );
-		int y = ( gHUD.m_scrinfo.iHeight / 2 ) - ( h / 2 );
+		int x = ( ScreenWidth / 2 ) - ( w / 2 );
+		int y = ( ScreenHeight / 2 ) - ( h / 2 );
 
 		gEngfuncs.pfnSPR_DrawHoles( 0, x, y, &area );
 	}
@@ -402,7 +402,7 @@ void CHudDoDCrossHair::DrawClanTimer( float flTime )
 		time_mins = time_remaining2 / 60;
 		time_secs = time_remaining2 - ( time_mins * 60 );
 
-		y = gHUD.m_scrinfo.iHeight / 3;
+		y = ScreenHeight / 3;
 		x = -1;
 
 		if( time_secs > 1 || time_mins > 0 )

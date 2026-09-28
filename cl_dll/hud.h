@@ -328,9 +328,7 @@ class CHudDoDCrossHair : CHudBase
 public:
 	int Init( void );
 	int VidInit( void );
-	//void SetDoDCrosshair( void );
 	int Draw( float flTime );
-	void Reset( void ) { return; }
 	CHudMsgFunc( ClanTimer );
 	bool ShouldDrawCrossHair( void );
 	float GetCurrentWeaponAccuracy( void );
@@ -339,6 +337,8 @@ public:
 	void DrawDynamicCrossHair( void );
 	void DrawCustomCrossHair( int style );
 	int GetCrossHairWidth( void );
+
+	void Reset( void ) { return; }
 
 	float m_fClanTimer;
 
@@ -389,7 +389,6 @@ public:
 	void DrawOverviewLayer( void );
 	void DrawOverviewEntities( void );
 	void CheckOverviewEntities( void );
-	// void CreateMapSprite( float, int, int, int, int, const class Vector &, const class Vector &, class Vector & );
 	void HandleMapButton( void );
 	void HandleMapZoomButton( void );
 	void SetMapState( int mapstate );
@@ -482,15 +481,16 @@ public:
 	int Draw( float flTime );
 	void Reset( void );
 	CHudMsgFunc( StatusValue );
-	//int GetTargetHealth( void );
-	//int GetTargetIndex( void );
-	//int GetTargetTeam( void );
 	char *GetTargetName( void );
 	void CreateEntities( void );
 	void DrawEntitiesOverTeam( void );
 	void DrawEntitiesOverTarget( void );
 	bool InDeathCamMode( void );
 	void Think( void );
+
+	int GetTargetHealth( void ) { return m_iHealth; }
+	int GetTargetIndex( void ) { return m_iTargetIndex; }
+	int GetTargetTeam( void ) { return m_iTargetTeam; }
 
 	void UpdateWhosTalking( int index, qboolean bTalking )
 	{
@@ -606,8 +606,6 @@ public:
 	void Reset( void );
 	int Draw( float flTime );
 	CHudMsgFunc( ShowMenu );
-	// void ShowMenu_Votekick( int );
-	// void ShowMenu_ListPlayers( int );
 	void SelectMenuItem( int menu_item );
 
 	int m_fMenuDisplayed;
@@ -800,7 +798,6 @@ public:
 	void MessageScanNextChar( void );
 	void Reset( void );
 	void HintMessageAdd( const char *pText );
-	// vgui2::HFont GetFont( void );
 
 	typedef struct
 	{
@@ -860,7 +857,6 @@ public:
 	CHudMsgFunc( GameRules );
 	CHudMsgFunc( ResetSens );
 	CHudMsgFunc( CameraView );
-	//int MsgFunc_ParaLand( const char *pszName, int iSize, void *pbuf );
 	int Draw( float flTime );
 	int VidInit( void );
 };
@@ -892,8 +888,6 @@ public:
 	void StartDrawingCredits( void );
 	void DrawCredits( float flTime );
 	void DrawMarkerIcon( HSPRITE pSpr );
-	//void DrawObjectiveTimer( void );
-	//void UpdateReinforcementTimer( void );
 
 	int m_iHealth;
 	char *m_szObjectIcon;
@@ -986,7 +980,6 @@ public:
 	int VidInit( void );
 	void Think( void );
 	void AddParticleSystem( particle_shooter_t *pShooter );
-	//int MsgFunc_PReg( const char *pszName, int iSize, void *pbuf );
 	CHudMsgFunc( PShoot );
 
 private:
@@ -997,6 +990,8 @@ private:
 //
 //-----------------------------------------------------
 //
+#define MAX_ENV_MODELS 192
+
 struct env_model_t
 {
 	char szModel[64];
@@ -1018,12 +1013,20 @@ public:
 	void Think( void );
 	void RemoveAllModels( void );
 	void AddEnvModel( env_model_t *pModel );
-	int GetNumModels( void );
-	env_model_t *GetModel( int iModel );
+
+	int GetNumModels( void ) { return m_iNumEnvModels; }
+
+	env_model_t *GetModel( int iModel )
+	{
+		if( iModel < 0 || iModel >= MAX_ENV_MODELS )
+			return NULL;
+
+		return &m_sEnvModels[iModel];
+	}
 
 private:
 	TEMPENTITY *m_teEnvModelTE;
-	env_model_t m_sEnvModels[192];
+	env_model_t m_sEnvModels[MAX_ENV_MODELS];
 	int m_iNumEnvModels;
 };
 
@@ -1095,6 +1098,8 @@ private:
 //
 //-----------------------------------------------------
 //
+#define VGUI2_CHAR_BUFFER 512
+
 class CHudVGUI2Print : public CHudBase
 {
 public:
@@ -1113,7 +1118,7 @@ public:
 
 private:
 	float m_flVGUI2StringTime;
-	char  m_szCharBuf[512];
+	char  m_szCharBuf[VGUI2_CHAR_BUFFER];
 	float m_fR, m_fG, m_fB;
 	int   m_iX, m_iY;
 
@@ -1214,7 +1219,7 @@ public:
 	int		m_iSensLevel;
 	int		m_iFontHeight;
 	int		m_iFontEngineHeight;
-	char	m_szTeamNames[5][32];
+	char	m_szTeamNames[5][MAX_TEAMNAME_SIZE];
 
 	int		m_iMapX;
 	int		m_iMapY;
@@ -1395,14 +1400,14 @@ public:
 	float GetMortarUnDeployTime( void );
 	bool IsTeamPara( int team );
 	char *GetPlayerClassName( int playerclass );
-	void SetFOV( int fov ) { m_iFOV = fov; }
-	int GetFOV( void );
 	void DoRecoil( int weapon_id );
 	void GetWeaponRecoilAmount( int weaponId, float &flPitchRecoil, float &flYawRecoil );
 	void SetRecoilAmount( float flPitchRecoil, float flYawRecoil );
 	void PopRecoil( float frametime, float &flPitchRecoil, float &flYawRecoil );
-
 	void GetAllPlayersInfo( void );
+
+	void SetFOV( int fov ) { m_iFOV = fov; }
+	int GetFOV( void ) { return m_iFOV; }
 };
 
 extern CHud gHUD;

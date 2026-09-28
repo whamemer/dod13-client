@@ -74,37 +74,37 @@ enum e_ammo
 };
 
 // HLDM Weapon placeholder entities.
-class CCOLT               g_Colt;
-class CLUGER              g_Luger;
-class CGarand             g_Garand;
-class CScopedKar          g_ScopedKar;
-class CThompson           g_Thompson;
-class CSPRING             g_Spring;
-class CKAR                g_KAR;
-class CBAR                g_BAR;
-class CMP40               g_MP40;
-class CMP44               g_MP44;
-class CMG42               g_MG42;
-class C30CAL              g_30CAL;
-class CMG34               g_MG34;
-class CAmerKnife          g_AmerKnife;
-class CGerKnife           g_GerKnife;
-class CSpade              g_Spade;
-class CM1Carbine          g_M1Carbine;
-class CGreaseGun          g_GreaseGun;
-class CFG42               g_FG42;
-class CK43                g_K43;
-class CENFIELD            g_Enfield;
-class CSTEN               g_Sten;
-class CBREN               g_Bren;
-class CWEBLEY             g_Webley;
-class CBazooka            g_Bazooka;
-class CPschreck           g_Pschreck;
-class CPIAT               g_PIAT;
-class CHandGrenade        g_HandGrenade;
-class CStickGrenade       g_StickGrenade;
-class CHandGrenadeEx      g_HandGrenadeEx;
-class CStickGrenadeEx     g_StickGrenadeEx;
+static CCOLT               g_Colt;
+static CLUGER              g_Luger;
+static CGarand             g_Garand;
+static CScopedKar          g_ScopedKar;
+static CThompson           g_Thompson;
+static CSPRING             g_Spring;
+static CKAR                g_KAR;
+static CBAR                g_BAR;
+static CMP40               g_MP40;
+static CMP44               g_MP44;
+static CMG42               g_MG42;
+static C30CAL              g_30CAL;
+static CMG34               g_MG34;
+static CAmerKnife          g_AmerKnife;
+static CGerKnife           g_GerKnife;
+static CSpade              g_Spade;
+static CM1Carbine          g_M1Carbine;
+static CGreaseGun          g_GreaseGun;
+static CFG42               g_FG42;
+static CK43                g_K43;
+static CENFIELD            g_Enfield;
+static CSTEN               g_Sten;
+static CBREN               g_Bren;
+static CWEBLEY             g_Webley;
+static CBazooka            g_Bazooka;
+static CPschreck           g_Pschreck;
+static CPIAT               g_PIAT;
+static CHandGrenade        g_HandGrenade;
+static CStickGrenade       g_StickGrenade;
+static CHandGrenadeEx      g_HandGrenadeEx;
+static CStickGrenadeEx     g_StickGrenadeEx;
 
 /*
 ======================
@@ -385,7 +385,7 @@ CBaseEntity::PostMortarValue
 */
 void CBasePlayerWeapon::PostMortarValue( float value )
 {
-	// need vgui2 support
+	// Nothing.
 }
 
 /*

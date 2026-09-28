@@ -76,10 +76,6 @@ int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 
 	m_flMouseSensitivity = 0.0f;
 
-	/* WHAMER: TODO: vgui2
-	if( !g_iVuser1z && gDoDViewPortInterface->UpdateScoreBoard() )
-		return 1*/
-
 	m_iFOV = 0;
 	g_lastFOV = 0.0f;
 	return 1;
@@ -93,12 +89,10 @@ int CHud::MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+extern void DoD_LoadClientEnts( const char *map );
+
 int CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
-	/* WHAMER: TODO: vgui2
-	if( gViewPortInterface )
-		gViewPortInterface->OnLevelChange();*/
-
 	// prepare all hud data
 	HUDLIST *pList = m_pHudList;
 
@@ -111,7 +105,7 @@ int CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 
 	//Probably not a good place to put this.
 	pBeam = pBeam2 = NULL;
-	//DoD_LoadClientEnts( gEngfuncs.pfnGetLevelName() );
+	DoD_LoadClientEnts( gEngfuncs.pfnGetLevelName() );
 	return 1;
 }
 
