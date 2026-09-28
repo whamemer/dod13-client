@@ -222,10 +222,6 @@ int CHudStatusBar::MsgFunc_StatusValue( const char *pszName, int iSize, void *pb
 {
 	BEGIN_READ( pbuf, iSize );
 	m_iHealth = READ_BYTE();
-
-	if( g_iUser1 )
-		return 0;
-		// vgui2
 	return 1;
 }
 
@@ -262,7 +258,6 @@ void CHudStatusBar::CreateEntities( void )
 		}
 	}
 }
-
 
 void CHudStatusBar::DrawEntitiesOverTeam( void )
 {
