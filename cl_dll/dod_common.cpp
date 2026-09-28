@@ -30,8 +30,8 @@ DECLARE_MESSAGE( m_DoDCommon, ResetSens )
 bool b_cutscene_return;
 int i_lastspectoggle;
 float fl_DeadTargetSwitch;
-extern int i_dodmusic, g_iDeadFlag, g_iVuser1x, g_iUser3, g_iMovetype;
-int g_iinjump, g_ionground;
+extern int i_dodmusic, g_iDeadFlag, g_iVuser1x, g_iUser3, g_iMovetype, g_ionground;
+int g_iinjump;
 int g_ihidexhair;
 float i_ProneCounter;
 

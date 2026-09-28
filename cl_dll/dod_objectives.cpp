@@ -669,9 +669,9 @@ int CObjectiveIcons::Draw( float flTime )
 				if( ent )
 				{
 					ent->baseline.iuser1 = 1;
-					Vector p_origin = pPoint->m_rOrigin;
+					vec3_t p_origin = pPoint->m_rOrigin;
 					float clientTime = gEngfuncs.GetClientTime();
-					gHUD.m_Spectator.AddOverviewEntityToMap( icon, ent, clientTime - 1.0f, &p_origin );
+					gHUD.m_Spectator.AddOverviewEntityToMap( icon, ent, clientTime - 1.0f, p_origin );
 				}
 			}
 
