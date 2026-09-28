@@ -142,7 +142,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && always()
-    needs: [ android, windows, linux, psvita, macos ]
+    needs: [ android, windows, linux ]
     steps:
       - name: Fetch artifacts
         uses: actions/download-artifact@v4
