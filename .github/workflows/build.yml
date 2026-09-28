@@ -1,137 +1,167 @@
-name: build
+name: Build and Deploy
+on: [ push, pull_request ]
 
-on: [push, pull_request]
+concurrency:
+  group: continuous
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install ccache
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+          cache: gradle
+      - name: Setup compilation cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: Android-ccache-${{ github.sha }}
+          restore-keys: |
+            Android-ccache-${{ github.ref_name }}
+            Android-ccache-
+      - name: Build and Sign APK
+        env:
+          KEYSTORE_FILE_PATH: ${{ github.workspace }}/signingkey.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [[ -n "${{ secrets.SIGNING_KEY }}" ]]; then
+            echo "${{ secrets.SIGNING_KEY }}" | base64 --decode > ${{ env.KEYSTORE_FILE_PATH }}
+            ./gradlew assembleGitContinuous
+            mv app/build/outputs/apk/git/continuous/app-git-continuous.apk DOD13Client-Android.apk
+          else
+            ./gradlew assembleGitDebug
+            mv app/build/outputs/apk/git/debug/app-git-debug.apk DOD13Client-Android.apk
+          fi
+        working-directory: android
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android
+          path: android/DOD13Client-Android.apk
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    env:
+      SCCACHE_DIR: ${{ github.workspace }}/.sccache
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            cc: gcc
-            cxx: g++
-          - os: ubuntu-latest
-            cc: clang
-            cxx: clang++
-          - os: windows-latest
-            cc: cl
-            cxx: cl
-    env:
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
-      STEAMRT_SNAPSHOT: latest-steam-client-general-availability
+        arch: [ 'x86', 'amd64' ]
+      fail-fast: false
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Checkout steam-runtime
-      if: startsWith(matrix.os, 'ubuntu')
-      uses: actions/checkout@v4
-      with:
-        repository: ValveSoftware/steam-runtime
-        path: steam-runtime
-    - name: Cache steam-runtime
-      if: startsWith(matrix.os, 'ubuntu')
-      id: cache-steam-runtime
-      uses: actions/cache@v4
-      with:
-        path: com.valvesoftware.SteamRuntime.Sdk-i386-scout-sysroot.tar.gz
-        key: steam-runtime-${{ env.STEAMRT_SNAPSHOT }}
-    - name: Download steam-runtime
-      if: startsWith(matrix.os, 'ubuntu') && steps.cache-steam-runtime.outputs.cache-hit != 'true'
-      run: wget --no-verbose https://repo.steampowered.com/steamrt-images-scout/snapshots/${{ env.STEAMRT_SNAPSHOT }}/com.valvesoftware.SteamRuntime.Sdk-i386-scout-sysroot.tar.gz
-    - name: Install steam runtime
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-        sudo apt update
-        ./steam-runtime/setup_chroot.sh --i386 --tarball ./com.valvesoftware.SteamRuntime.Sdk-i386-scout-sysroot.tar.gz
-        sudo sed -i 's/groups=sudo/groups=adm/g' /etc/schroot/chroot.d/steamrt_scout_i386.conf
-
-    - name: Build on Linux
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-        schroot --chroot steamrt_scout_i386 -- cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DPOLLY=ON -B build -S . -DCMAKE_EXE_LINKER_FLAGS="-Wl,--no-undefined" -DCMAKE_INSTALL_PREFIX="$PWD/dist"
-        schroot --chroot steamrt_scout_i386 -- cmake --build build --target all
-        schroot --chroot steamrt_scout_i386 -- cmake --build build --target install
-    - name: Build on Linux with vgui
-      if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.cc, 'gcc')
-      run: |
-        schroot --chroot steamrt_scout_i386 -- cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DPOLLY=ON -B build-vgui -S . -DCMAKE_EXE_LINKER_FLAGS="-Wl,--no-undefined" -DUSE_VGUI=ON -DCMAKE_INSTALL_PREFIX="$PWD/dist-vgui"
-        cp vgui_support/vgui-dev/lib/vgui.so build-vgui/cl_dll
-        cp vgui_support/vgui-dev/lib/vgui.so build-vgui
-        schroot --chroot steamrt_scout_i386 -- cmake --build build-vgui --target all
-        schroot --chroot steamrt_scout_i386 -- cmake --build build-vgui --target install
-
-    - name: Set developer command prompt for Windows x86
-      if: startsWith(matrix.os, 'windows')
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x86
-
-    - name: Build on Windows
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build -S . -DCMAKE_INSTALL_PREFIX="dist"
-        cmake --build build --target all
-        cmake --build build --target install
-    - name: Build on Windows with vgui
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build -S . -DUSE_VGUI=ON -DCMAKE_INSTALL_PREFIX="dist-vgui"
-        cmake --build build --target all
-        cmake --build build --target install
-
-    - name: Set developer command prompt for Windows x86_64
-      if: startsWith(matrix.os, 'windows')
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: x64
-    - name: Build on Windows x64
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build64 -S . -DCMAKE_INSTALL_PREFIX="dist64" -D64BIT=ON
-        cmake --build build64 --target all
-        cmake --build build64 --target install
-
-    - name: Extract branch name
-      shell: bash
-      run: echo "branch=$(echo ${GITHUB_REF#refs/heads/} | tr '/' '_')" >> $GITHUB_OUTPUT
-      id: extract_branch
-    - name: Extract gamedir
-      shell: bash
-      run: echo "gamedir=$(grep build/CMakeCache.txt -Ee 'GAMEDIR:STRING=[a-z]+' | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
-      id: extract_gamedir
-    - name: Upload linux artifact
-      if: startsWith(matrix.os, 'ubuntu') && matrix.cc == 'gcc'
-      uses: actions/upload-artifact@v4
-      with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-linux
-        path: dist/${{ steps.extract_gamedir.outputs.gamedir }}
-    - name: Upload linux artifact with vgui
-      if: startsWith(matrix.os, 'ubuntu') && matrix.cc == 'gcc'
-      uses: actions/upload-artifact@v4
-      with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-linux-vgui
-        path: dist-vgui/${{ steps.extract_gamedir.outputs.gamedir }}
-    - name: Upload windows artifact
-      if: startsWith(matrix.os, 'windows')
-      uses: actions/upload-artifact@v4
-      with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-windows
-        path: dist/${{ steps.extract_gamedir.outputs.gamedir }}
-    - name: Upload windows x64 artifact
-      if: startsWith(matrix.os, 'windows')
-      uses: actions/upload-artifact@v4
-      with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-windows_x64
-        path: dist64/${{ steps.extract_gamedir.outputs.gamedir }}
-    - name: Upload windows artifact with vgui
-      if: startsWith(matrix.os, 'windows')
-      uses: actions/upload-artifact@v4
-      with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-windows-vgui
-        path: dist-vgui/${{ steps.extract_gamedir.outputs.gamedir }}
-
+      - name: Checkout sources
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          submodules: recursive
+      - name: Setup Visual Studio
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+      - name: Setup YY-Thunks
+        if: matrix.arch == 'x86'
+        run: bash scripts/setup_yy_thunks.sh
+      - name: Setup compilation cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ runner.os }}-${{ matrix.arch }}-${{ github.sha }}
+          restore-keys: |
+            sccache-${{ runner.os }}-${{ matrix.arch }}-${{ github.ref_name }}
+            sccache-${{ runner.os }}-${{ matrix.arch }}-
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
+      - name: Configure
+        run: cmake -DCMAKE_POLICY_DEFAULT_CMP0141=NEW --preset "win32-ci-${{ matrix.arch }}"
+      - name: Build and Package
+        run: |
+          cmake --build .
+          cpack --config CPackConfig.cmake
+        working-directory: build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-${{ matrix.arch }}
+          path: build/*.zip
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ 'i386', 'amd64' ]
+      fail-fast: false
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install libatomic1:i386 libgcc-s1:i386 \
+            libstdc++6:i386 gcc-multilib g++-multilib \
+            ninja-build libfontconfig-dev:i386 libfontconfig-dev ccache
+      - name: Setup compilation cache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-${{ matrix.arch }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-ccache-${{ github.ref_name }}
+            ${{ runner.os }}-${{ matrix.arch }}-ccache-
+      - name: Configure
+        run: cmake --preset "linux-ci-${{ matrix.arch }}"
+      - name: Build and Package
+        run: |
+          cmake --build .
+          cpack --config CPackConfig.cmake
+        working-directory: build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-${{ matrix.arch }}
+          path: build/*.tar.gz
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && always()
+    needs: [ android, windows, linux, psvita, macos ]
+    steps:
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Remove old release
+        run: |
+          TAG_NAME=${{ github.ref_name == 'main' && 'continuous' || format('continuous-{0}', github.ref_name) }}
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          if gh release list --repo ${{ github.repository }} | grep -q -e "$TAG_NAME"; then
+            gh release delete "$TAG_NAME" --yes --cleanup-tag --repo ${{ github.repository }}
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload new release
+        run: |
+          TAG_NAME=${{ github.ref_name == 'main' && 'continuous' || format('continuous-{0}', github.ref_name) }}
+          gh release create "$TAG_NAME" --title "DOD13Client development build" \
+            --prerelease --generate-notes \
+            DOD13Client-* --repo ${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
