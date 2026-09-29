@@ -992,6 +992,8 @@ private:
 //
 #define MAX_ENV_MODELS 192
 
+#define SF_ENVMODEL_ANIMATION 0x10
+
 struct env_model_t
 {
 	char szModel[64];

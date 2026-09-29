@@ -9,6 +9,19 @@
 #if !defined ( STUDIOMODELRENDERER_H )
 #define STUDIOMODELRENDERER_H
 
+#define BONE_CACHE_HASH_SIZE 128
+
+#define COLORMAP_TOP_MASK       0xFF
+#define COLORMAP_BOTTOM_MASK    0xFF00
+#define COLORMAP_BOTTOM_SHIFT   8
+
+struct bonecache_hash_item_t 
+{
+	char szCachedBoneName[32];
+	float rgCachedBoneTransform[3][4];
+	float rgCachedLightTransform[3][4];
+};
+
 /*
 ====================
 CStudioModelRenderer
@@ -30,6 +43,8 @@ public:
 	virtual int StudioDrawModel( int flags );
 	virtual int StudioDrawPlayer( int flags, struct entity_state_s *pplayer );
 
+	int StudioDrawCurrentEntity( int flags );
+
 public:
 	// Local interfaces
 	//
@@ -41,11 +56,11 @@ public:
 	virtual void StudioSetUpTransform( int trivial_accept );
 
 	// Set up model bone positions
-	virtual void StudioSetupBones( void );	
+	virtual void StudioSetupBones( void );
 
 	// Find final attachment points
 	virtual void StudioCalcAttachments( void );
-	
+
 	// Save bone matrices and names
 	virtual void StudioSaveBones( void );
 
@@ -81,7 +96,7 @@ public:
 
 	// Finalize rendering
 	virtual void StudioRenderFinal( void );
-	
+
 	// GL&D3D vs. Software renderer finishing functions
 	virtual void StudioRenderFinal_Software( void );
 	virtual void StudioRenderFinal_Hardware( void );
@@ -96,17 +111,23 @@ public:
 	// Process movement of player
 	virtual void StudioProcessGait( entity_state_t *pplayer );
 
+	// DoD Bones
+	void EmptyBoneCacheHashTable( void );
+	bool FindBoneInCache( char *name, float ( *boneTransformOut )[4], float ( *lightTransformOut )[4] );
+	void AddBoneToCache( char *name, float ( *boneTransformOut )[4], float ( *lightTransformOut )[4] );
+	void PrintCache( void );
+
 public:
 
 	// Client clock
-	double			m_clTime;				
+	double			m_clTime;
 	// Old Client clock
-	double			m_clOldTime;			
+	double			m_clOldTime;
 
 	// Do interpolation?
-	int				m_fDoInterp;			
+	int				m_fDoInterp;
 	// Do gait estimation?
-	int				m_fGaitEstimation;		
+	int				m_fGaitEstimation;
 
 	// Current render frame #
 	int				m_nFrameCount;
@@ -114,14 +135,18 @@ public:
 	// Cvars that studio model code needs to reference
 	//
 	// Use high quality models?
-	cvar_t			*m_pCvarHiModels;	
+	cvar_t			*m_pCvarHiModels;
 	// Developer debug output desired?
 	cvar_t			*m_pCvarDeveloper;
 	// Draw entities bone hit boxes, etc?
 	cvar_t			*m_pCvarDrawEntities;
 
+	// DoD
+	cvar_t *m_pDrawModels;
+	cvar_t *m_pDrawPlayerModels;
+
 	// The entity which we are currently rendering.
-	cl_entity_t		*m_pCurrentEntity;		
+	cl_entity_t		*m_pCurrentEntity;
 
 	// The model for the entity being rendered
 	model_t			*m_pRenderModel;
@@ -137,7 +162,7 @@ public:
 
 	// Pointer to header block for studio model data
 	studiohdr_t		*m_pStudioHeader;
-	
+
 	// Pointers to current body part and submodel
 	mstudiobodyparts_t *m_pBodyPart;
 	mstudiomodel_t	*m_pSubModel;
@@ -152,13 +177,14 @@ public:
 
 	// Caching
 	// Number of bones in bone cache
-	int				m_nCachedBones; 
+	int				m_nCachedBones;
 	// Names of cached bones
 	char			m_nCachedBoneNames[MAXSTUDIOBONES][32];
 	// Cached bone & light transformation matrices
 	float			m_rgCachedBoneTransform[MAXSTUDIOBONES][3][4];
 	float			m_rgCachedLightTransform[MAXSTUDIOBONES][3][4];
 
+	bonecache_hash_item_t boneCacheHashTable[MAXSTUDIOBONES];
 	// Software renderer scale factors
 	float			m_fSoftwareXScale, m_fSoftwareYScale;
 
@@ -175,13 +201,13 @@ public:
 
 	// Matrices
 	// Model to world transformation
-	float			(*m_protationmatrix)[3][4];	
+	float			( *m_protationmatrix )[3][4];
 	// Model to view transformation
-	float			(*m_paliastransform)[3][4];
+	float			( *m_paliastransform )[3][4];
 
 	// Concatenated bone and light transforms
-	float			(*m_pbonetransform)[MAXSTUDIOBONES][3][4];
-	float			(*m_plighttransform)[MAXSTUDIOBONES][3][4];
+	float			( *m_pbonetransform )[MAXSTUDIOBONES][3][4];
+	float			( *m_plighttransform )[MAXSTUDIOBONES][3][4];
 };
 
 #endif // STUDIOMODELRENDERER_H
