@@ -30,9 +30,12 @@ extern cvar_t *cl_particlefx;
 
 int CParticleShooter::Init( void )
 {
-	m_iFlags |= HUD_ACTIVE;
 	gHUD.AddHudElem( this );
+
+	m_iFlags |= HUD_ACTIVE;
+
 	HOOK_MESSAGE( PShoot );
+
 	memset( m_sShooters, 0, sizeof( m_sShooters ) );
 	m_iNumShooters = 0;
 	return 1;

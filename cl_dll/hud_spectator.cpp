@@ -84,7 +84,7 @@ void SpectatorSpray( void )
 
 void SpectatorHelp( void )
 {
-  	char *text = CHudTextMessage::BufferedLocaliseTextString( "#Spec_Help_Text" );
+  	char *text = gHUD.m_TextMessage.BufferedLocaliseTextString( "#Spec_Help_Text" );
 
 	if( text )
 	{
@@ -799,7 +799,7 @@ void CHudSpectator::SetModes( int iNewMainMode, int iNewInsetMode )
 
 		char string[128];
 		sprintf( string, "#Spec_Mode%d", g_iUser1 );
-		sprintf( string, "%c%s", HUD_PRINTCENTER, CHudTextMessage::BufferedLocaliseTextString( string ) );
+		sprintf( string, "%c%s", HUD_PRINTCENTER, gHUD.m_TextMessage.BufferedLocaliseTextString( string ) );
 		gHUD.m_TextMessage.MsgFunc_TextMsg( NULL, strlen( string ) + 1, string );
 	}
 }
@@ -1102,195 +1102,176 @@ void CHudSpectator::DrawOverviewLayer()
 
 void CHudSpectator::DrawOverviewEntities()
 {
-	int			i, ir, ig, ib;
+	int i, ir, ig, ib;
 	struct model_s *hSpriteModel;
-	vec3_t			origin, angles, point, forward, right, left, up, world, screen, offset;
-	float			x, y, z, r, g, b, sizeScale = 4.0f;
-	cl_entity_t *	ent;
-	float rmatrix[3][4];	// transformation matrix
+	Vector origin, angles, point, forward, right, left, up, screen, offset;
+	float x, y, z, sizeScale = 4.0f;
+	cl_entity_t *ent;
+	float rmatrix[3][4];
 
-	float			zScale = ( 90.0f - v_angles[0] ) / 90.0f;
-
+	float zScale = ( 90.0f - v_angles.x ) / 90.0f;
 	z = m_OverviewData.layersHeights[0] * zScale;
-	// get yellow/brown HUD color
-	UnpackRGB( ir, ig, ib, RGB_YELLOWISH );
-	r = (float)ir / 255.0f;
-	g = (float)ig / 255.0f;
-	b = (float)ib / 255.0f;
 
 	gEngfuncs.pTriAPI->CullFace( TRI_NONE );
 
-	for( i = 0; i < MAX_PLAYERS; i++ )
-		m_vPlayerPos[i][2] = -1;	// mark as invisible 
+	for( i = 0; i != MAX_PLAYERS; ++i )
+	{
+		m_vPlayerPos[i].z = -1;
+	}
 
-	// draw all players
-	for( i = 0; i < MAX_OVERVIEW_ENTITIES; i++ )
+	for( i = 0; i != MAX_OVERVIEW_ENTITIES; ++i )
 	{
 		if( !m_OverviewEntities[i].hSprite )
 			continue;
 
-		hSpriteModel = (struct model_s *)gEngfuncs.GetSpritePointer( m_OverviewEntities[i].hSprite );
+		hSpriteModel = ( struct model_s * ) gEngfuncs.GetSpritePointer( m_OverviewEntities[i].hSprite );
 		ent = m_OverviewEntities[i].entity;
 
 		gEngfuncs.pTriAPI->SpriteTexture( hSpriteModel, 0 );
 		gEngfuncs.pTriAPI->RenderMode( kRenderTransTexture );
 
-		// see R_DrawSpriteModel
-		// draws players sprite
 		AngleVectors( ent->angles, right, up, NULL );
-
-		VectorCopy( ent->origin,origin );
+		origin = ent->origin;
 
 		gEngfuncs.pTriAPI->Begin( TRI_QUADS );
-
 		gEngfuncs.pTriAPI->Color4f( 1.0f, 1.0f, 1.0f, 1.0f );
 
-		gEngfuncs.pTriAPI->TexCoord2f(1, 0);
+		gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 0.0f );
 		VectorMA( origin, 16.0f * sizeScale, up, point );
 		VectorMA( point, 16.0f * sizeScale, right, point );
-		point[2] *= zScale;
-		gEngfuncs.pTriAPI->Vertex3fv( point );
+		point.z *= zScale;
+		gEngfuncs.pTriAPI->Vertex3fv( &point.x );
 
-		gEngfuncs.pTriAPI->TexCoord2f( 0, 0 );
-
+		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 0.0f );
 		VectorMA( origin, 16.0f * sizeScale, up, point );
 		VectorMA( point, -16.0f * sizeScale, right, point );
-		point[2] *= zScale;
-		gEngfuncs.pTriAPI->Vertex3fv( point );
+		point.z *= zScale;
+		gEngfuncs.pTriAPI->Vertex3fv( &point.x );
 
-		gEngfuncs.pTriAPI->TexCoord2f( 0, 1 );
+		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 1.0f );
 		VectorMA( origin, -16.0f * sizeScale, up, point );
 		VectorMA( point, -16.0f * sizeScale, right, point );
-		point[2] *= zScale;
-		gEngfuncs.pTriAPI->Vertex3fv( point );
+		point.z *= zScale;
+		gEngfuncs.pTriAPI->Vertex3fv( &point.x );
 
-		gEngfuncs.pTriAPI->TexCoord2f( 1, 1 );
+		gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 1.0f );
 		VectorMA( origin, -16.0f * sizeScale, up, point );
 		VectorMA( point, 16.0f * sizeScale, right, point );
-		point[2] *= zScale;
-		gEngfuncs.pTriAPI->Vertex3fv( point );
-
+		point.z *= zScale;
+		gEngfuncs.pTriAPI->Vertex3fv( &point.x );
 		gEngfuncs.pTriAPI->End();
 
 		if( !ent->player )
 			continue;
 
-		// draw line under player icons
-		origin[2] *= zScale;
-
+		origin.z *= zScale;
 		gEngfuncs.pTriAPI->RenderMode( kRenderTransAdd );
-
-		hSpriteModel = (struct model_s *)gEngfuncs.GetSpritePointer( m_hsprBeam );
+		hSpriteModel = ( model_s * ) gEngfuncs.GetSpritePointer( m_hsprBeam );
 		gEngfuncs.pTriAPI->SpriteTexture( hSpriteModel, 0 );
-
-		gEngfuncs.pTriAPI->Color4f( 1.0f, 1.0f, 1.0f, 0.5f );
+		gEngfuncs.pTriAPI->Color4f( 1.0f, 1.0f, 1.0f, 0.35f );
 
 		gEngfuncs.pTriAPI->Begin( TRI_QUADS );
 		gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 0.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] + 4.0f, origin[1] + 4.0f, origin[2] - zScale );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x + 4.0f, origin.y + 4.0f, origin.z - zScale );
 		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 0.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] - 4.0f, origin[1] - 4.0f, origin[2] - zScale );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x - 4.0f, origin.y - 4.0f, origin.z - zScale );
 		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 1.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] - 4.0f, origin[1] - 4.0f, z );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x - 4.0f, origin.y - 4.0f, z );
 		gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 1.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] + 4.0f, origin[1] + 4.0f, z );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x + 4.0f, origin.y + 4.0f, z );
 		gEngfuncs.pTriAPI->End();
 
 		gEngfuncs.pTriAPI->Begin( TRI_QUADS );
 		gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 0.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] - 4.0f, origin[1] + 4.0f, origin[2] - zScale );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x - 4.0f, origin.y + 4.0f, origin.z - zScale );
 		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 0.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] + 4.0f, origin[1] - 4.0f, origin[2] - zScale );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x + 4.0f, origin.y - 4.0f, origin.z - zScale );
 		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 1.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] + 4.0f, origin[1] - 4.0f, z );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x + 4.0f, origin.y - 4.0f, z );
 		gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 1.0f );
-		gEngfuncs.pTriAPI->Vertex3f( origin[0] - 4.0f, origin[1] + 4.0f, z );
+		gEngfuncs.pTriAPI->Vertex3f( origin.x - 4.0f, origin.y + 4.0f, z );
 		gEngfuncs.pTriAPI->End();
 
-		// calculate screen position for name and infromation in hud::draw()
 		if( !gEngfuncs.pTriAPI->WorldToScreen( origin, screen ) )
-			continue;	// object is behind viewer
+			continue;
 
-		screen[0] = XPROJECT( screen[0] );
-		screen[1] = YPROJECT( screen[1] );
-		screen[2] = 0.0f;
+		screen.x = XPROJECT( screen.x );
+		screen.y = YPROJECT( screen.y );
+		screen.z = 0.0f;
 
-		// calculate some offset under the icon
-		origin[0] += 32.0f;
-		origin[1] += 32.0f;
-
+		origin.x += 32.0f;
+		origin.y += 32.0f;
 		gEngfuncs.pTriAPI->WorldToScreen( origin, offset );
 
-		offset[0] = XPROJECT( offset[0] );
-		offset[1] = YPROJECT( offset[1] );
-		offset[2] = 0.0f;
+		offset.x = XPROJECT( offset.x );
+		offset.y = YPROJECT( offset.y );
+		offset.z = 0.0f;
 
 		VectorSubtract( offset, screen, offset );
 
-		int playerNum = ent->index - 1;
-
-		m_vPlayerPos[playerNum][0] = screen[0];	
-		m_vPlayerPos[playerNum][1] = screen[1] + Length( offset );	
-		m_vPlayerPos[playerNum][2] = 1;	// mark player as visible 
+		int playerNum = ent->index;
+		m_vPlayerPos[playerNum].x = screen.x;
+		m_vPlayerPos[playerNum].y = screen.y + offset.Length();
+		m_vPlayerPos[playerNum].z = 1.0f;
 	}
 
 	if( !m_pip->value || !m_drawcone->value )
 		return;
 
-	// get current camera position and angle
-	if( m_pip->value == INSET_IN_EYE || g_iUser1 == OBS_IN_EYE )
+	if( m_pip->value == 2.0f || g_iUser1 == OBS_IN_EYE )
 	{
 		V_GetInEyePos( g_iUser2, origin, angles );
 	}
-	else if( m_pip->value == INSET_CHASE_FREE || g_iUser1 == OBS_CHASE_FREE )
+	else if( g_iUser1 == 4 )
+	{
+		origin = v_sim_org;
+		angles = v_cl_angles;
+	}
+	else if( m_pip->value == 1.0f || g_iUser1 == 2 )
 	{
 		V_GetChasePos( g_iUser2, v_cl_angles, origin, angles );
 	}
-	else if( g_iUser1 == OBS_ROAMING )
+	else if( g_iUser1 == 3 )
 	{
-		VectorCopy( v_sim_org, origin );
-		VectorCopy( v_cl_angles, angles );
+		angles = v_cl_angles;
+		origin = v_sim_org;
 	}
 	else
+	{
 		V_GetChasePos( g_iUser2, NULL, origin, angles );
+	}
 
-	// draw camera sprite
-	x = origin[0];
-	y = origin[1];
-	z = origin[2];
+	x = origin.x;
+	y = origin.y;
+	z = origin.z;
+	angles.x = 0;
 
-	angles[0] = 0; // always show horizontal camera sprite
-
-	hSpriteModel = (struct model_s *)gEngfuncs.GetSpritePointer( m_hsprCamera );
+	hSpriteModel = ( model_s * ) gEngfuncs.GetSpritePointer( m_hsprCamera );
 	gEngfuncs.pTriAPI->RenderMode( kRenderTransAdd );
 	gEngfuncs.pTriAPI->SpriteTexture( hSpriteModel, 0 );
-
-	gEngfuncs.pTriAPI->Color4f( r, g, b, 1.0f );
+	gEngfuncs.pTriAPI->Color4f( 1.0f, 1.0f, 1.0f, 1.0f );
 
 	AngleVectors( angles, forward, NULL, NULL );
 	VectorScale( forward, 512.0f, forward );
 
-	offset[0] = 0.0f; 
-	offset[1] = 45.0f; 
-	offset[2] = 0.0f; 
-
+	offset.x = 0.0f;
+	offset.y = 45.0f;
+	offset.z = 0.0f;
 	AngleMatrix( offset, rmatrix );
 	VectorTransform( forward, rmatrix, right );
 
-	offset[1]= -45.0f;
+	offset.y = -45.0f;
 	AngleMatrix( offset, rmatrix );
-	VectorTransform( forward, rmatrix , left );
+	VectorTransform( forward, rmatrix, left );
 
 	gEngfuncs.pTriAPI->Begin( TRI_TRIANGLES );
-		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 0.0f );
-		gEngfuncs.pTriAPI->Vertex3f( x + right[0], y + right[1], ( z + right[2] ) * zScale);
-
-		gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 1.0f );
-		gEngfuncs.pTriAPI->Vertex3f( x, y, z * zScale );
-
-		gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 1.0f );
-		gEngfuncs.pTriAPI->Vertex3f( x + left[0], y + left[1], ( z + left[2] ) * zScale );
-	gEngfuncs.pTriAPI->End ();
+	gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 0.0f );
+	gEngfuncs.pTriAPI->Vertex3f( x + right.x, y + right.y, ( z + right.z ) * zScale );
+	gEngfuncs.pTriAPI->TexCoord2f( 0.0f, 1.0f );
+	gEngfuncs.pTriAPI->Vertex3f( x, y, z * zScale );
+	gEngfuncs.pTriAPI->TexCoord2f( 1.0f, 1.0f );
+	gEngfuncs.pTriAPI->Vertex3f( x + left.x, y + left.y, ( z + left.z ) * zScale );
+	gEngfuncs.pTriAPI->End();
 	gEngfuncs.pTriAPI->RenderMode( kRenderNormal );
 }
 
@@ -1331,7 +1312,6 @@ bool CHudSpectator::AddOverviewEntity( int type, struct cl_entity_s *ent, const 
 		{
 			switch ( g_PlayerExtraInfo[ent->index].teamnumber )
 			{
-				// blue and red teams are swapped in CS and TFC
 				case 1:
 					if( gHUD.m_bBritish )
 						hSprite = m_hsprBritLight;

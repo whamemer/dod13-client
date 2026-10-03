@@ -189,7 +189,7 @@ inline int GetSpriteRes( int width, int height )
 
 	if( width < 640 )
 		i = 320;
-	else if( width < 1280 || !gHUD.m_pAllowHD->value )
+	else if( width < 1280 )
 		i = 640;
 	else
 	{
@@ -201,7 +201,7 @@ inline int GetSpriteRes( int width, int height )
 			i = 2560;
 	}
 
-	return min( i, gHUD.m_iMaxRes );
+	return i;
 }
 
 #define bound( min, num, max ) ((num) >= (min) ? ((num) < (max) ? (num) : (max)) : (min))

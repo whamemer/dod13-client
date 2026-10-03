@@ -26,97 +26,79 @@ typedef struct entity_state_s entity_state_t;
 
 struct entity_state_s
 {
-// Fields which are filled in by routines outside of delta compression
-	int		entityType;
-	// Index into cl_entities array for this entity.
-	int		number;      
-	float		msg_time;
+	int                        entityType;
+	int                        number;
+	float                      msg_time;
+	int                        messagenum;
 
-	// Message number last time the player/entity state was updated.
-	int		messagenum;
+	vec3_t                     origin;
+	vec3_t                     angles;
 
-// Fields which can be transitted and reconstructed over the network stream
-	vec3_t		origin;
-	vec3_t		angles;
+	int                        modelindex;
+	int                        sequence;
+	float                      frame;
+	int                        colormap;
+	short int                  skin;
+	short int                  solid;
+	int                        effects;
+	float                      scale;
+	byte                       eflags;
 
-	int		modelindex;
-	int		sequence;
-	float		frame;
-	int		colormap;
-	short		skin;
-	short		solid;
-	int		effects;
-	float		scale;
-	byte		eflags;
+	int                        rendermode;
+	int                        renderamt;
+	color24                    rendercolor;
+	int                        renderfx;
 
-	// Render information
-	int		rendermode;
-	int		renderamt;
-	color24		rendercolor;
-	int		renderfx;
+	int                        movetype;
+	float                      animtime;
+	float                      framerate;
+	int                        body;
+	unsigned char              controller[4];
+	unsigned char              blending[4];
+	vec3_t                     velocity;
 
-	int		movetype;
-	float		animtime;
-	float		framerate;
-	int		body;
-	byte		controller[4];
-	byte		blending[4];
-	vec3_t		velocity;
+	vec3_t                     mins;
+	vec3_t                     maxs;
 
-	// Send bbox down to client for use during prediction.
-	vec3_t		mins;    
-	vec3_t		maxs;
+	int                        aiment;
+	int                        owner;
 
-	int		aiment;
-	// If owned by a player, the index of that player ( for projectiles ).
-	int		owner; 
+	float                      friction;
+	float                      gravity;
 
-	// Friction, for prediction.
-	float		friction;       
-	// Gravity multiplier
-	float		gravity;				
+	int                        team;
+	int                        playerclass;
+	int                        health;
+	qboolean                   spectator;
+	int                        weaponmodel;
+	int                        gaitsequence;
+	vec3_t                     basevelocity;
+	int                        usehull;
+	int                        oldbuttons;
+	int                        onground;
+	int                        iStepLeft;
+	float                      flFallVelocity;
 
-// PLAYER SPECIFIC
-	int		team;
-	int		playerclass;
-	int		health;
-	qboolean		spectator;  
-	int		weaponmodel;
-	int		gaitsequence;
-	// If standing on conveyor, e.g.
-	vec3_t		basevelocity;   
-	// Use the crouched hull, or the regular player hull.
-	int		usehull;		
-	// Latched buttons last time state updated.
-	int		oldbuttons;     
-	// -1 = in air, else pmove entity number
-	int		onground;		
-	int		iStepLeft;
-	// How fast we are falling
-	float		flFallVelocity;  
+	float                      fov;
+	int                        weaponanim;
 
-	float		fov;
-	int		weaponanim;
+	vec3_t                     startpos;
+	vec3_t                     endpos;
+	float                      impacttime;
+	float                      starttime;
 
-	// Parametric movement overrides
-	vec3_t		startpos;
-	vec3_t		endpos;
-	float		impacttime;
-	float		starttime;
-
-	// For mods
-	int		iuser1;
-	int		iuser2;
-	int		iuser3;
-	int		iuser4;
-	float		fuser1;
-	float		fuser2;
-	float		fuser3;
-	float		fuser4;
-	vec3_t		vuser1;
-	vec3_t		vuser2;
-	vec3_t		vuser3;
-	vec3_t		vuser4;
+	int                        iuser1;
+	int                        iuser2;
+	int                        iuser3;
+	int                        iuser4;
+	float                      fuser1;
+	float                      fuser2;
+	float                      fuser3;
+	float                      fuser4;
+	vec3_t                     vuser1;
+	vec3_t                     vuser2;
+	vec3_t                     vuser3;
+	vec3_t                     vuser4;
 };
 
 #include "pm_info.h"

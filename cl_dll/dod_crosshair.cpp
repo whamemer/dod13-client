@@ -39,8 +39,10 @@ float flBoltHideXHair;
 
 int CHudDoDCrossHair::Init( void )
 {
-	HOOK_MESSAGE( ClanTimer );
 	gHUD.AddHudElem( this );
+
+	HOOK_MESSAGE( ClanTimer );
+
 	m_iYPos = ScreenHeight / 2;
 	m_iXPos = ScreenWidth / 2;
 	m_iFlags |= HUD_ACTIVE;

@@ -1373,7 +1373,7 @@ void _DLLEXPORT HUD_PostRunCmd( struct local_state_s *from, struct local_state_s
 {
 	g_runfuncs = runfuncs;
 
-	if( cl_lw && cl_lw->value )
+	if( gHUD.cl_lw && gHUD.cl_lw->value )
 	{
 		HUD_WeaponsPostThink( from, to, cmd, time, random_seed );
 	}

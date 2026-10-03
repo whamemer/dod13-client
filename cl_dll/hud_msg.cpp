@@ -54,7 +54,11 @@ int CHud::MsgFunc_ResetHUD( const char *pszName, int iSize, void *pbuf )
 		g_lastFOV = 0.0f;
 		m_iFOV = 0;
 		m_flMouseSensitivity = 0.0f;
-		m_iConcussionEffect = 0;
+
+		for( int i = 0; i < MAX_PLAYERS; i++ )
+		{
+			m_PlayerFOV[i] = 90;
+		}
 	}
 
 	if( g_pParticleMan )
@@ -81,17 +85,9 @@ int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
-void CAM_ToFirstPerson( void );
-
-int CHud::MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
-{
-	CAM_ToFirstPerson();
-	return 1;
-}
-
 extern void DoD_LoadClientEnts( const char *map );
 
-int CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
+void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
 	// prepare all hud data
 	HUDLIST *pList = m_pHudList;
@@ -106,56 +102,15 @@ int CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	//Probably not a good place to put this.
 	pBeam = pBeam2 = NULL;
 	DoD_LoadClientEnts( gEngfuncs.pfnGetLevelName() );
-	return 1;
-}
-
-int CHud::MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
-{
-	BEGIN_READ( pbuf, iSize );
-	m_Teamplay = READ_BYTE();
-
-	if( m_Teamplay )
-		ClientCmd( "richpresence_gamemode Teamplay\n" );
-	else
-		ClientCmd( "richpresence_gamemode\n" );
-	ClientCmd( "richpresence_update\n" );
-	return 1;
 }
 
 int CHud::MsgFunc_Damage( const char *pszName, int iSize, void *pbuf )
 {
-	int		armor, blood;
-	Vector	from;
-	int		i;
-	float	count;
-
 	BEGIN_READ( pbuf, iSize );
-	armor = READ_BYTE();
-	blood = READ_BYTE();
-
-	for( i = 0; i < 3; i++)
-		from[i] = READ_COORD();
-
-	count = ( blood * 0.5 ) + ( armor * 0.5 );
-
-	if( count < 10 )
-		count = 10;
-
-	// TODO: kick viewangles,  show damage visually
-	return 1;
-}
-
-int CHud::MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf )
-{
-	int r, g, b;
-	BEGIN_READ( pbuf, iSize );
-	m_iConcussionEffect = READ_BYTE();
-	if( m_iConcussionEffect )
-	{
-		UnpackRGB( r, g, b, RGB_YELLOWISH );	// Vit_amiN: fixed
-		this->m_StatusIcons.EnableIcon( "dmg_concuss", r, g, b );
-	}
-	else
-		this->m_StatusIcons.DisableIcon( "dmg_concuss" );
+	READ_BYTE();
+	READ_BYTE();
+	READ_COORD();
+	READ_COORD();
+	READ_COORD();
 	return 1;
 }

@@ -43,8 +43,10 @@ DECLARE_MESSAGE( m_Scope, Scope )
 
 int CHudScope::Init( void )
 {
-	HOOK_MESSAGE( Scope );
 	gHUD.AddHudElem( this );
+
+	HOOK_MESSAGE( Scope );
+
 	m_iFlags |= HUD_ACTIVE;
 	m_iWeaponId = WEAPON_NONE;
 	m_bWeaponChanged = false;

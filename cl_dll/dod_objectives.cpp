@@ -115,6 +115,8 @@ void ScreenToWorld( int x, int y, vec3_t &pick )
 
 int CObjectiveIcons::Init( void )
 {
+	gHUD.AddHudElem( this );
+
 	HOOK_MESSAGE( InitObj );
 	HOOK_MESSAGE( SetObj );
 	HOOK_MESSAGE( StartProg );
@@ -125,7 +127,7 @@ int CObjectiveIcons::Init( void )
 	HOOK_MESSAGE( PlayersIn );
 
 	m_iFlags |= HUD_ACTIVE;
-	gHUD.AddHudElem( this );
+
 	m_iconarea.top = 0;
 	m_iconarea.left = 0;
 	m_iconarea.bottom = 32;

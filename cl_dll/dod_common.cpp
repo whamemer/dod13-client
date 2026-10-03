@@ -30,8 +30,9 @@ DECLARE_MESSAGE( m_DoDCommon, ResetSens )
 bool b_cutscene_return;
 int i_lastspectoggle;
 float fl_DeadTargetSwitch;
-extern int i_dodmusic, g_iDeadFlag, g_iVuser1x, g_iUser3, g_iMovetype, g_ionground;
-extern int g_iinjump;
+
+extern int i_dodmusic, g_iDeadFlag, g_ionground, g_iinjump;
+
 int g_ihidexhair;
 float i_ProneCounter;
 
@@ -77,6 +78,8 @@ void __CmdFunc_ClientProne( void )
 
 int CHudDoDCommon::Init( void )
 {
+	gHUD.AddHudElem( this );
+
 	HOOK_MESSAGE( GameRules );
 	HOOK_MESSAGE( CameraView );
 	HOOK_MESSAGE( ResetSens );
@@ -85,7 +88,6 @@ int CHudDoDCommon::Init( void )
 
 	gHUD.i_specmenutoggle = 1;
 	m_iFlags |= HUD_ACTIVE;
-	gHUD.AddHudElem( this );
 	return 1;
 }
 
@@ -112,7 +114,7 @@ int CHudDoDCommon::MsgFunc_GameRules( const char *pszName, int iSize, void *pbuf
 	gHUD.m_bAxisInfiniteLives = ( b & 2 ) != false;
 
 	warmupMode = ( b & 4 ) != false;
-	gHUD.m_ObjectiveIcons.m_bWarmupMode = warmupMode;
+	gHUD.m_ObjectiveIcons.SetWarmupMode( warmupMode );
 
 	return 1;
 }

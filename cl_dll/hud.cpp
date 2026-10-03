@@ -33,24 +33,30 @@
 #include "dod_shared.h"
 #include "voice_status.h"
 
+float g_fUser4;
+int g_iVuser1x;
+int g_iVuser1z;
+int g_iMovetype;
+int g_iEffects;
+int g_iOnlyClientDraw;
+
+float g_lastFOV = 0.0f;
+float g_fStamina = 100.0f;
+
+int g_iWeaponBits2;
+
 extern engine_studio_api_t IEngineStudio;
-extern Queue g_RubbleQueue;
-hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	   // player info from the engine
+
+hud_player_info_t	 g_PlayerInfoList[MAX_PLAYERS+1];	  // player info from the engine
 extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS+1];   // additional player info sent directly to the client dll
-team_info_t		g_TeamInfo[MAX_TEAMS + 1];
+team_info_t		g_TeamInfo[MAX_TEAMS + 1];				// for CHudScoreboard
 pmodel_fx_t     g_PModelFxInfo[MAX_TEAMS + 1];
-int		g_IsSpectator[MAX_PLAYERS+1];
+
 int g_iPlayerClass;
 int g_iTeamNumber;
 int g_iUser1 = 0;
 int g_iUser2 = 0;
 int g_iUser3 = 0;
-
-float g_fUser4;
-int g_iVuser1x, g_iVuser1z;
-int g_iMovetype, g_iEffects, g_iOnlyClientDraw;
-float g_lastFOV = 0.0f, g_fStamina = 100.0f;
-int g_iWeaponBits2;
 
 int iNumberOfTeamColors = 3;
 int iTeamColors[3][3] =
@@ -84,11 +90,6 @@ public:
 		}
 	}
 
-	virtual void UpdateCursorState()
-	{
-		// gViewPort->UpdateCursorState();
-	}
-
 	virtual int	GetAckIconHeight()
 	{
 		return ScreenHeight - gHUD.m_iFontHeight*3 - 6;
@@ -99,6 +100,7 @@ public:
 		return false;
 	}
 };
+
 static CDoDVoiceStatusHelper g_VoiceStatusHelper;
 
 cvar_t *hud_textmode;
@@ -107,22 +109,18 @@ float g_hud_text_color[3];
 extern client_sprite_t *GetSpriteList( client_sprite_t *pList, const char *psz, int iRes, int iCount );
 
 extern cvar_t *sensitivity;
-cvar_t *cl_lw = NULL;
-cvar_t *cl_viewbob = NULL;
-
-cvar_t *cl_dmsmallmap;
-cvar_t *cl_dmshowmarkers;
-cvar_t *cl_dmshowplayers;
-cvar_t *cl_dmshowflags;
-cvar_t *cl_dmshowobjects;
-cvar_t *cl_dmshowgrenades;
+extern cvar_t *cl_dmsmallmap;
+extern cvar_t *cl_dmshowmarkers;
+extern cvar_t *cl_dmshowplayers;
+extern cvar_t *cl_dmshowflags;
+extern cvar_t *cl_dmshowobjects;
+extern cvar_t *cl_dmshowgrenades;
 extern cvar_t *cl_numshotrubble;
 extern cvar_t *cl_weatherdis;
 cvar_t *cl_autoreload;
 
 void ShutdownInput( void );
 
-//DECLARE_MESSAGE( m_Logo, Logo )
 int __MsgFunc_Logo( const char *pszName, int iSize, void *pbuf )
 {
 	return gHUD.MsgFunc_Logo( pszName, iSize, pbuf );
@@ -141,12 +139,6 @@ int __MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 int __MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
 	gHUD.MsgFunc_InitHUD( pszName, iSize, pbuf );
-	return 1;
-}
-
-int __MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
-{
-	gHUD.MsgFunc_ViewMode( pszName, iSize, pbuf );
 	return 1;
 }
 
@@ -185,169 +177,9 @@ int __MsgFunc_SetFOV( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
-static cvar_t *violence_hblood;
-
-bool ShouldShowBlood()
-{
-	if( !violence_hblood )
-	{
-		violence_hblood = gEngfuncs.pfnGetCvarPointer( "violence_hblood" );
-
-		if( !violence_hblood )
-			return false;
-	}
-
-	if( violence_hblood->value != 1.0f )
-		return false;
-
-	return true;
-}
-
-extern vec3_t v_origin;
-
-void EV_BloodPuff( float *org )
-{
-	vec3_t velocity, origin;
-	float dustscale, bloodscale;
-	float flDist, scale;
-	TEMPENTITY *pTemp;
-	vec3_t closerOrigin, to_view;
-
-	int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/shot-dust.spr" );
-	int modelBlood = gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/blood-narrow.spr" );
-
-	origin = Vector( org );
-	velocity = Vector( 0.0f, 0.0f, 2.0f );
-
-	dustscale = gEngfuncs.pfnRandomFloat( 0.7f, 0.8f );
-	bloodscale = gEngfuncs.pfnRandomFloat( 0.4f, 0.45f );
-
-	closerOrigin = v_origin - origin;
-	flDist = Length( closerOrigin );
-
-	if( flDist >= 32.0f )
-		if( flDist <= 1200.0f )
-		{
-			if( flDist <= 600.0f )
-				scale = 1.0f;
-			else
-				scale = ( flDist - 600.0f ) / 600.0f * 0.5f + 1.0f;
-		}
-		else
-		{
-			scale = 1.5f;
-		}
-
-	pTemp = gEngfuncs.pEfxAPI->R_TempSprite( &origin.x, &velocity.x, scale * dustscale, modelIndex, 4, 0, 0.15f, 30.0f, 256 );
-
-	pTemp->entity.curstate.renderamt = 800;
-	pTemp->entity.curstate.framerate = 45.0f;
-	pTemp->entity.curstate.rendercolor.r = -76;
-	pTemp->entity.curstate.rendercolor.g = -80;
-	pTemp->entity.curstate.rendercolor.b = -108;
-	pTemp->entity.angles.z = gEngfuncs.pfnRandomLong( 0, 90 );
-
-	to_view = v_origin - origin;
-	VectorNormalize( &to_view.x );
-	VectorMA( &origin.x, 2.0f, &to_view.x, &closerOrigin.x );
-
-	pTemp = gEngfuncs.pEfxAPI->R_TempSprite( &closerOrigin.x, &velocity.x, scale * bloodscale, modelBlood, 4, 0, 0.35f, 30.0f, 256 );
-	pTemp->entity.curstate.framerate = 20.0f;
-	pTemp->entity.curstate.renderamt = 800;
-	pTemp->entity.curstate.rendercolor.r = 120;
-	pTemp->entity.curstate.rendercolor.g = 0;
-	pTemp->entity.curstate.rendercolor.b = 0;
-	pTemp->entity.angles.z = gEngfuncs.pfnRandomLong( 0, 90 );
-}
-
-int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
-{
-	float origin[3];
-
-	BEGIN_READ( pbuf, iSize );
-
-	origin[0] = READ_COORD();
-	origin[1] = READ_COORD();
-	origin[2] = READ_COORD();
-
-	ShouldShowBlood();
-	EV_BloodPuff( origin );
-	return 1;
-}
-
-int __MsgFunc_BloodPuff( const char *pszName, int iSize, void *pbuf )
-{
-	float origin[3];
-
-	BEGIN_READ( pbuf, iSize );
-
-	origin[0] = READ_COORD();
-	origin[1] = READ_COORD();
-	origin[2] = READ_COORD();
-
-	ShouldShowBlood();
-	EV_BloodPuff( origin );
-	return 1;
-}
-
-extern char *s_HandSignalSubtitles[][3];
-
-int EV_HandSignalMsg( const char *pszName, int iSize, void *pbuf )
-{
-	int entindex = READ_BYTE();
-	int signal = READ_BYTE();
-
-	int team = g_PlayerExtraInfo[entindex].teamId;
-
-	if( ( entindex - 1 ) <= 63 && signal < 26 )
-	{
-		gEngfuncs.pfnGetPlayerInfo( entindex, &g_PlayerInfoList[entindex] );
-
-		char pattern[268];
-		sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[entindex].name, ": %s2" );
-
-		char *subtitle = s_HandSignalSubtitles[signal][0];;
-
-		if( team == 2 )
-		{
-			subtitle = s_HandSignalSubtitles[signal][1];
-
-			if( *subtitle )
-			{
-				gHUD.m_SayText.SayTextPrint( pattern, 256, entindex, "#Handsignal", subtitle, nullptr, nullptr );
-				gHUD.m_Spectator.AddVoiceIconToPlayerEnt( entindex );
-				return 1;
-			}
-		}
-		else if( team == 1 && gHUD.m_bBritish )
-		{
-			subtitle = s_HandSignalSubtitles[signal][2];
-
-			if( *subtitle )
-			{
-				gHUD.m_SayText.SayTextPrint( pattern, 256, entindex, "#Handsignal", subtitle, nullptr, nullptr );
-				gHUD.m_Spectator.AddVoiceIconToPlayerEnt( entindex );
-				return 1;
-			}
-		}
-	}
-
-	return 1;
-}
-
-void __CmdFunc_InputPlayerSpecial()
-{
-	gEngfuncs.pfnClientCmd( "_special" );
-}
-
-int __MsgFunc_HandSignal( const char *pszName, int iSize, void *pbuf )
-{
-	return EV_HandSignalMsg( pszName, iSize, pbuf );
-}
-
 int __MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
 {
-	return 1;
+	return gHUD.MsgFunc_HLTV( pszName, iSize, pbuf );
 }
 
 int __MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
@@ -376,74 +208,184 @@ int __MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
-int __MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf )
+int __MsgFunc_BloodPuff( const char *pszName, int iSize, void *pbuf )
 {
-	return gHUD.MsgFunc_Concuss( pszName, iSize, pbuf );
+	float origin[3];
+
+	BEGIN_READ( pbuf, iSize );
+
+	origin[0] = READ_COORD();
+	origin[1] = READ_COORD();
+	origin[2] = READ_COORD();
+
+	ShouldShowBlood();
+	EV_BloodPuff( origin );
+	return 1;
 }
 
-int __MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
+int __MsgFunc_HandSignal( const char *pszName, int iSize, void *pbuf )
 {
-	return gHUD.MsgFunc_GameMode( pszName, iSize, pbuf );
+	return EV_HandSignalMsg( pszName, iSize, pbuf );
 }
 
-int __MsgFunc_ValClass( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_TeamNames( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_Feign( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_Detpack( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_BuildSt( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_RandomPC( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_ServerName( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_Spectator( const char *pszName, int iSize, void *pbuf ) { return 1; }
-int __MsgFunc_AllowSpec( const char *pszName, int iSize, void *pbuf ) { return 1; }
- 
+int __MsgFunc_MOTD( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_RandomPC( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_ServerName( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_TeamNames( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_VGUIMenu( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_Spectator( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_AllowSpec( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_ScoreInfo( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_ScoreInfoLong( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_TeamScore( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_MapMarker( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_WaveTime( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_WaveStatus( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_WideScreen( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_ScoreShort( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_Frags( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_ObjScore( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_PStatus( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_PClass( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_PTeam( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
+int __MsgFunc_CurMarker( const char *pszName, int iSize, void *pbuf )
+{
+	return 0;
+}
+
 // This is called every time the DLL is loaded
 void CHud::Init( void )
 {
-	HOOK_COMMAND( "special", InputPlayerSpecial );
-
 	HOOK_MESSAGE( Logo );
 	HOOK_MESSAGE( ResetHUD );
 	HOOK_MESSAGE( YouDied );
-	HOOK_MESSAGE( GameMode );
 	HOOK_MESSAGE( InitHUD );
-	HOOK_MESSAGE( ViewMode );
 	HOOK_MESSAGE( SetFOV );
 	HOOK_MESSAGE( HLTV );
 	HOOK_MESSAGE( BloodPuff );
 	HOOK_MESSAGE( HandSignal );
 	HOOK_MESSAGE( UseSound );
-	HOOK_MESSAGE( Concuss );
-
-	HOOK_MESSAGE( ValClass );
 	HOOK_MESSAGE( TeamNames );
-	HOOK_MESSAGE( Feign );
-	HOOK_MESSAGE( Detpack );
-	HOOK_MESSAGE( BuildSt );
 	HOOK_MESSAGE( RandomPC );
 	HOOK_MESSAGE( ServerName );
+	HOOK_MESSAGE( ScoreInfo );
+	HOOK_MESSAGE( ScoreInfoLong );
+	HOOK_MESSAGE( TeamScore );
 	HOOK_MESSAGE( Spectator );
 	HOOK_MESSAGE( AllowSpec );
+	HOOK_MESSAGE( MapMarker );
+	HOOK_MESSAGE( VGUIMenu );
+	HOOK_MESSAGE( WaveTime );
+	HOOK_MESSAGE( WaveStatus );
+	HOOK_MESSAGE( WideScreen );
+	HOOK_MESSAGE( Frags );
+	HOOK_MESSAGE( ObjScore );
+	HOOK_MESSAGE( PStatus );
+	HOOK_MESSAGE( ScoreShort );
+	HOOK_MESSAGE( PClass );
+	HOOK_MESSAGE( PTeam );
+	HOOK_MESSAGE( RoundState );
+	HOOK_MESSAGE( CurMarker );
+	HOOK_MESSAGE( TimeLeft );
 
 	hud_takesshots = CVAR_CREATE( "hud_takesshots", "0", FCVAR_ARCHIVE );
 	max_rubble = CVAR_CREATE( "max_rubble", "240", 0 );
-
 	cl_corpsestay = CVAR_CREATE( "cl_corpsestay", "10", FCVAR_ARCHIVE );
-	cl_dmsmallmap = CVAR_CREATE( "cl_dmsmallmap", "1", FCVAR_ARCHIVE );
-	cl_dmshowmarkers = CVAR_CREATE( "cl_dmshowmarkers", "1", FCVAR_ARCHIVE );
-	cl_dmshowplayers = CVAR_CREATE( "cl_dmshowplayers", "1", FCVAR_ARCHIVE );
-	cl_dmshowflags = CVAR_CREATE( "cl_dmshowflags", "1", FCVAR_ARCHIVE );
-	cl_dmshowobjects = CVAR_CREATE( "cl_dmshowobjects", "1", FCVAR_ARCHIVE );
-	cl_dmshowgrenades = CVAR_CREATE( "cl_dmshowgrenades", "1", FCVAR_ARCHIVE );
-	cl_numshotrubble = CVAR_CREATE( "cl_numshotrubble", "5", FCVAR_ARCHIVE );
-	cl_weatherdis = CVAR_CREATE( "cl_weatherdis", "1700", FCVAR_ARCHIVE );
+
+	CVAR_CREATE( "cl_dmsmallmap", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowmarkers", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowplayers", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowflags", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowobjects", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_dmshowgrenades", "1", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_numshotrubble", "5", FCVAR_ARCHIVE );
+	CVAR_CREATE( "cl_weatherdis", "1700", FCVAR_ARCHIVE );
+	cl_autoreload = CVAR_CREATE( "cl_autoreload", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
 
 	_cl_minimap = CVAR_CREATE( "_cl_minimap", "2", FCVAR_ARCHIVE | FCVAR_USERINFO );
 	_cl_minimapzoom = CVAR_CREATE( "_cl_minimapzoom", "1", FCVAR_ARCHIVE );
-
 	zoom_sensitivity_ratio = CVAR_CREATE( "zoom_sensitivity_ratio", "1.2", FCVAR_ARCHIVE );
-
 	_ah = CVAR_CREATE( "_ah", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
-
 	cl_hudfont = CVAR_CREATE( "cl_hudfont", "1", FCVAR_ARCHIVE );
 	hud_fastswitch = CVAR_CREATE( "hud_fastswitch", "0", FCVAR_ARCHIVE );
 
@@ -454,12 +396,18 @@ void CHud::Init( void )
 	crosshair = gEngfuncs.pfnGetCvarPointer( "crosshair" );
 	developer = gEngfuncs.pfnGetCvarPointer( "developer" );
 
-	CVAR_CREATE( "hud_classautokill", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );		// controls whether or not to suicide immediately on TF class switch
-	CVAR_CREATE( "hud_takesshots", "0", FCVAR_ARCHIVE );		// controls whether or not to automatically take screenshots at the end of a round
-	hud_textmode = CVAR_CREATE ( "hud_textmode", "0", FCVAR_ARCHIVE );
+	m_pCvarStealMouse = CVAR_CREATE( "hud_capturemouse", "1", FCVAR_ARCHIVE );
+	m_pCvarDraw = CVAR_CREATE( "hud_draw", "1", FCVAR_ARCHIVE );
 
 	m_iLogo = 0;
 	m_iFOV = 0;
+	m_iRes = 1;
+	m_iSensLevel = 0;
+	m_iRoundState = 1;
+	i_Recoil = 0;
+	m_iWaterLevel = 0;
+	m_flTime = 1.0f;
+
 	m_bAllieParatrooper = false;
 	m_bAllieInfiniteLives = true;
 	m_bAxisParatrooper = false;
@@ -467,24 +415,13 @@ void CHud::Init( void )
 	m_bParatrooper = false;
 	m_bInfiniteLives = true;
 	m_bBritish = false;
-	m_iRoundState = 1;
-
-	m_pCvarStealMouse = CVAR_CREATE( "hud_capturemouse", "1", FCVAR_ARCHIVE );
-	m_pCvarDraw = CVAR_CREATE( "hud_draw", "1", FCVAR_ARCHIVE );
-	cl_autoreload = CVAR_CREATE( "cl_autoreload", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
-
-	CVAR_CREATE( "cl_autowepswitch", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );
-	default_fov = CVAR_CREATE( "default_fov", "90", FCVAR_ARCHIVE );
-	m_pAllowHD = CVAR_CREATE ( "hud_allow_hd", "1", FCVAR_ARCHIVE );
-	cl_viewbob = CVAR_CREATE( "cl_viewbob", "1", FCVAR_ARCHIVE );
 
 	m_pSpriteList = NULL;
 
-	// Clear any old HUD list
 	if( m_pHudList )
 	{
 		HUDLIST *pList;
-		while ( m_pHudList )
+		while( m_pHudList )
 		{
 			pList = m_pHudList;
 			m_pHudList = m_pHudList->pNext;
@@ -492,12 +429,6 @@ void CHud::Init( void )
 		}
 		m_pHudList = NULL;
 	}
-
-	// In case we get messages before the first update -- time will be valid
-	m_flTime = 1.0f;
-	
-	i_Recoil = 0;
-	m_iWaterLevel = 0;
 
 	m_Scope.Init();
 	m_DoDCommon.Init();
@@ -516,19 +447,16 @@ void CHud::Init( void )
 	m_DeathNotice.Init();
 	m_TextMessage.Init();
 	m_StatusIcons.Init();
+	m_Menu.Init();
 	m_DoDCrossHair.Init();
-	m_DoDMap.Init();
 	m_MortarHud.Init();
 	m_VGUI2Print.Init();
 
 	m_MOTD.Init();
 	m_Scoreboard.Init();
 
-	m_Menu.Init();
-
 	MsgFunc_ResetHUD( 0, 0, NULL );
 
-	m_iSensLevel = 0;
 	m_szTeamNames[NULL][NULL] = '\0';
 
 	strcpy( m_szTeamNames[1], m_TextMessage.BufferedLocaliseTextString( "#Teamname_allies" ) );
@@ -536,10 +464,7 @@ void CHud::Init( void )
 	strcpy( m_szTeamNames[3], m_TextMessage.BufferedLocaliseTextString( "#Teamname_spectators" ) );
 	strcpy( m_szTeamNames[4], m_TextMessage.BufferedLocaliseTextString( "#Teamname_british" ) );
 
-	gHUD.InitMapBounds();
-
-	ClientCmd( "richpresence_gamemode\n" );
-	ClientCmd( "richpresence_update\n" );
+	InitMapBounds();
 }
 
 // CHud destructor
@@ -562,7 +487,7 @@ CHud::~CHud()
 		m_pHudList = NULL;
 	}
 
-	g_RubbleQueue.Update( 99999.0f );
+	g_RubbleQueue.Update( m_flTime );
 }
 
 // GetSpriteIndex()
@@ -583,161 +508,138 @@ int CHud::GetSpriteIndex( const char *SpriteName )
 
 void CHud::VidInit( void )
 {
-	int j;
-	m_scrinfo.iSize = sizeof(m_scrinfo);
-	GetScreenInfo( &m_scrinfo );
+	m_scrinfo.iSize = sizeof( SCREENINFO );
+	gEngfuncs.pfnGetScreenInfo( &m_scrinfo );
 
-	// ----------
-	// Load Sprites
-	// ---------
-	//m_hsprFont = LoadSprite("sprites/%d_font.spr");
-
-	m_hsprLogo = 0;	
+	m_hsprLogo = 0;
 	m_hsprCursor = 0;
+	m_iRoundState = 1;
+	m_iRes = ( ScreenWidth <= 639 ) ? 320 : 640;
 
-	// a1ba: don't break the loading order here and
-	// don't cause memory leak but check
-	// maximum HUD sprite resolution we have
-	m_iMaxRes = 640;
-	client_sprite_t *pSpriteList = m_pSpriteList ? m_pSpriteList :
-		SPR_GetList( "sprites/hud.txt", &m_iSpriteCountAllRes );
-	if( pSpriteList )
+	m_bAllieParatrooper = false;
+	m_bAllieInfiniteLives = true;
+	m_bAxisParatrooper = false;
+	m_bAxisInfiniteLives = true;
+	m_bParatrooper = false;
+	m_bInfiniteLives = true;
+	m_bBritish = false;
+
+	m_flPlaySprintSoundTime = 0.0f;
+	m_fRoundEndsTime = 0.0f;
+
+	SetFOV( 0 );
+	g_lastFOV = 0.0f;
+
+	m_flPitchRecoilAccumulator = 0.0f;
+	m_flYawRecoilAccumulator = 0.0f;
+	m_flRecoilTimeRemaining = 0.0f;
+
+	if( m_pSpriteList )
 	{
-		for( int i = 0; i < m_iSpriteCountAllRes; i++ )
+		if( m_iSpriteCountAllRes > 0 )
 		{
-			if( m_iMaxRes < pSpriteList[i].iRes )
-				m_iMaxRes = pSpriteList[i].iRes;
-		}
-	}
-
-	m_iRes = GetSpriteRes( ScreenWidth, ScreenHeight );
-
-	// Only load this once
-	if( !m_pSpriteList )
-	{
-		// we need to load the hud.txt, and all sprites within
-		m_pSpriteList = pSpriteList;
-
-		if( m_pSpriteList )
-		{
-			// count the number of sprites of the appropriate res
-			m_iSpriteCount = 0;
-			client_sprite_t *p = m_pSpriteList;
-			for( j = 0; j < m_iSpriteCountAllRes; j++ )
-			{
-				if( p->iRes == m_iRes )
-					m_iSpriteCount++;
-				p++;
-			}
-
-			// allocated memory for sprite handle arrays
- 			m_rghSprites = new HSPRITE[m_iSpriteCount];
-			m_rgrcRects = new wrect_t[m_iSpriteCount];
-			m_rgszSpriteNames = new char[m_iSpriteCount * MAX_SPRITE_NAME_LENGTH];
-
-			p = m_pSpriteList;
+			int validSprites = 0;
 			int index = 0;
-			for( j = 0; j < m_iSpriteCountAllRes; j++ )
+			client_sprite_t *p = m_pSpriteList;
+
+			while( TRUE )
 			{
 				if( p->iRes == m_iRes )
 				{
+					validSprites++;
 					char sz[256];
 					sprintf( sz, "sprites/%s.spr", p->szSprite );
-					m_rghSprites[index] = SPR_Load( sz );
-					m_rgrcRects[index] = p->rc;
-					strlcpy( &m_rgszSpriteNames[index * MAX_SPRITE_NAME_LENGTH], p->szName, MAX_SPRITE_NAME_LENGTH );
-					index++;
-				}
+					m_rghSprites[index++] = gEngfuncs.pfnSPR_Load( sz );
 
+					if( validSprites >= m_iSpriteCountAllRes )
+						break;
+				}
+				else if( ++validSprites >= m_iSpriteCountAllRes )
+				{
+					break;
+				}
 				p++;
 			}
 		}
 	}
 	else
 	{
-		// we have already have loaded the sprite reference from hud.txt, but
-		// we need to make sure all the sprites have been loaded (we've gone through a transition, or loaded a save game)
-		client_sprite_t *p = m_pSpriteList;
+		m_pSpriteList = gEngfuncs.pfnSPR_GetList( "sprites/hud.txt", &m_iSpriteCountAllRes );
 
-		// count the number of sprites of the appropriate res
-		m_iSpriteCount = 0;
-		for( j = 0; j < m_iSpriteCountAllRes; j++ )
+		if( m_pSpriteList )
 		{
-			if( p->iRes == m_iRes )
-				m_iSpriteCount++;
-			p++;
-		}
+			m_iSpriteCount = 0;
+			client_sprite_t *p = m_pSpriteList;
 
-		delete[] m_rghSprites;
-		delete[] m_rgrcRects;
-		delete[] m_rgszSpriteNames;
-
-		// allocated memory for sprite handle arrays
- 		m_rghSprites = new HSPRITE[m_iSpriteCount];
-		m_rgrcRects = new wrect_t[m_iSpriteCount];
-		m_rgszSpriteNames = new char[m_iSpriteCount * MAX_SPRITE_NAME_LENGTH];
-
-		p = m_pSpriteList;
-		int index = 0;
-		for( j = 0; j < m_iSpriteCountAllRes; j++ )
-		{
-			if( p->iRes == m_iRes )
+			for( int j = 0; j < m_iSpriteCountAllRes; j++ )
 			{
-				char sz[256];
-				sprintf( sz, "sprites/%s.spr", p->szSprite );
-				m_rghSprites[index] = SPR_Load( sz );
-				m_rgrcRects[index] = p->rc;
-				strlcpy( &m_rgszSpriteNames[index * MAX_SPRITE_NAME_LENGTH], p->szName, MAX_SPRITE_NAME_LENGTH );
-				index++;
+				if( p->iRes == m_iRes )
+					m_iSpriteCount++;
+				p++;
 			}
 
-			p++;
+			m_rghSprites = new HSPRITE[m_iSpriteCount];
+			m_rgrcRects = new wrect_t[m_iSpriteCount];
+			m_rgszSpriteNames = new char[m_iSpriteCount * MAX_SPRITE_NAME_LENGTH];
+
+			p = m_pSpriteList;
+			int index = 0;
+
+			for( int i = 0; i < m_iSpriteCountAllRes; i++ )
+			{
+				if( p->iRes == m_iRes )
+				{
+					char sz[256];
+					sprintf( sz, "sprites/%s.spr", p->szSprite );
+					m_rghSprites[index] = gEngfuncs.pfnSPR_Load( sz );
+					m_rgrcRects[index] = p->rc;
+
+					strncpy( m_rgszSpriteNames + ( index * MAX_SPRITE_NAME_LENGTH ), p->szName, MAX_SPRITE_NAME_LENGTH );
+					index++;
+				}
+				p++;
+			}
 		}
 	}
 
-	// assumption: number_1, number_2, etc, are all listed and loaded sequentially
 	m_HUD_number_0 = GetSpriteIndex( "number_0" );
+	m_MG_number_0 = GetSpriteIndex( "mg_0" );
 
-	if( m_HUD_number_0 == -1 )
-	{
-		const char *msg = "There is something wrong with your game data! Please, reinstall\n";
+	if( m_HUD_number_0 != -1 )
+		m_iFontHeight = m_rgrcRects[m_HUD_number_0].bottom - m_rgrcRects[m_HUD_number_0].top;
+	else
+		m_iFontHeight = 16;
 
-		if( HUD_MessageBox( msg ) )
-		{
-			gEngfuncs.pfnClientCmd( "quit\n" );
-		}
+	m_iFontEngineHeight = m_iFontHeight;
 
-		return;
-	}
-
-	m_iFontHeight = m_rgrcRects[m_HUD_number_0].bottom - m_rgrcRects[m_HUD_number_0].top;
-
+	m_Ammo.VidInit();
 	m_Scope.VidInit();
 	m_DoDCommon.VidInit();
 	m_Icons.VidInit();
 	m_DoDMap.VidInit();
 	m_ObjectiveIcons.VidInit();
-	m_PShooter.VidInit();
 	m_CEnvModel.VidInit();
+	m_PShooter.VidInit();
 	m_Weather.VidInit();
-	m_Ammo.VidInit();
-	m_SayText.VidInit();
-	m_Spectator.VidInit();
 	m_Train.VidInit();
 	m_Message.VidInit();
 	m_StatusBar.VidInit();
 	m_DeathNotice.VidInit();
-	m_TextMessage.VidInit();
+	m_SayText.VidInit();
+	m_Menu.VidInit();
 	m_StatusIcons.VidInit();
 	m_DoDCrossHair.VidInit();
-	m_DoDMap.VidInit();
 	m_MortarHud.VidInit();
-	m_VGUI2Print.VidInit();
 
 	m_MOTD.VidInit();
 	m_Scoreboard.VidInit();
 
-	m_iSensLevel = 0;
+	for( int i = 0; i < MAX_PLAYERS; i++ )
+	{
+		g_PlayerExtraInfo[i].teamnumber = 3;
+	}
+
+	ClientSetSensitivity( 0 );
 	memset( g_PModelFxInfo, 0, sizeof( g_PModelFxInfo ) );
 }
 
@@ -867,37 +769,33 @@ float HUD_GetFOV( void )
 	return g_lastFOV;
 }
 
-int CHud::MsgFunc_SetFOV( const char *pszName,  int iSize, void *pbuf )
+int CHud::MsgFunc_SetFOV( const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
 
-	int newfov = READ_BYTE();
-	int def_fov = CVAR_GET_FLOAT( "default_fov" );
+	if( g_iVuser1z )
+		return m_iFOV;
 
-	g_lastFOV = newfov;
+	int newfov = READ_BYTE();
+	g_lastFOV = ( float ) newfov;
+
+	int def_fov = 90;
 
 	if( newfov == 0 )
-	{
 		m_iFOV = def_fov;
-	}
 	else
-	{
 		m_iFOV = newfov;
-	}
 
-	// the clients fov is actually set in the client data update section of the hud
-
-	// Set a new sensitivity
 	if( m_iFOV == def_fov )
-	{  
-		// reset to saved sensitivity
-		m_flMouseSensitivity = 0;
+	{
+		m_flMouseSensitivity = 0.0f;
+		return 1;
 	}
-	else
-	{  
-		// set a new sensitivity that is proportional to the change from the FOV default
-		m_flMouseSensitivity = sensitivity->value * ((float)newfov / (float)def_fov) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
-	}
+
+	float zoom_sens = ( zoom_sensitivity_ratio ) ? zoom_sensitivity_ratio->value : 1.0f;
+	float flEngineSens = ( sensitivity ) ? sensitivity->value : 1.0f;
+
+	m_flMouseSensitivity = zoom_sens * ( ( float ) m_iFOV / ( float ) def_fov * flEngineSens );
 
 	return 1;
 }
@@ -918,7 +816,55 @@ int CHud::MsgFunc_TimeLeft( const char *pszName, int iSize, void *pbuf )
 
 int CHud::MsgFunc_HLTV( const char *pszName, int iSize, void *pbuf )
 {
-	return 1;
+	BEGIN_READ( pbuf, iSize );
+	int player = READ_BYTE();
+	int data = READ_BYTE();
+
+	if( gEngfuncs.IsSpectateOnly() )
+	{
+		if( data & 0x80 )
+		{
+			int health = data & 0x7F;
+
+			if( player != 0 )
+			{
+				g_PlayerExtraInfo[player].health = health;
+			}
+			else
+			{
+				for( int i = 0; i < MAX_PLAYERS; i++ )
+				{
+					g_PlayerExtraInfo[i].health = health;
+				}
+			}
+			return 1;
+		}
+		else
+		{
+			if( data == 0 )
+			{
+				data = 90;
+			}
+
+			if( player != 0 )
+			{
+				m_PlayerFOV[player] = data;
+			}
+			else
+			{
+				for( int i = 0; i < MAX_PLAYERS; i++ )
+				{
+					m_PlayerFOV[i] = data;
+				}
+			}
+			return 1;
+		}
+	}
+	else
+	{
+		gEngfuncs.Con_DPrintf( "Warning! Received unexpected HLTV user message.\n" );
+		return 1;
+	}
 }
 
 void CHud::AddHudElem( CHudBase *phudelem )
@@ -978,7 +924,145 @@ int CHud::GetWaterLevel( void )
 	return m_iWaterLevel;
 }
 
-int CHud::MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
+static cvar_t *violence_hblood;
+
+bool ShouldShowBlood( void )
+{
+	if( !violence_hblood )
+	{
+		violence_hblood = gEngfuncs.pfnGetCvarPointer( "violence_hblood" );
+
+		if( !violence_hblood )
+			return false;
+	}
+
+	if( violence_hblood->value != 1.0f )
+		return false;
+
+	return true;
+}
+
+int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf )
+{
+	float origin[3];
+
+	BEGIN_READ( pbuf, iSize );
+
+	origin[0] = READ_COORD();
+	origin[1] = READ_COORD();
+	origin[2] = READ_COORD();
+
+	ShouldShowBlood();
+	EV_BloodPuff( origin );
+	return 1;
+}
+
+extern vec3_t v_origin;
+
+void EV_BloodPuff( float *org )
+{
+	vec3_t velocity, origin;
+	float dustscale, bloodscale;
+	float flDist, scale;
+	TEMPENTITY *pTemp;
+	vec3_t closerOrigin, to_view;
+
+	int modelIndex = gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/shot-dust.spr" );
+	int modelBlood = gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/blood-narrow.spr" );
+
+	origin = Vector( org );
+	velocity = Vector( 0.0f, 0.0f, 2.0f );
+
+	dustscale = gEngfuncs.pfnRandomFloat( 0.7f, 0.8f );
+	bloodscale = gEngfuncs.pfnRandomFloat( 0.4f, 0.45f );
+
+	flDist = ( v_origin - origin ).Length();
+
+	if( flDist >= 32.0f )
+	{
+		if( flDist <= 1200.0f )
+		{
+			if( flDist <= 600.0f )
+				scale = 1.0f;
+			else
+				scale = ( flDist - 600.0f ) / 600.0f * 0.5f + 1.0f;
+		}
+		else
+		{
+			scale = 1.5f;
+		}
+
+		pTemp = gEngfuncs.pEfxAPI->R_TempSprite( &origin.x, &velocity.x, scale * dustscale, modelIndex, 4, 0, 0.15f, 30.0f, 256 );
+
+		if( pTemp )
+		{
+			pTemp->entity.curstate.renderamt = 800;
+			pTemp->entity.curstate.framerate = 45.0f;
+			pTemp->entity.curstate.rendercolor.r = -76;
+			pTemp->entity.curstate.rendercolor.g = -80;
+			pTemp->entity.curstate.rendercolor.b = -108;
+			pTemp->entity.angles.z = gEngfuncs.pfnRandomLong( 0, 90 );
+		}
+
+		to_view = v_origin - origin;
+		VectorNormalize( &to_view.x );
+		VectorMA( &origin.x, 2.0f, &to_view.x, &closerOrigin.x );
+
+		pTemp = gEngfuncs.pEfxAPI->R_TempSprite( &closerOrigin.x, &velocity.x, scale * bloodscale, modelBlood, 4, 0, 0.35f, 30.0f, 256 );
+
+		if( pTemp )
+		{
+			pTemp->entity.curstate.framerate = 20.0f;
+			pTemp->entity.curstate.renderamt = 800;
+			pTemp->entity.curstate.rendercolor.r = 120;
+			pTemp->entity.curstate.rendercolor.g = 0;
+			pTemp->entity.curstate.rendercolor.b = 0;
+			pTemp->entity.angles.z = gEngfuncs.pfnRandomLong( 0, 90 );
+		}
+	}
+}
+
+extern char *s_HandSignalSubtitles[][3];
+
+int EV_HandSignalMsg( const char *pszName, int iSize, void *pbuf )
+{
+	BEGIN_READ( pbuf, iSize );
+	int clientIndex = READ_BYTE();
+	int signal = READ_BYTE();
+
+	if( clientIndex >= 1 && clientIndex <= MAX_PLAYERS && signal < HS_IDLE2 )
+	{
+		int teamId = g_PlayerExtraInfo[clientIndex].teamId;
+		gEngfuncs.pfnGetPlayerInfo( clientIndex, &g_PlayerInfoList[clientIndex] );
+
+		char pattern[268];
+		sprintf( pattern, "%c%s%s%s\n", 2, "(%s1) ", g_PlayerInfoList[clientIndex].name, ": %s2" );
+
+		char *sstr2 = s_HandSignalSubtitles[signal][0];
+
+		if( teamId == 2 )
+		{
+			char *pszAxisStr = s_HandSignalSubtitles[signal][1];
+
+			if( *pszAxisStr )
+				sstr2 = pszAxisStr;
+		}
+		else if( teamId == 1 && gHUD.m_bBritish )
+		{
+			char *pszBritishStr = s_HandSignalSubtitles[signal][2];
+
+			if( *pszBritishStr )
+				sstr2 = pszBritishStr;
+		}
+
+		gHUD.m_SayText.SayTextPrint( pattern, 256, clientIndex, "#Handsignal", sstr2 );
+		gHUD.m_Spectator.AddVoiceIconToPlayerEnt( clientIndex );
+	}
+
+	return 1;
+}
+
+void CHud::MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
 
@@ -986,8 +1070,6 @@ int CHud::MsgFunc_UseSound( const char *pszName, int iSize, void *pbuf )
 		gEngfuncs.pfnPlaySoundByName( "common/wpn_select.wav", 0.5 );
 	else
 		gEngfuncs.pfnPlaySoundByName( "common/wpn_denyselect.wav", 0.5 );
-
-	return 1;
 }
 
 char *CHud::GetTeamName( int team )
@@ -1095,25 +1177,28 @@ void CHud::VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b
 
 bool CHud::IsInMGDeploy( void )
 {
-	if( g_iUser3 != 2 )
-		return g_iVuser1x == 2;
+	if( g_iUser3 == 2 || g_iVuser1x == 2 )
+		return true;
 
-	return true;
+	return false;
 }
 
 bool CHud::IsProneDeployed( void )
 {
-	return g_iUser3 == 2;
+	return ( g_iUser3 == 2 );
 }
 
 bool CHud::IsSandbagDeployed( void )
 {
-	return g_iVuser1x == 2;
+	return ( g_iVuser1x == 2 );
 }
 
 bool CHud::IsProne( void )
 {
-	return ( g_iUser3 - 1 ) <= 1;
+	if( g_iUser3 == 1 || g_iUser3 == 0 )
+		return false;
+
+	return true;
 }
 
 bool CHud::IsDucking( void )
@@ -1125,8 +1210,8 @@ extern int g_iDeadFlag;
 
 bool CHud::IsInMortarDeploy( void )
 {
-	if( !g_iDeadFlag )
-		return g_iUser3 == 3;
+	if( !g_iDeadFlag && g_iUser3 == 3 )
+		return true;
 
 	return false;
 }
@@ -1276,23 +1361,25 @@ void CHud::GetWeaponRecoilAmount( int weaponId, float &flPitchRecoil, float &flY
 	}
 }
 
-
 void CHud::DoRecoil( int weapon_id )
 {
-	float flPitchRecoil, flYawRecoil;
+	float flPitchRecoil = 0.0f;
+	float flYawRecoil = 0.0f;
 
-	gHUD.GetWeaponRecoilAmount( weapon_id, flPitchRecoil, flYawRecoil );
-	gHUD.SetRecoilAmount( flPitchRecoil, flYawRecoil );
-
+	GetWeaponRecoilAmount( weapon_id, flPitchRecoil, flYawRecoil );
+	SetRecoilAmount( flPitchRecoil, flYawRecoil );
 }
 
 void CHud::SetRecoilAmount( float flPitchRecoil, float flYawRecoil )
 {
 	m_flPitchRecoilAccumulator = flPitchRecoil;
-	m_flYawRecoilAccumulator = gEngfuncs.pfnRandomFloat( 0.8f, 1.1f ) * flYawRecoil;
+
+	float flRandomYaw = gEngfuncs.pfnRandomFloat( 0.8f, 1.1f ) * flYawRecoil;
 
 	if( gEngfuncs.pfnRandomLong( 0, 1 ) > 0 )
-		m_flYawRecoilAccumulator = -m_flYawRecoilAccumulator;
+		flRandomYaw = -flRandomYaw;
+
+	m_flYawRecoilAccumulator = flRandomYaw;
 
 	m_flRecoilTimeRemaining = 0.1f;
 }
@@ -1315,18 +1402,5 @@ void CHud::PopRecoil( float frametime, float &flPitchRecoil, float &flYawRecoil 
 		flPitchRecoil = m_flPitchRecoilAccumulator * flRecoilProportion;
 		flYawRecoil = m_flYawRecoilAccumulator * flRecoilProportion;
 		m_flRecoilTimeRemaining -= frametime;
-	}
-}
-
-void CHud::GetAllPlayersInfo()
-{
-	for( int i = 1; i < MAX_PLAYERS; i++ )
-	{
-		GetPlayerInfo( i, &g_PlayerInfoList[i] );
-
-		if( g_PlayerInfoList[i].thisplayer )
-		{
-			m_Scoreboard.m_iPlayerNum = i;
-		}
 	}
 }

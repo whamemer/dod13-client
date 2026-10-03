@@ -41,13 +41,13 @@ extern int g_iAlive;
 int CHudStatusBar::Init( void )
 {
 	gHUD.AddHudElem( this );
+
 	HOOK_MESSAGE( StatusValue );
 	Reset();
 	m_flNextUpdateTime = 0.0f;
 	hud_centerid = CVAR_CREATE( "hud_centerid", "1", FCVAR_CLIENTDLL );
 
 	memset( m_TargetTalking, 0, sizeof( m_TargetTalking ) );
-	memset( m_szStatusText, 0, sizeof( m_szStatusText ) );
 	return 1;
 }
 

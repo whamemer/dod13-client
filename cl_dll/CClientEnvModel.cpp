@@ -31,9 +31,10 @@ extern engine_studio_api_t IEngineStudio;
 
 int CClientEnvModel::Init( void )
 {
+	gHUD.AddHudElem( this );
+
 	m_iFlags |= HUD_ACTIVE;
 	memset( m_sEnvModels, 0, sizeof( m_sEnvModels ) );
-	gHUD.AddHudElem( this );
 	return 1;
 }
 

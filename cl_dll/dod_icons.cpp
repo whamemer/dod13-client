@@ -35,12 +35,13 @@ DECLARE_MESSAGE( m_Icons, ClCorpse )
 
 void __CmdFunc_Credits( void )
 {
-	gHUD.m_Icons.m_iCreditName = 0;
-	gHUD.m_Icons.m_flCreditChangeTime = gHUD.m_flTime;
+	gHUD.m_Icons.StartDrawingCredits();
 }
 
 int CHudDodIcons::Init( void )
 {
+	gHUD.AddHudElem( this );
+
 	HOOK_MESSAGE( Health );
 	HOOK_MESSAGE( Object );
 	HOOK_MESSAGE( ClientAreas );
@@ -48,7 +49,6 @@ int CHudDodIcons::Init( void )
 
 	m_iFlags |= HUD_ACTIVE;
 	memset( m_Areas, 0, sizeof( m_Areas ) );
-	gHUD.AddHudElem( this );
 
 	HOOK_COMMAND( "credits", Credits )
 

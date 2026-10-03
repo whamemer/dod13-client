@@ -23,8 +23,7 @@
 #include "dod_shared.h"
 
 extern vec3_t v_sim_org, v_cl_angles;
-extern cvar_t *cl_dmsmallmap;
-extern int g_iTeamNumber;
+cvar_t *cl_dmsmallmap;
 bool b_turnedoffmap;
 int flZoomLevels[3];
 
@@ -221,7 +220,7 @@ void CHudDoDMap::DrawOverviewLayer( void )
 	}
 }
 
-bool CHudDoDMap::AddMapEntityToMap( HSPRITE sprite, double lifeTime, Vector *p_origin )
+bool CHudDoDMap::AddMapEntityToMap( HSPRITE sprite, double lifeTime, vec3_t origin )
 {
 	double flClientTime = gEngfuncs.GetClientTime();
 
@@ -230,7 +229,7 @@ bool CHudDoDMap::AddMapEntityToMap( HSPRITE sprite, double lifeTime, Vector *p_o
 		if( !m_ExtraOverviewEntities[i].hSprite )
 		{
 			m_ExtraOverviewEntities[i].hSprite = sprite;
-			m_ExtraOverviewEntities[i].origin = *p_origin;
+			m_ExtraOverviewEntities[i].origin = origin;
 			m_ExtraOverviewEntities[i].killtime = flClientTime + lifeTime;
 
 			return true;

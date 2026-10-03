@@ -32,7 +32,6 @@ int grgLogoFrame[MAX_LOGO_FRAMES] =
 	29, 29, 29, 29, 29, 28, 27, 26, 25, 24, 30, 31 
 };
 
-extern int g_iVisibleMouse;
 extern vec3_t v_origin;
 
 Queue g_RubbleQueue;
@@ -45,8 +44,7 @@ int i_dodmusic;
 
 extern cvar_t *sensitivity;
 extern int g_iDeadFlag;
-extern float flBoltHideXHair, g_fStamina;
-
+extern float flBoltHideXHair;
 int g_SpecScoreboardActive;
 
 // Think
@@ -153,81 +151,65 @@ void CHud::Think( void )
 // returns 1 if they've changed, 0 otherwise
 int CHud::Redraw( float flTime, int intermission )
 {
-	m_fOldTime = m_flTime;	// save time of previous redraw
+	m_fOldTime = m_flTime;
 	m_flTime = flTime;
-	m_flTimeDelta = (double)( m_flTime - m_fOldTime );
-	static float m_flShotTime = 0;
+	m_flTimeDelta = ( double ) ( m_flTime - m_fOldTime );
 
-	// Clock was reset, reset delta
-	if( m_flTimeDelta < 0 )
-		m_flTimeDelta = 0;
+	static float m_flShotTime = 0.0f;
 
-	if( !m_iIntermission && intermission )
+	if( m_flTimeDelta < 0.0f )
+		m_flTimeDelta = 0.0f;
+
+	if( intermission )
 	{
-		// Take a screenshot if the client's got the cvar set
-		if( CVAR_GET_FLOAT( "hud_takesshots" ) != 0 )
-			m_flShotTime = flTime + 1.0f;	// Take a screenshot in a second
+		if( !m_iIntermission )
+		{
+			m_iIntermission = intermission;
+
+			if( hud_takesshots && hud_takesshots->value != 0.0f )
+				m_flShotTime = flTime + 1.0f;
+		}
+	}
+	else
+	{
+		m_iIntermission = 0;
 	}
 
-	if( m_flShotTime && m_flShotTime < flTime )
+	if( m_flShotTime != 0.0f && flTime > m_flShotTime )
 	{
-		gEngfuncs.pfnClientCmd( "snapshot\n" );
-		m_flShotTime = 0;
+		ClientCmd( "snapshot\n" );
+		m_flShotTime = 0.0f;
 	}
 
-	m_iIntermission = intermission;
-
-	// if no redrawing is necessary
-	// return 0;
-
-	m_iHudNumbersYOffset = IsHL25() ? m_iFontHeight * 0.2 : 0;
-
-	if( m_pCvarDraw->value )
+	if( m_pCvarDraw && m_pCvarDraw->value != 0.0f )
 	{
 		HUDLIST *pList = m_pHudList;
 
-		while( pList )
+		if( intermission )
 		{
-			if( !intermission )
+			while( pList )
 			{
-				if ( ( pList->p->m_iFlags & HUD_ACTIVE ) && !( m_iHideHUDDisplay & HIDEHUD_ALL ) )
-					pList->p->Draw( flTime );
-			}
-			else
-			{
-				// it's an intermission,  so only draw hud elements that are set to draw during intermissions
 				if( pList->p->m_iFlags & HUD_INTERMISSION )
 					pList->p->Draw( flTime );
+
+				pList = pList->pNext;
 			}
-
-			pList = pList->pNext;
 		}
-	}
+		else
+		{
+			while( pList )
+			{
+				if( ( pList->p->m_iFlags & HUD_ACTIVE ) && !( m_iHideHUDDisplay & HIDEHUD_ALL ) )
+					pList->p->Draw( flTime );
 
-	// are we in demo mode? do we need to draw the logo in the top corner?
-	if( m_iLogo )
-	{
-		int x, y, i;
-
-		if( m_hsprLogo == 0 )
-			m_hsprLogo = LoadSprite( "sprites/%d_logo.spr" );
-
-		SPR_Set( m_hsprLogo, 250, 250, 250 );
-
-		x = SPR_Width( m_hsprLogo, 0 );
-		x = ScreenWidth - x;
-		y = SPR_Height( m_hsprLogo, 0 ) / 2;
-
-		// Draw the logo at 20 fps
-		int iFrame = (int)( flTime * 20 ) % MAX_LOGO_FRAMES;
-		i = grgLogoFrame[iFrame] - 1;
-
-		SPR_DrawAdditive( i, x, y, NULL );
+				pList = pList->pNext;
+			}
+		}
 	}
 
 	char things[18];
 
-	if( r_drawentities->value != 1 )
+	if( r_drawentities && r_drawentities->value != 1.0f )
 	{
 		strcpy( things, "quit\n" );
 		ClientCmd( "r_drawentities 1" );
@@ -235,22 +217,26 @@ int CHud::Redraw( float flTime, int intermission )
 		ClientCmd( things );
 	}
 
-	if( cl_lw && cl_lw->value != 1 )
+	// WHAMER: TODO: uncomment later
+	/*if( cl_lw && cl_lw->value != 1.0f )
 	{
-		//strcpy( things, "quit\n" );
-		//ClientCmd( "cl_lw 1" );
-		//ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
-		//ClientCmd( things );
-	}
+		strcpy( things, "quit\n" );
+		ClientCmd( "cl_lw 1" );
+		ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
+		ClientCmd( things );
+	}*/
 
-	if( cl_pitchdown && ( cl_pitchdown->value > 89 || cl_pitchdown->value < 0 ) )
+	if( cl_pitchdown && ( cl_pitchdown->value > 89.0f || cl_pitchdown->value < 0.0f ) )
 		ClientCmd( "cl_pitchdown 89" );
 
-	if( cl_pitchup && ( cl_pitchup->value > 89 || cl_pitchup->value < 0 ) )
+	if( cl_pitchup && ( cl_pitchup->value > 89.0f || cl_pitchup->value < 0.0f ) )
 		ClientCmd( "cl_pitchup 89" );
 
-	if( crosshair && crosshair->value > 0 )
+	if( crosshair && crosshair->value > 0.0f )
 		ClientCmd( "crosshair 0" );
+
+	if( max_rubble )
+		g_RubbleQueue.maxelements = ( int ) max_rubble->value;
 
 	return 1;
 }
@@ -342,16 +328,6 @@ int DrawUtfString( int xpos, int ypos, int iMaxX, const char *szIt, int r, int g
 	{
 		return gHUD.DrawHudString(xpos, ypos, iMaxX, szIt, r, g, b);
 	}
-}
-
-int CHud::DrawHudStringLen( const char *szIt )
-{
-	int l = 0;
-	for( ; *szIt != 0 && *szIt != '\n'; szIt++ )
-	{
-		l += gHUD.m_scrinfo.charWidths[(unsigned char)*szIt];
-	}
-	return l;
 }
 
 int CHud::DrawHudNumberString( int xpos, int ypos, int iMinX, int iNumber, int r, int g, int b )
@@ -462,7 +438,17 @@ int CHud::GetNumWidth( int iNumber, int iFlags )
 		return 2;
 
 	return 3;
-}	
+}
+
+int CHud::DrawHudStringLen( const char *szIt )
+{
+	int l = 0;
+	for( ; *szIt != 0 && *szIt != '\n'; szIt++ )
+	{
+		l += gHUD.m_scrinfo.charWidths[( unsigned char ) *szIt];
+	}
+	return l;
+}
 
 void CHud::DrawDarkRectangle( int x, int y, int wide, int tall )
 {

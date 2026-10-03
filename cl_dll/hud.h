@@ -22,9 +22,6 @@
 #pragma once
 #if !defined(HUD_H)
 #define HUD_H
-#define RGB_YELLOWISH 0x00FFA000 //255,160,0
-#define RGB_REDISH 0x00FF1010 //255,160,0
-#define RGB_GREENISH 0x0000A000 //0,160,0
 
 #include "wrect.h"
 #include "cl_dll.h"
@@ -39,6 +36,7 @@
 #define	HUDELEM_ACTIVE	1
 
 #define CHudMsgFunc(x) int MsgFunc_##x(const char *pszName, int iSize, void *pbuf)
+#define CHudMsgFuncV(x) void MsgFunc_##x(const char *pszName, int iSize, void *pbuf)
 #define CHudUserCmd(x) void UserCmd_##x()
 
 typedef struct
@@ -92,7 +90,7 @@ class Queue
 {
 public:
 	int count;
-	int maxelemets;
+	int maxelements;
 	float m_flDuration;
 	Element *first;
 	Element *last;
@@ -105,7 +103,7 @@ public:
 
 	bool Full( void ) 
 	{ 
-		return ( count >= maxelemets ); 
+		return ( count >= maxelements );
 	}
 
 	bool Add( float flTime )
@@ -247,7 +245,7 @@ public:
 	void Think( void );
 	void Reset( void );
 	void PlayerDied( void );
-	int DrawWeaponList( float flTime );	
+	int DrawWeaponList( float flTime );
 	int DrawWList( float flTime );
 
 	CHudMsgFunc( CurWeapon );
@@ -297,9 +295,6 @@ private:
 
 	ClipInfo ClipInfoArray[64];
 	ClipInfo BritGrenClipInfo;
-
-	int m_HUD_bucket0;
-	int m_HUD_selection;
 };
 
 #define FADE_TIME 100
@@ -323,12 +318,14 @@ private:
 //
 //-----------------------------------------------------
 //
-class CHudDoDCrossHair : CHudBase
+class CHudDoDCrossHair : public CHudBase
 {
 public:
 	int Init( void );
 	int VidInit( void );
 	int Draw( float flTime );
+	void Reset( void ) { /*Nothing.*/ }
+
 	CHudMsgFunc( ClanTimer );
 	bool ShouldDrawCrossHair( void );
 	float GetCurrentWeaponAccuracy( void );
@@ -338,8 +335,7 @@ public:
 	void DrawCustomCrossHair( int style );
 	int GetCrossHairWidth( void );
 
-	void Reset( void ) { return; }
-
+private:
 	float m_fClanTimer;
 
 	int i_xSet;
@@ -378,24 +374,11 @@ public:
 //
 #define MAX_EXTRA_MAP_ICONS 32 
 
+#pragma pack(push, 1)
+
 class CHudDoDMap : public CHudBase
 {
 public:
-	int VidInit( void );
-	void InitHUDData( void );
-	int Draw( float flTime );
-	int Init( void );
-	void DrawOverview( void );
-	void DrawOverviewLayer( void );
-	void DrawOverviewEntities( void );
-	void CheckOverviewEntities( void );
-	void HandleMapButton( void );
-	void HandleMapZoomButton( void );
-	void SetMapState( int mapstate );
-	void GetSmallMapOffset( float &x, float &y, float &z );
-	bool AddMapEntityToMap( HSPRITE sprite, double lifetime, vec3_t *origin );
-	void DrawOverviewIcon( vec3_t origin, HSPRITE hIcon, int iconScale, vec3_t angles );
-
 	typedef struct
 	{
 		vec3_t origin;
@@ -404,6 +387,22 @@ public:
 	} map_icon_t;
 
 	map_icon_t m_ExtraOverviewEntities[MAX_EXTRA_MAP_ICONS];
+
+	int VidInit( void );
+	void InitHUDData( void );
+	int Draw( float flTime );
+	int Init( void );
+
+	void DrawOverview( void );
+	void DrawOverviewLayer( void );
+	void DrawOverviewEntities( void );
+	void CheckOverviewEntities( void );
+	void HandleMapButton( void );
+	void HandleMapZoomButton( void );
+	void SetMapState( int mapstate );
+	void GetSmallMapOffset( float &x, float &y, float &z );
+	bool AddMapEntityToMap( HSPRITE sprite, double lifetime, vec3_t origin );
+	void DrawOverviewIcon( vec3_t origin, HSPRITE hIcon, int iconScale, vec3_t angles );
 
 private:
 	cl_entity_t m_MapTag[64];
@@ -415,60 +414,7 @@ private:
 	float m_flPreviousMapScale;
 };
 
-//
-//-----------------------------------------------------
-//
-class CHudMOTD : public CHudBase
-{
-public:
-	int Init( void );
-	int VidInit( void );
-	int Draw( float flTime );
-	void Reset( void );
-
-	CHudMsgFunc( MOTD );
-	void Scroll( int dir );
-	void Scroll( float amount );
-	float scroll;
-	bool m_bShow;
-
-protected:
-	static int MOTD_DISPLAY_TIME;
-	char m_szMOTD[MAX_MOTD_LENGTH];
-
-	int m_iLines;
-	int m_iMaxLength;
-};
-
-//
-//-----------------------------------------------------
-//
-class CHudScoreboard : public CHudBase
-{
-public:
-	int Init( void );
-	void InitHUDData( void );
-	int VidInit( void );
-	int Draw( float flTime );
-	int DrawPlayers( int xoffset, float listslot, int nameoffset = 0, const char *team = NULL ); // returns the ypos where it finishes drawing
-	void UserCmd_ShowScores( void );
-	void UserCmd_HideScores( void );
-	CHudMsgFunc( ScoreInfo );
-	CHudMsgFunc( TeamInfo );
-	CHudMsgFunc( TeamScore );
-	CHudMsgFunc( TeamScores );
-	CHudMsgFunc( TeamNames );
-	void DeathMsg( int killer, int victim );
-
-	int m_iNumTeams;
-
-	int m_iLastKilledBy;
-	int m_fLastKillTime;
-	int m_iPlayerNum;
-	int m_iShowscoresHeld;
-
-	void GetAllPlayersInfo( void );
-};
+#pragma pack(pop)
 
 //
 //-----------------------------------------------------
@@ -480,6 +426,7 @@ public:
 	int VidInit( void );
 	int Draw( float flTime );
 	void Reset( void );
+
 	CHudMsgFunc( StatusValue );
 	char *GetTargetName( void );
 	void CreateEntities( void );
@@ -532,17 +479,11 @@ protected:
 	HSPRITE m_StatusBarHeadModel;
 
 	cvar_t *hud_centerid;
-
-	char m_szStatusText[MAX_STATUSBAR_LINES][MAX_STATUSTEXT_LENGTH];  // a text string describing how the status bar is to be drawn
-	char m_szStatusBar[MAX_STATUSBAR_LINES][MAX_STATUSTEXT_LENGTH];	// the constructed bar that is drawn
-	int m_iStatusValues[MAX_STATUSBAR_VALUES];  // an array of values for use in the status bar
-
-	int m_bReparseString; // set to TRUE whenever the m_szStatusBar needs to be recalculated
-
-	// an array of colors...one color for each line
-	float *m_pflNameColors[MAX_STATUSBAR_LINES];
 };
 
+//
+//-----------------------------------------------------
+//
 struct extra_player_info_t
 {
 	short frags;
@@ -575,7 +516,6 @@ struct team_info_t
 extern hud_player_info_t	g_PlayerInfoList[MAX_PLAYERS + 1];	   // player info from the engine
 extern extra_player_info_t  g_PlayerExtraInfo[MAX_PLAYERS + 1];   // additional player info sent directly to the client dll
 extern team_info_t			g_TeamInfo[MAX_TEAMS + 1];
-extern int					g_IsSpectator[MAX_PLAYERS + 1];
 
 //
 //-----------------------------------------------------
@@ -587,10 +527,11 @@ public:
 	void InitHUDData( void );
 	int VidInit( void );
 	int Draw( float flTime );
+
 	CHudMsgFunc( DeathMsg );
 
 private:
-	int m_HUD_d_skull;  // sprite index of skull icon
+	int m_HUD_d_skull;
 	cvar_t *hud_deathnotice_time;
 };
 
@@ -605,6 +546,7 @@ public:
 	int VidInit( void );
 	void Reset( void );
 	int Draw( float flTime );
+
 	CHudMsgFunc( ShowMenu );
 	void SelectMenuItem( int menu_item );
 
@@ -668,7 +610,6 @@ public:
 	wrect_t m_iconarea;
 	HSPRITE TimerHUD;
 	wrect_t *TimerHUDArea;
-	bool m_bWarmupMode;
 
 	int Init( void );
 	int VidInit( void );
@@ -720,7 +661,7 @@ public:
 		}
 	}
 
-private: 
+private:
 	float m_fTimerSeconds;
 	float m_flWaveTime;
 	int m_Init;
@@ -736,6 +677,8 @@ private:
 	wrect_t m_topwrect;
 	wrect_t m_bottomwrect;
 	HSPRITE m_TopNumber;
+	HSPRITE m_BottomNumber;
+	bool m_bWarmupMode;
 };
 
 //
@@ -762,14 +705,15 @@ struct message_parms_t
 //
 //-----------------------------------------------------
 //
-
 class CHudTextMessage : public CHudBase
 {
 public:
 	int Init( void );
-	static char *LocaliseTextString( const char *msg, char *dst_buffer, int buffer_size );
-	static char *BufferedLocaliseTextString( const char *msg );
+
+	char *LocaliseTextString( const char *msg, char *dst_buffer, int buffer_size );
+	char *BufferedLocaliseTextString( const char *msg );
 	const char *LookupString( const char *msg_name, int *msg_dest = NULL );
+
 	CHudMsgFunc( TextMsg );
 	CHudMsgFunc( CapMsg );
 };
@@ -777,10 +721,15 @@ public:
 //
 //-----------------------------------------------------
 //
-
 class CHudMessage : public CHudBase
 {
 public:
+	typedef struct
+	{
+		client_textmessage_t *pMessage;
+		unsigned int font;
+	} client_message_t;
+
 	int Init( void );
 	int VidInit( void );
 	int Draw( float flTime );
@@ -793,24 +742,18 @@ public:
 
 	void MessageAdd( const char *pName, float time, int hintMessage, unsigned int font );
 	void MessageAdd( client_textmessage_t *newMessage );
-	void MessageDrawScan( client_textmessage_t *pMessage, float time );
+	void MessageDrawScan( client_textmessage_t *pMessage, float time, unsigned int font );
 	void MessageScanStart( void );
 	void MessageScanNextChar( void );
 	void Reset( void );
 	void HintMessageAdd( const char *pText );
-
-	typedef struct
-	{
-		client_textmessage_t *pMessage;
-		unsigned int font;
-	} client_message_t;
 
 private:
 	client_message_t			m_pMessages[maxHUDMessages];
 	float						m_startTime[maxHUDMessages];
 	message_parms_t				m_parms;
 	float						m_gameTitleTime;
-	client_textmessage_t		*m_pGameTitle;
+	client_textmessage_t *m_pGameTitle;
 
 	int m_HUD_title_life;
 	int m_HUD_title_half;
@@ -827,6 +770,7 @@ public:
 	int VidInit( void );
 	int Draw( float flTime );
 	void Think( void );
+
 	CHudMsgFunc( Scope );
 	void Reset( void );
 	void DrawTriApiScope( void );
@@ -836,6 +780,7 @@ private:
 	int m_iWeaponId;
 	bool m_bWeaponChanged;
 	int m_nLastWpnId;
+
 	HSPRITE spring_sprite;
 	model_s *spring_model;
 	HSPRITE k43_sprite;
@@ -864,18 +809,17 @@ public:
 //
 //-----------------------------------------------------
 //
-struct ClientArea
-{
-	int nStatus;
+struct ClientArea {
+	int     nStatus;
 	HSPRITE hSpr;
 };
 
-class CHudDodIcons : public CHudBase
-{
+class CHudDodIcons : public CHudBase {
 public:
 	int Init( void );
 	int VidInit( void );
 	void Reset( void );
+
 	void PlayerDied( void );
 	CHudMsgFunc( Health );
 	CHudMsgFunc( Object );
@@ -890,20 +834,22 @@ public:
 	void DrawMarkerIcon( HSPRITE pSpr );
 
 	int m_iHealth;
+
 	char *m_szObjectIcon;
 	HSPRITE m_hObjectSpr;
 	wrect_t *m_wObjectArea;
+
 	int sprite_array[5];
-	wrect_t *area_array;
+	wrect_t *area_array[5];
 	int m_iKey;
+
 	HSPRITE MapMarkerSprite;
 	wrect_t *MapMarkerArea;
 	float m_fLastMapMarkerTime;
-	int m_iCreditName;
-	float m_flCreditChangeTime;
 
 private:
 	ClientArea m_Areas[128];
+
 	HSPRITE IconMGDeploy;
 	wrect_t *IconMGDeployArea;
 	HSPRITE MainHUD;
@@ -918,23 +864,33 @@ private:
 	wrect_t *StaminaBarHUDArea;
 	HSPRITE HealthBarHUD;
 	wrect_t *HealthBarHUDArea;
+
 	int i_HeartFrame;
 	float f_HeartTime;
 	float f_HeartSpeed;
+
 	HSPRITE HealthOverlayHUD;
 	wrect_t *HealthOverlayHUDArea;
+
 	int m_iIconHeight;
 	int m_iIconWidth;
+
 	float m_flHintDieTime;
 	int m_iHintTeam;
+
 	int m_iMsgX;
 	int m_iMsgY;
+
 	int m_hHintHeads[3];
 	wrect_t *m_rectHintHeads[3];
 	HSPRITE m_hHorizHintBacking;
 	HSPRITE m_hVertHintBacking;
 	wrect_t *m_rectHorizHintBacking;
 	wrect_t *m_rectVertHintBacking;
+
+	int m_iCreditName;
+	float m_flCreditChangeTime;
+
 	HSPRITE m_hsprSelectedMarker;
 	float m_flDrawSelectedMarkerTime;
 };
@@ -979,6 +935,7 @@ public:
 	int Init( void );
 	int VidInit( void );
 	void Think( void );
+
 	void AddParticleSystem( particle_shooter_t *pShooter );
 	CHudMsgFunc( PShoot );
 
@@ -1013,6 +970,7 @@ public:
 	int Init( void );
 	int VidInit( void );
 	void Think( void );
+
 	void RemoveAllModels( void );
 	void AddEnvModel( env_model_t *pModel );
 
@@ -1072,6 +1030,7 @@ public:
 	int VidInit( void );
 	void Reset( void );
 	int Draw( float flTime );
+
 	CHudMsgFunc( StatusIcon );
 
 	enum
@@ -1079,13 +1038,7 @@ public:
 		MAX_ICONSPRITENAME_LENGTH = MAX_SPRITE_NAME_LENGTH,
 		MAX_ICONSPRITES = 4
 	};
-	
-	//had to make these public so CHud could access them (to enable concussion icon)
-	//could use a friend declaration instead...
-	void EnableIcon( const char *pszIconName, unsigned char red, unsigned char green, unsigned char blue );
-	void DisableIcon( const char *pszIconName );
 
-private:
 	typedef struct
 	{
 		char szSpriteName[MAX_ICONSPRITENAME_LENGTH];
@@ -1094,6 +1047,10 @@ private:
 		unsigned char r, g, b;
 	} icon_sprite_t;
 
+	void EnableIcon( char *pszIconName, unsigned char red, unsigned char green, unsigned char blue );
+	void DisableIcon( char *pszIconName );
+
+private:
 	icon_sprite_t m_IconList[MAX_ICONSPRITES];
 };
 
@@ -1173,64 +1130,214 @@ public:
 
 	CTrajectoryList *m_TrajectoryList;
 };
+
+//
+//-----------------------------------------------------
+//
+class CHudMOTD : public CHudBase
+{
+public:
+	int Init( void );
+	int VidInit( void );
+	int Draw( float flTime );
+	void Reset( void );
+
+	CHudMsgFunc( MOTD );
+	void Scroll( int dir );
+	void Scroll( float amount );
+	float scroll;
+	bool m_bShow;
+
+protected:
+	static int MOTD_DISPLAY_TIME;
+	char m_szMOTD[MAX_MOTD_LENGTH];
+
+	int m_iLines;
+	int m_iMaxLength;
+};
+
+//
+//-----------------------------------------------------
+//
+class CHudScoreboard : public CHudBase
+{
+public:
+	int Init( void );
+	void InitHUDData( void );
+	int VidInit( void );
+	int Draw( float flTime );
+	int DrawPlayers( int xoffset, float listslot, int nameoffset = 0, const char *team = NULL ); // returns the ypos where it finishes drawing
+	void UserCmd_ShowScores( void );
+	void UserCmd_HideScores( void );
+	CHudMsgFunc( ScoreInfo );
+	CHudMsgFunc( TeamInfo );
+	CHudMsgFunc( TeamScore );
+	CHudMsgFunc( TeamScores );
+	CHudMsgFunc( TeamNames );
+	void DeathMsg( int killer, int victim );
+
+	int m_iNumTeams;
+
+	int m_iLastKilledBy;
+	int m_fLastKillTime;
+	int m_iPlayerNum;
+	int m_iShowscoresHeld;
+
+	void GetAllPlayersInfo( void );
+};
 	
 //
 //-----------------------------------------------------
 //
-class CHud
-{
+class CHud {
 private:
-	HUDLIST						*m_pHudList;
-	HSPRITE						m_hsprLogo;
-	int							m_iLogo;
-	client_sprite_t				*m_pSpriteList;
-	int							m_iSpriteCount;
-	int							m_iSpriteCountAllRes;
-	int							m_iConcussionEffect; 
+	HUDLIST			   *m_pHudList;
+	HSPRITE            m_hsprLogo;
+	int                m_iLogo;
+	client_sprite_t	   *m_pSpriteList;
+	int                m_iSpriteCount;
+	int                m_iSpriteCountAllRes;
 
 public:
-	HSPRITE						m_hsprCursor;
-	float m_flTime;	   // the current client time
-	float m_fOldTime;  // the time at which the HUD was last redrawn
-	double m_flTimeDelta; // the difference between flTime and fOldTime
-	Vector	m_vecOrigin;
-	Vector	m_vecAngles;
-	Vector	m_vecVelocity;
-	float	m_flMouseSensitivity;
-	int		m_iKeyBits;
-	int		m_iHideHUDDisplay;
-	int		m_iFOV;
-	int		m_PlayerFOV[64];
-	int		m_Teamplay;
-	int		m_iRes;
-	int		m_iMaxRes;
-	int		m_iHudNumbersYOffset;
-	cvar_t  *m_pCvarStealMouse;
-	cvar_t	*m_pCvarDraw;
-	cvar_t  *m_pAllowHD;
+	HSPRITE            m_hsprCursor;
+	float              m_flTime;
+	float              m_fOldTime;
 
-	bool	m_bAllieParatrooper;
-	bool	m_bAllieInfiniteLives;
-	bool	m_bAxisParatrooper;
-	bool	m_bAxisInfiniteLives;
-	bool	m_bParatrooper;
-	bool	m_bInfiniteLives;
-	bool	m_bBritish;
+	double             m_flTimeDelta;
+	Vector             m_vecOrigin;
+	Vector             m_vecAngles;
+	Vector             m_vecVelocity;
+	int                m_iKeyBits;
+	int                m_iHideHUDDisplay;
+	int                m_Teamplay;
+	int                m_iRes;
+	cvar_t			   *m_pCvarStealMouse;
+	cvar_t			   *m_pCvarDraw;
+	float              m_flMouseSensitivity;
 
-	int		m_iRoundState;
-	int		m_iSensLevel;
-	int		m_iFontHeight;
-	int		m_iFontEngineHeight;
-	char	m_szTeamNames[5][MAX_TEAMNAME_SIZE];
+	int                m_PlayerFOV[64];
+	bool               m_bAllieParatrooper;
+	bool               m_bAllieInfiniteLives;
+	bool               m_bAxisParatrooper;
+	bool               m_bAxisInfiniteLives;
+	bool               m_bParatrooper;
+	bool               m_bInfiniteLives;
+	bool               m_bBritish;
 
-	int		m_iMapX;
-	int		m_iMapY;
-	int		m_iMapWidth;
-	int		m_iMapHeight;
-	int		m_iSmallMapX;
-	int		m_iSmallMapY;
-	int		m_iSmallMapWidth;
-	int		m_iSmallMapHeight;
+	int                m_iRoundState;
+	int                m_iSensLevel;
+	int                m_iFontHeight;
+	int                m_iFontEngineHeight;
+	HSPRITE			   *m_rghSprites;
+	wrect_t			   *m_rgrcRects;
+	char			   *m_rgszSpriteNames;
+	char               m_szTeamNames[5][MAX_TEAMNAME_SIZE];
+
+	int                m_iFOV;
+	int                m_iMapX;
+	int                m_iMapY;
+	int                m_iMapWidth;
+	int                m_iMapHeight;
+	int                m_iSmallMapX;
+	int                m_iSmallMapY;
+	int                m_iSmallMapWidth;
+	int                m_iSmallMapHeight;
+
+	CHudScope          m_Scope;
+	CHudDodIcons       m_Icons;
+	CObjectiveIcons    m_ObjectiveIcons;
+	CParticleShooter   m_PShooter;
+	CClientEnvModel    m_CEnvModel;
+	CWeatherManager    m_Weather;
+	CHudAmmo           m_Ammo;
+	CHudSayText        m_SayText;
+	CHudSpectator      m_Spectator;
+	CHudTrain          m_Train;
+	CHudMessage        m_Message;
+	CHudStatusBar      m_StatusBar;
+	CHudDeathNotice    m_DeathNotice;
+	CHudMenu           m_Menu;
+	CHudTextMessage    m_TextMessage;
+	CHudStatusIcons    m_StatusIcons;
+	CHudDoDCrossHair   m_DoDCrossHair;
+	CHudDoDMap         m_DoDMap;
+	CHudDoDCommon      m_DoDCommon;
+	CHudVGUI2Print     m_VGUI2Print;
+	CMortarHud         m_MortarHud;
+
+	SCREENINFO         m_scrinfo;
+	int                m_iWeaponBits;
+	int                m_fPlayerDead;
+	int                m_iIntermission;
+	int                g_iClip;
+	bool               m_bAutoReloadComplete;
+
+	int                g_pModel;
+	float              g_NextAttack;
+	int                m_HUD_number_0;
+	int                m_MG_number_0;
+	float              i_MusicFadeCounter;
+	float              i_MusicFadeCounter2;
+	int                i_MusicPlay;
+	int                i_specmenutoggle;
+	int                i_Recoil;
+	float              i_TempFSpeed;
+	float              i_TempBSpeed;
+	float              i_TempSSpeed;
+
+	int                m_iWaterLevel;
+	int                m_iClipSize;
+	float              m_flPlaySprintSoundTime;
+	int                m_iMinimapState;
+	float              m_fRoundEndsTime;
+	float              m_fMortarDeployTime;
+	float              m_fMortarUnDeployTime;
+
+	cvar_t			   *_cl_minimap;
+	cvar_t			   *_cl_minimapzoom;
+	cvar_t			   *zoom_sensitivity_ratio;
+	cvar_t			   *hud_takesshots;
+	cvar_t			   *r_drawentities;
+	cvar_t			   *cl_lw = NULL;
+	cvar_t			   *cl_pitchup;
+	cvar_t			   *cl_pitchdown;
+	cvar_t			   *crosshair;
+	cvar_t			   *max_rubble;
+	cvar_t			   *_ah;
+	cvar_t			   *cl_corpsestay;
+	cvar_t			   *developer;
+	cvar_t			   *cl_hudfont;
+	cvar_t			   *hud_fastswitch;
+
+	float              m_flPitchRecoilAccumulator;
+	float              m_flYawRecoilAccumulator;
+	float              m_flRecoilTimeRemaining;
+
+public:
+	HSPRITE GetSprite( int index ) 
+	{
+		return ( index < 0 ) ? 0 : m_rghSprites[index];
+	}
+
+	wrect_t &GetSpriteRect( int index ) 
+	{
+		return m_rgrcRects[index];
+	}
+
+	void SetFOV( int fov ) 
+	{ 
+		m_iFOV = fov; 
+	}
+
+	int GetFOV() 
+	{ 
+		return m_iFOV; 
+	}
+
+	int GetSpriteIndex( const char *SpriteName );
+
+	CHud() : m_iSpriteCount( 0 ), m_pHudList( NULL ) {}
+	~CHud();
 
 	int DrawHudNumber( int x, int y, int iFlags, int iNumber, int r, int g, int b );
 	int DrawHudString( int x, int y, int iMaxX, const char *szString, int r, int g, int b );
@@ -1241,142 +1348,24 @@ public:
 	void PostMortarValue( float value );
 	int GetMinimapZoomLevel( void );
 	int ZoomMinimap( void );
-	int DrawHudStringLen( const char *szIt );
-	void DrawDarkRectangle( int x, int y, int wide, int tall );
-
-	// the memory for these arrays are allocated in the first call to CHud::VidInit(), when the hud.txt and associated sprites are loaded.
-	// freed in ~CHud()
-	HSPRITE *m_rghSprites;	/*[HUD_SPRITE_COUNT]*/			// the sprites loaded from hud.txt
-	wrect_t *m_rgrcRects;	/*[HUD_SPRITE_COUNT]*/
-	char *m_rgszSpriteNames; /*[HUD_SPRITE_COUNT][MAX_SPRITE_NAME_LENGTH]*/
-
-	struct cvar_s *default_fov;
-public:
-	HSPRITE GetSprite( int index ) 
-	{
-		return ( index < 0 ) ? 0 : m_rghSprites[index];
-	}
-
-	wrect_t& GetSpriteRect( int index )
-	{
-		return m_rgrcRects[index];
-	}
-
-	inline bool IsHL25( void )
-	{
-		// a1ba: only HL25 have higher resolution HUD spritesheets
-		// and only accept HUD style changes if user has allowed HD sprites
-		return m_iMaxRes > 640 && m_pAllowHD->value;
-	}
-
-	int GetSpriteIndex( const char *SpriteName );	// gets a sprite index, for use in the m_rghSprites[] array
-
-	CHudScope		m_Scope;
-	CHudDodIcons	m_Icons;
-	CObjectiveIcons	m_ObjectiveIcons;
-	CParticleShooter	m_PShooter;
-	CClientEnvModel m_CEnvModel;
-	CWeatherManager	m_Weather;
-	CHudAmmo		m_Ammo;
-	CHudSayText		m_SayText;
-	CHudSpectator	m_Spectator;
-	CHudTrain		m_Train;
-	CHudMessage		m_Message;
-	CHudStatusBar   m_StatusBar;
-	CHudDeathNotice m_DeathNotice;
-	CHudMenu		m_Menu;
-	CHudTextMessage m_TextMessage;
-	CHudStatusIcons	m_StatusIcons;
-	CHudDoDCrossHair	m_DoDCrossHair;
-	CHudDoDMap		m_DoDMap;
-	CHudDoDCommon	m_DoDCommon;
-	CHudVGUI2Print	m_VGUI2Print;
-	CMortarHud		m_MortarHud;
-
-	CHudScoreboard	m_Scoreboard;
-	CHudMOTD	m_MOTD;
 
 	void Init( void );
 	void VidInit( void );
-	void Think(void);
+	void Think( void );
 	int Redraw( float flTime, int intermission );
 	int UpdateClientData( client_data_t *cdata, float time );
 
-	CHud() : m_iSpriteCount(0), m_pHudList(NULL) {}  
-	~CHud();			// destructor, frees allocated memory
-
-	// user messages
-
 	CHudMsgFunc( Damage );
-	CHudMsgFunc( GameMode );
 	CHudMsgFunc( Logo );
 	CHudMsgFunc( ResetHUD );
-	CHudMsgFunc( InitHUD );
-	CHudMsgFunc( ViewMode );
-	CHudMsgFunc( SetFOV );
-	CHudMsgFunc( Concuss );
-
 	CHudMsgFunc( YouDied );
+	CHudMsgFunc( ZoomStatus );
+	CHudMsgFuncV( InitHUD );
+	CHudMsgFunc( SetFOV );
 	CHudMsgFunc( HLTV );
 	CHudMsgFunc( RoundState );
 	CHudMsgFunc( TimeLeft );
-	CHudMsgFunc( UseSound );
-
-	//int _cdecl MsgFunc_ZoomStatus( const char *pszName, int iSize, void *pbuf );
-
-	// Screen information
-	SCREENINFO	m_scrinfo;
-
-	int	m_iWeaponBits;
-	int	m_fPlayerDead;
-	int m_iIntermission;
-	int g_iClip;
-	bool m_bAutoReloadComplete;
-	int g_pModel;
-	float g_NextAttack;
-
-	// sprite indexes
-	int m_HUD_number_0;
-	int m_MG_number_0;
-
-	float i_MusicFadeCounter;
-	float i_MusicFadeCounter2;
-
-	int i_MusicPlay;
-	int i_specmenutoggle;
-	int i_Recoil;
-	float i_TempFSpeed;
-	float i_TempBSpeed;
-	float i_TempSSpeed;
-	int m_iWaterLevel;
-	int m_iClipSize;
-	float m_flPlaySprintSoundTime;
-	int m_iMinimapState;
-	float m_fRoundEndsTime;
-	float m_fMortarDeployTime;
-	float m_fMortarUnDeployTime;
-
-	cvar_t *_cl_minimap;
-	cvar_t *_cl_minimapzoom;
-	cvar_t *zoom_sensitivity_ratio;
-	cvar_t *hud_takesshots;
-	cvar_t *r_drawentities;
-	cvar_t *cl_lw;
-	cvar_t *cl_pitchup;
-	cvar_t *cl_pitchdown;
-	cvar_t *crosshair;
-	cvar_t *max_rubble;
-	cvar_t *_ah;
-	cvar_t *cl_corpsestay;
-	cvar_t *developer;
-	cvar_t *cl_hudfont;
-	cvar_t *hud_fastswitch;
-
-	float m_flPitchRecoilAccumulator;
-	float m_flYawRecoilAccumulator;
-	float m_flRecoilTimeRemaining;
-
-	int m_iNoConsolePrint;
+	CHudMsgFuncV( UseSound );
 
 	void AddHudElem( CHudBase *p );
 	float GetSensitivity( void );
@@ -1406,18 +1395,35 @@ public:
 	void GetWeaponRecoilAmount( int weaponId, float &flPitchRecoil, float &flYawRecoil );
 	void SetRecoilAmount( float flPitchRecoil, float flYawRecoil );
 	void PopRecoil( float frametime, float &flPitchRecoil, float &flYawRecoil );
+
 	void GetAllPlayersInfo( void );
 
-	void SetFOV( int fov ) { m_iFOV = fov; }
-	int GetFOV( void ) { return m_iFOV; }
+	int DrawHudStringLen( const char *szIt );
+	void DrawDarkRectangle( int x, int y, int wide, int tall );
+
+	CHudScoreboard     m_Scoreboard;
+	CHudMOTD           m_MOTD;
 };
 
-extern CHud gHUD;
+void ClientSetSensitivity( int level );
+bool ShouldShowBlood( void );
+int EV_BloodPuffMsg( const char *pszName, int iSize, void *pbuf );
+void EV_BloodPuff( float *org );
+int EV_HandSignalMsg( const char *pszName, int iSize, void *pbuf );
 
-extern int g_iPlayerClass;
-extern int g_iTeamNumber;
-extern int g_iUser1;
-extern int g_iUser2;
-extern int g_iUser3;
-extern int g_iVuser1x, g_iVuser1z;
+extern CHud gHUD;
+extern Queue g_RubbleQueue;
+
+extern int g_iPlayerClass, g_iTeamNumber;
+extern int g_iUser1, g_iUser2, g_iUser3;
+
+extern float g_fUser4;
+extern int g_iVuser1x;
+extern int g_iVuser1z;
+extern int g_iMovetype;
+extern int g_iEffects;
+extern int g_iOnlyClientDraw;
+extern float g_lastFOV;
+extern float g_fStamina;
+extern int g_iWeaponBits2;
 #endif

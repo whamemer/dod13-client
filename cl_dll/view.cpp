@@ -77,7 +77,6 @@ extern cvar_t	*cl_forwardspeed;
 extern cvar_t	*chase_active;
 extern cvar_t	*scr_ofsx, *scr_ofsy, *scr_ofsz;
 extern cvar_t	*cl_vsmoothing;
-extern cvar_t	*cl_viewbob;
 extern Vector   dead_viewangles;
 
 #define	CAM_MODE_RELAX		1

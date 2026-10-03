@@ -32,9 +32,22 @@ cvar_t *cl_showpacketloss;
 DECLARE_COMMAND( m_Scoreboard, ShowScores )
 DECLARE_COMMAND( m_Scoreboard, HideScores )
 
-DECLARE_MESSAGE( m_Scoreboard, ScoreInfo )
+//DECLARE_MESSAGE( m_Scoreboard, ScoreInfo )
 DECLARE_MESSAGE( m_Scoreboard, TeamInfo )
-DECLARE_MESSAGE( m_Scoreboard, TeamScore )
+//DECLARE_MESSAGE( m_Scoreboard, TeamScore )
+
+void CHud::GetAllPlayersInfo()
+{
+	for( int i = 1; i < MAX_PLAYERS; i++ )
+	{
+		GetPlayerInfo( i, &g_PlayerInfoList[i] );
+
+		if( g_PlayerInfoList[i].thisplayer )
+		{
+			m_Scoreboard.m_iPlayerNum = i;
+		}
+	}
+}
 
 int CHudScoreboard::Init( void )
 {
@@ -44,8 +57,8 @@ int CHudScoreboard::Init( void )
 	// HOOK_COMMAND( "+showscores", ShowScores );
 	// HOOK_COMMAND( "-showscores", HideScores );
 
-	HOOK_MESSAGE( ScoreInfo );
-	HOOK_MESSAGE( TeamScore );
+	//HOOK_MESSAGE( ScoreInfo );
+	//HOOK_MESSAGE( TeamScore );
 	HOOK_MESSAGE( TeamInfo );
 
 	InitHUDData();
@@ -106,12 +119,9 @@ int CHudScoreboard::Draw( float fTime )
 {
 	int i, j, can_show_packetloss = 0;
 	int FAR_RIGHT;
-	gHUD.m_iNoConsolePrint &= ~( 1 << 0 );
 
 	if( !m_iShowscoresHeld && !gHUD.m_iIntermission )
 		return 1;
-	
-	gHUD.m_iNoConsolePrint |= 1 << 0;
 
 	GetAllPlayersInfo();
 
@@ -298,7 +308,7 @@ int CHudScoreboard::Draw( float fTime )
 		static char buf[64];
 		sprintf( buf, "%d", team_info->ping );
 		xpos = ( ( PING_RANGE_MAX - PING_RANGE_MIN ) / 2) + PING_RANGE_MIN + xpos_rel + 25;
-		UnpackRGB( r, g, b, RGB_YELLOWISH );
+		UnpackRGB( r, g, b, 1 );
 		gHUD.DrawHudStringReverse( xpos, ypos, xpos - 50, buf, r, g, b );
 
 		//  Packetloss removed on Kelly 'shipping nazi' Bailey's orders
@@ -443,7 +453,7 @@ int CHudScoreboard::DrawPlayers( int xpos_rel, float list_slot, int nameoffset, 
 		{
 			if( g_PlayerInfoList[best_player].packetloss >= 63 )
 			{
-				UnpackRGB( r, g, b, RGB_REDISH );
+				UnpackRGB( r, g, b, 1 );
 				strcpy( buf, " !!!!" );
 			}
 			else
@@ -474,7 +484,7 @@ void CHudScoreboard::GetAllPlayersInfo( void )
 	}
 }
 
-int CHudScoreboard::MsgFunc_ScoreInfo( const char *pszName, int iSize, void *pbuf )
+int CHudScoreboard::MsgFunc_ScoreInfo(const char *pszName, int iSize, void *pbuf)
 {
 	m_iFlags |= HUD_ACTIVE;
 
@@ -574,7 +584,7 @@ int CHudScoreboard::MsgFunc_TeamInfo( const char *pszName, int iSize, void *pbuf
 //		short: teams kills
 //		short: teams deaths 
 // if this message is never received, then scores will simply be the combined totals of the players.
-int CHudScoreboard::MsgFunc_TeamScore( const char *pszName, int iSize, void *pbuf )
+int CHudScoreboard::MsgFunc_TeamScore(const char *pszName, int iSize, void *pbuf)
 {
 	BEGIN_READ( pbuf, iSize );
 	char *TeamName = READ_STRING();

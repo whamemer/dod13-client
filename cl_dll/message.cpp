@@ -34,10 +34,10 @@ char g_pCustomText[1024];
 
 int CHudMessage::Init( void )
 {
+	gHUD.AddHudElem( this );
+
 	HOOK_MESSAGE( HudText );
 	HOOK_MESSAGE( GameTitle );
-
-	gHUD.AddHudElem( this );
 
 	m_Fonts[0] = NULL;
 	m_Fonts[1] = NULL;
@@ -245,21 +245,21 @@ void CHudMessage::MessageScanStart( void )
 	}
 }
 
-
-void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
+void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time, unsigned int font )
 {
 	int i, j, length, width;
 	const char *pText;
 	const char *pLineStart;
+	char line[320];
 
 	pText = pMessage->pMessage;
-	// Count lines
 	m_parms.lines = 1;
 	m_parms.time = time;
 	m_parms.pMessage = pMessage;
 	length = 0;
 	width = 0;
 	m_parms.totalWidth = 0;
+
 	while( *pText )
 	{
 		if( *pText == '\n' )
@@ -269,17 +269,22 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 				m_parms.totalWidth = width;
 			width = 0;
 		}
-		else
-			width += gHUD.m_scrinfo.charWidths[(unsigned char)*pText];
+		else if( *pText != 13 )
+		{
+			width += gHUD.m_scrinfo.charWidths[( unsigned char ) *pText];
+		}
 		pText++;
 		length++;
 	}
+
+	if( width > m_parms.totalWidth )
+		m_parms.totalWidth = width;
+
 	m_parms.length = length;
 	m_parms.totalHeight = ( m_parms.lines * gHUD.m_scrinfo.iCharHeight );
 
 	m_parms.y = YPosition( pMessage->y, m_parms.totalHeight );
 	pText = pMessage->pMessage;
-
 	m_parms.charTime = 0;
 
 	MessageScanStart();
@@ -289,25 +294,34 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 		m_parms.lineLength = 0;
 		m_parms.width = 0;
 		pLineStart = pText;
-		while( *pText && *pText != '\n' )
+
+		int iCharCount = 0;
+		while( *pText && *pText != '\n' && pText < pLineStart + 320 )
 		{
-			unsigned char c = *pText;
-			m_parms.width += gHUD.m_scrinfo.charWidths[c];
-			m_parms.lineLength++;
+			if( *pText != 13 )
+			{
+				line[iCharCount] = *pText;
+				m_parms.width += gHUD.m_scrinfo.charWidths[( unsigned char ) *pText];
+				iCharCount++;
+			}
 			pText++;
 		}
-		pText++;		// Skip LF
+		pText++;
+		line[iCharCount] = '\0';
+		m_parms.lineLength = iCharCount;
 
 		m_parms.x = XPosition( pMessage->x, m_parms.width, m_parms.totalWidth );
 
 		for( j = 0; j < m_parms.lineLength; j++ )
 		{
-			m_parms.text = (unsigned char)pLineStart[j];
+			m_parms.text = ( unsigned char ) line[j];
 			int next = m_parms.x + gHUD.m_scrinfo.charWidths[m_parms.text];
+
 			MessageScanNextChar();
 
 			if( m_parms.x >= 0 && m_parms.y >= 0 && next <= ScreenWidth )
 				TextMessageDrawChar( m_parms.x, m_parms.y, m_parms.text, m_parms.r, m_parms.g, m_parms.b );
+
 			m_parms.x = next;
 		}
 
@@ -320,23 +334,38 @@ int CHudMessage::Draw( float fTime )
 	int i, drawn;
 	client_textmessage_t *pMessage;
 	float endTime = 0.0f;
+	float m_flTime = gHUD.m_flTime;
 
 	drawn = 0;
 
 	if( m_gameTitleTime > 0 )
 	{
-		float localTime = gHUD.m_flTime - m_gameTitleTime;
-		float brightness;
+		float localTime = m_flTime - m_gameTitleTime;
+		float brightness = 0.0f;
 
-		// Maybe timer isn't set yet
-		if( m_gameTitleTime > gHUD.m_flTime )
-			m_gameTitleTime = gHUD.m_flTime;
+		if( m_gameTitleTime > m_flTime )
+			m_gameTitleTime = m_flTime;
 
-		if( localTime > ( m_pGameTitle->fadein + m_pGameTitle->holdtime + m_pGameTitle->fadeout ) )
+		float flHoldEnd = m_pGameTitle->holdtime + m_pGameTitle->fadein;
+
+		if( localTime > ( flHoldEnd + m_pGameTitle->fadeout ) )
 			m_gameTitleTime = 0;
 		else
 		{
-			brightness = FadeBlend( m_pGameTitle->fadein, m_pGameTitle->fadeout, m_pGameTitle->holdtime, localTime );
+			if( localTime >= 0.0f )
+			{
+				if( m_pGameTitle->fadein <= localTime )
+				{
+					if( localTime <= flHoldEnd )
+						brightness = 1.0f;
+					else
+						brightness = ( m_pGameTitle->fadeout <= 0.0f ) ? 0.0f : 1.0f - ( localTime - flHoldEnd ) / m_pGameTitle->fadeout;
+				}
+				else
+				{
+					brightness = ( m_pGameTitle->fadein <= 0.0f ) ? 0.0f : 1.0f - ( m_pGameTitle->fadein - localTime ) / m_pGameTitle->fadein;
+				}
+			}
 
 			int halfWidth = gHUD.GetSpriteRect( m_HUD_title_half ).right - gHUD.GetSpriteRect( m_HUD_title_half ).left;
 			int fullWidth = halfWidth + gHUD.GetSpriteRect( m_HUD_title_life ).right - gHUD.GetSpriteRect( m_HUD_title_life ).left;
@@ -354,15 +383,16 @@ int CHudMessage::Draw( float fTime )
 			drawn = 1;
 		}
 	}
-	// Fixup level transitions
+
 	for( i = 0; i < maxHUDMessages; i++ )
 	{
-		// Assume m_parms.time contains last time
 		if( m_pMessages[i].pMessage )
 		{
-			// pMessage = m_pMessages[i];
-			if( m_startTime[i] > gHUD.m_flTime )
-				m_startTime[i] = gHUD.m_flTime + m_parms.time - m_startTime[i] + 0.2f;	// Server takes 0.2 seconds to spawn, adjust for this
+			float vTime = m_startTime[i];
+			if( vTime > m_flTime || vTime == 1.0f )
+			{
+				m_startTime[i] = m_parms.time + m_flTime - vTime + 0.2f;
+			}
 		}
 	}
 
@@ -372,15 +402,12 @@ int CHudMessage::Draw( float fTime )
 		{
 			pMessage = m_pMessages[i].pMessage;
 
-			// This is when the message is over
 			switch( pMessage->effect )
 			{
 			case 0:
 			case 1:
 				endTime = m_startTime[i] + pMessage->fadein + pMessage->fadeout + pMessage->holdtime;
 				break;
-
-			// Fade in is per character in scanning messages
 			case 2:
 				endTime = m_startTime[i] + ( pMessage->fadein * strlen( pMessage->pMessage ) ) + pMessage->fadeout + pMessage->holdtime;
 				break;
@@ -389,27 +416,21 @@ int CHudMessage::Draw( float fTime )
 			if( fTime <= endTime )
 			{
 				float messageTime = fTime - m_startTime[i];
+				unsigned int font = m_pMessages[i].font;
 
-				// Draw the message
-				// effect 0 is fade in/fade out
-				// effect 1 is flickery credits
-				// effect 2 is write out (training room)
-				MessageDrawScan( pMessage, messageTime );
-
+				MessageDrawScan( pMessage, messageTime, font );
 				drawn++;
 			}
 			else
 			{
-				// The message is over
 				m_pMessages[i].pMessage = nullptr;
 				m_pMessages[i].font = 0;
 			}
 		}
 	}
 
-	// Remember the time -- to fix up level transitions
-	m_parms.time = gHUD.m_flTime;
-	// Don't call until we get another message
+	m_parms.time = m_flTime;
+
 	if( !drawn )
 		m_iFlags &= ~HUD_ACTIVE;
 

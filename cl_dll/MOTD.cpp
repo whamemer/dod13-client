@@ -26,13 +26,13 @@
 #include <string.h>
 #include <stdio.h>
 
-DECLARE_MESSAGE( m_MOTD, MOTD )
+//DECLARE_MESSAGE( m_MOTD, MOTD )
 
 int CHudMOTD::Init( void )
 {
 	gHUD.AddHudElem( this );
 
-	HOOK_MESSAGE( MOTD );
+	//HOOK_MESSAGE( MOTD );
 
 	m_bShow = false;
 
@@ -62,10 +62,8 @@ void CHudMOTD::Reset( void )
 #define ROW_RANGE_MAX ( ScreenHeight - 100 )
 int CHudMOTD::Draw( float fTime )
 {
-	gHUD.m_iNoConsolePrint &= ~( 1 << 1 );
 	if( !m_bShow )
 		return 1;
-	gHUD.m_iNoConsolePrint |= 1 << 1;
 	//bool bScroll;
 	// find the top of where the MOTD should be drawn,  so the whole thing is centered in the screen
 	int ypos = ( ScreenHeight - LINE_HEIGHT * m_iLines ) / 2; // shift it up slightly

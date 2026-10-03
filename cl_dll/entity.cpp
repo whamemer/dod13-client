@@ -30,8 +30,7 @@ extern vec3_t v_origin;
 int g_iAlive = 1;
 int g_iDeadFlag = 0;
 
-extern int g_iWeaponBits2, g_iMovetype, g_iEffects;
-extern float g_fStamina, g_flGravity;
+extern float g_flGravity;
 
 extern "C"
 {
@@ -45,9 +44,9 @@ extern "C"
 	struct cl_entity_s DLLEXPORT *HUD_GetUserEntity( int index );
 }
 
-extern cvar_t *cl_dmshowplayers;
-extern cvar_t *cl_dmshowobjects;
-extern cvar_t *cl_dmshowgrenades;
+cvar_t *cl_dmshowplayers;
+cvar_t *cl_dmshowobjects;
+cvar_t *cl_dmshowgrenades;
 
 /*
 ========================
@@ -155,20 +154,21 @@ structure, we need to copy them into the state structure at this point.
 */
 void DLLEXPORT HUD_TxferLocalOverrides( struct entity_state_s *state, const struct clientdata_s *client )
 {
-	VectorCopy( client->origin, state->origin );
+	state->origin[0] = client->origin[0];
+	state->origin[1] = client->origin[1];
+	state->origin[2] = client->origin[2];
 
-	// Spectator
 	state->iuser1 = client->iuser1;
 	state->iuser2 = client->iuser2;
 
-	// Duck prevention
 	state->iuser3 = client->iuser3;
-
-	// Fire prevention
 	state->iuser4 = client->iuser4;
 
 	state->fuser4 = client->fuser4;
-	state->vuser1 = client->vuser1;
+
+	state->vuser1[0] = client->vuser1[0];
+	state->vuser1[1] = client->vuser1[1];
+	state->vuser1[2] = client->vuser1[2];
 }
 
 /*
@@ -181,46 +181,52 @@ playerstate structure
 */
 void DLLEXPORT HUD_ProcessPlayerState( struct entity_state_s *dst, const struct entity_state_s *src )
 {
-	// Copy in network data
-	VectorCopy( src->origin, dst->origin );
-	VectorCopy( src->angles, dst->angles );
+	dst->origin[0] = src->origin[0];
+	dst->origin[1] = src->origin[1];
+	dst->origin[2] = src->origin[2];
 
-	VectorCopy( src->velocity, dst->velocity );
+	dst->angles[0] = src->angles[0];
+	dst->angles[1] = src->angles[1];
+	dst->angles[2] = src->angles[2];
 
-	dst->frame					= src->frame;
-	dst->modelindex				= src->modelindex;
-	dst->skin					= src->skin;
-	dst->effects				= src->effects;
-	dst->weaponmodel			= src->weaponmodel;
-	dst->movetype				= src->movetype;
-	dst->sequence				= src->sequence;
-	dst->animtime				= src->animtime;
-	
-	dst->solid					= src->solid;
-	
-	dst->rendermode				= src->rendermode;
-	dst->renderamt				= src->renderamt;	
-	dst->rendercolor.r			= src->rendercolor.r;
-	dst->rendercolor.g			= src->rendercolor.g;
-	dst->rendercolor.b			= src->rendercolor.b;
-	dst->renderfx				= src->renderfx;
+	dst->velocity[0] = src->velocity[0];
+	dst->velocity[1] = src->velocity[1];
+	dst->velocity[2] = src->velocity[2];
 
-	dst->framerate				= src->framerate;
-	dst->body					= src->body;
+	dst->frame = src->frame;
+	dst->modelindex = src->modelindex;
+	dst->skin = src->skin;
+	dst->effects = src->effects;
+	dst->weaponmodel = src->weaponmodel;
+	dst->movetype = src->movetype;
+	dst->sequence = src->sequence;
+	dst->animtime = src->animtime;
+	dst->solid = src->solid;
+	dst->rendermode = src->rendermode;
+	dst->renderamt = src->renderamt;
 
-	memcpy( &dst->controller[0], &src->controller[0], 4 * sizeof(byte) );
-	memcpy( &dst->blending[0], &src->blending[0], 2 * sizeof(byte) );
+	dst->rendercolor.r = src->rendercolor.r;
+	dst->rendercolor.g = src->rendercolor.g;
+	dst->rendercolor.b = src->rendercolor.b;
+	dst->renderfx = src->renderfx;
+	dst->framerate = src->framerate;
+	dst->body = src->body;
 
-	VectorCopy( src->basevelocity, dst->basevelocity );
+	memcpy( &dst->controller[0], &src->controller[0], 4 * sizeof( byte ) );
+	memcpy( &dst->blending[0], &src->blending[0], 2 * sizeof( byte ) );
 
-	dst->friction				= src->friction;
-	dst->gravity				= src->gravity;
-	dst->gaitsequence			= src->gaitsequence;
-	dst->spectator				= src->spectator;
-	dst->usehull				= src->usehull;
-	dst->playerclass			= src->playerclass;
-	dst->team					= src->team;
-	dst->colormap				= src->colormap;
+	dst->basevelocity[0] = src->basevelocity[0];
+	dst->basevelocity[1] = src->basevelocity[1];
+	dst->basevelocity[2] = src->basevelocity[2];
+
+	dst->friction = src->friction;
+	dst->gravity = src->gravity;
+	dst->gaitsequence = src->gaitsequence;
+	dst->spectator = src->spectator;
+	dst->usehull = src->usehull;
+	dst->playerclass = src->playerclass;
+	dst->team = src->team;
+	dst->colormap = src->colormap;
 
 	if( gEngfuncs.IsSpectateOnly() )
 	{
@@ -234,12 +240,13 @@ void DLLEXPORT HUD_ProcessPlayerState( struct entity_state_s *dst, const struct 
 	dst->iuser4 = src->iuser4;
 	dst->fuser4 = src->fuser4;
 
-	VectorCopy( src->vuser1, dst->vuser1 );
+	dst->vuser1[0] = src->vuser1[0];
+	dst->vuser1[1] = src->vuser1[1];
+	dst->vuser1[2] = src->vuser1[2];
 
 	g_PlayerExtraInfo[dst->number].health = src->health;
 
-	// Save off some data so other areas of the Client DLL can get to it
-	cl_entity_s *player = gEngfuncs.GetLocalPlayer();	// Get the local player's index
+	cl_entity_s *player = gEngfuncs.GetLocalPlayer();
 
 	if( dst->number == player->index )
 	{
@@ -252,28 +259,22 @@ void DLLEXPORT HUD_ProcessPlayerState( struct entity_state_s *dst, const struct 
 		if( g_iUser3 == 3 )
 		{
 			if( src->iuser3 != 3 )
-			{
 				gHUD.SetMortarUnDeployTime();
-			}
 		}
 		else
 		{
 			if( src->iuser3 == 3 )
-			{
 				gHUD.SetMortarDeployTime();
-			}
 		}
 
 		g_iUser3 = src->iuser3;
+		g_iWeaponBits2 = src->iuser4;
+		g_iVuser1x = src->vuser1[0];
+		g_iVuser1z = src->vuser1[2];
+		g_iMovetype = src->movetype;
+		g_iEffects = src->effects;
+		g_fStamina = src->fuser4;
 	}
-
-	g_iUser3 = src->iuser3;
-	g_iWeaponBits2 = src->iuser4;
-	g_iVuser1x = src->vuser1[0];
-	g_iVuser1z = src->vuser1[1];
-	g_iMovetype = src->movetype;
-	g_iEffects = src->effects;
-	g_fStamina = src->fuser4;
 }
 
 /*
@@ -286,9 +287,9 @@ Because we can predict an arbitrary number of frames before the server responds 
  update is occupying.
 =========================
 */
-void DLLEXPORT HUD_TxferPredictionData( struct entity_state_s *ps, const struct entity_state_s *pps, struct clientdata_s *pcd, 
-										const struct clientdata_s *ppcd, struct weapon_data_s *wd, 
-										const struct weapon_data_s *pwd )
+void DLLEXPORT HUD_TxferPredictionData( struct entity_state_s *ps, const struct entity_state_s *pps, struct clientdata_s *pcd,
+	const struct clientdata_s *ppcd, struct weapon_data_s *wd,
+	const struct weapon_data_s *pwd )
 {
 	ps->oldbuttons = pps->oldbuttons;
 	ps->flFallVelocity = pps->flFallVelocity;
@@ -307,7 +308,7 @@ void DLLEXPORT HUD_TxferPredictionData( struct entity_state_s *ps, const struct 
 
 	pcd->deadflag = ppcd->deadflag;
 
-	bool bIsAlive = true;
+	qboolean bIsAlive = true;
 
 	if( ppcd->iuser1 == 0 )
 	{
@@ -331,9 +332,14 @@ void DLLEXPORT HUD_TxferPredictionData( struct entity_state_s *ps, const struct 
 	pcd->fuser2 = ppcd->fuser2;
 	pcd->fuser4 = ppcd->fuser4;
 
-	VectorCopy( ppcd->vuser1, pcd->vuser1 );
+	pcd->vuser1[0] = ppcd->vuser1[0];
+	pcd->vuser1[1] = ppcd->vuser1[1];
+	pcd->vuser1[2] = ppcd->vuser1[2];
 
-	memcpy( wd, pwd, MAX_WEAPONS * sizeof( weapon_data_t ) );
+	for( int i = 0; i < MAX_WEAPONS; i++ )
+	{
+		wd[i] = pwd[i];
+	}
 }
 
 /*
