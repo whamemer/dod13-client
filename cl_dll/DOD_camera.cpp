@@ -7,8 +7,8 @@
 
 #include "hud.h"
 #include "util_vector.h"
-#include "DOD_camera.h"
-#include "DMC_BSPFile.h"
+#include "dod_camera.h"
+#include "dmc_bspfile.h"
 #include "dod_shared.h"
 #include "tri.h"
 #include "screenfade.h"
@@ -18,7 +18,7 @@ extern float g_lastFOV;
 void DoD_ProcessEnts( char *buffer )
 {
 	dod_bspparse_ent entKVPairs;
-	char token;
+	char token[1024];
 	int error = 0;
 
 	s_num_cameras = 0;
@@ -26,12 +26,12 @@ void DoD_ProcessEnts( char *buffer )
 
 	while( true )
 	{
-		buffer = gEngfuncs.COM_ParseFile( buffer, &token );
+		buffer = gEngfuncs.COM_ParseFile( buffer, token );
 
 		if( !buffer )
 			return;
 
-		if( token != '{' )
+		if( *token != '{' )
 		{
 			gEngfuncs.Con_Printf( "DoD_ProcessEnts: found %s when expecting {\n", token );
 			return;
@@ -247,10 +247,10 @@ void Parse_info_doddetect( dod_bspparse_ent *pEnt )
 	char *key;
 	char *value;
 	int i;
-	CDoDParticle *pParticle = NULL;
+	CDoDParticle *pParticle;
 
-	vWind[0] = 0.0f;
-	vWind[1] = 0.0f;
+	vWind.x = 0.0f;
+	vWind.y = 0.0f;
 
 	if( pEnt->numpairs > 0 )
 	{
@@ -260,10 +260,10 @@ void Parse_info_doddetect( dod_bspparse_ent *pEnt )
 			value = pEnt->kvPairs[i].szValue;
 
 			if( !strcasecmp( key, "detect_wind_velocity_x" ) )
-				vWind[0] = ( float ) strtod( value, NULL );
+				vWind.x = ( float ) strtod( value, NULL );
 
 			else if( !strcasecmp( key, "detect_wind_velocity_y" ) )
-				vWind[1] = ( float ) strtod( value, NULL );
+				vWind.y = ( float ) strtod( value, NULL );
 
 			else if( !strcasecmp( key, "detect_weather_type" ) )
 				g_iWeatherType = strtol( value, NULL, 10 );
@@ -273,7 +273,7 @@ void Parse_info_doddetect( dod_bspparse_ent *pEnt )
 		}
 	}
 
-	pParticle->SetGlobalWind( &vWind[0] );
+	pParticle->SetGlobalWind( &vWind.x );
 }
 
 void Parse_env_model( dod_bspparse_ent *pEnt )
