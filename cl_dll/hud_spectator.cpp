@@ -189,10 +189,7 @@ int CHudSpectator::Init()
 	}
 	else
 	{
-		for( int i = 0; i != MAX_PLAYERS; i++ )
-		{
-			m_bAddDrawIconNextFrame[i] = 0;
-		}
+		ClearVoiceIconFlags();
 
 		default_fov = gEngfuncs.pfnGetCvarPointer( "default_fov" );
 
@@ -1480,8 +1477,12 @@ HSPRITE CHudSpectator::GetMarkerSPR( int marker )
 
 void CHudSpectator::AddVoiceIconToPlayerEnt( int index )
 {
-	if( index >= 1 && index <= MAX_PLAYERS )
-		m_hsprCameraSpec = 1;
+	int idx = index - 1;
+
+	if( idx >= 0 && idx <= 63 )
+	{
+		m_bAddDrawIconNextFrame[idx] = true;
+	}
 }
 
 void CHudSpectator::ClearVoiceIconFlags( void )
@@ -1492,9 +1493,10 @@ void CHudSpectator::ClearVoiceIconFlags( void )
 
 bool CHudSpectator::ShouldSetVoiceIcon( int index )
 {
-	if( index >= 1 && index <= MAX_PLAYERS )
+	int idx = index - 1;
+	if( idx >= 0 && idx <= 63 && m_bAddDrawIconNextFrame[idx] )
 	{
-		m_bAddDrawIconNextFrame[index] = 0;
+		m_bAddDrawIconNextFrame[idx] = false;
 		return true;
 	}
 
