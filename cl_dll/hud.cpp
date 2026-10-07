@@ -455,9 +455,11 @@ void CHud::Init( void )
 	m_MOTD.Init();
 	m_Scoreboard.Init();
 
+	GetClientVoice()->Init( &g_VoiceStatusHelper );
 	MsgFunc_ResetHUD( 0, 0, NULL );
-
+	ClientSetSensitivity( 0 );
 	m_szTeamNames[NULL][NULL] = '\0';
+	g_RubbleQueue.m_flDuration = 2.0f;
 
 	strcpy( m_szTeamNames[1], m_TextMessage.BufferedLocaliseTextString( "#Teamname_allies" ) );
 	strcpy( m_szTeamNames[2], m_TextMessage.BufferedLocaliseTextString( "#Teamname_axis" ) );
@@ -514,7 +516,7 @@ void CHud::VidInit( void )
 	m_hsprLogo = 0;
 	m_hsprCursor = 0;
 	m_iRoundState = 1;
-	m_iRes = ( ScreenWidth <= 639 ) ? 320 : 640;
+	m_iRes = ( m_scrinfo.iWidth <= 639 ) ? 320 : 640;
 
 	m_bAllieParatrooper = false;
 	m_bAllieInfiniteLives = true;
@@ -526,8 +528,7 @@ void CHud::VidInit( void )
 
 	m_flPlaySprintSoundTime = 0.0f;
 	m_fRoundEndsTime = 0.0f;
-
-	SetFOV( 0 );
+	m_iFOV = 0;
 	g_lastFOV = 0.0f;
 
 	m_flPitchRecoilAccumulator = 0.0f;
@@ -539,24 +540,20 @@ void CHud::VidInit( void )
 		if( m_iSpriteCountAllRes > 0 )
 		{
 			int validSprites = 0;
-			int index = 0;
+			int idx = 0;
 			client_sprite_t *p = m_pSpriteList;
 
-			while( TRUE )
+			for( int i = 0; i < m_iSpriteCountAllRes; i++ )
 			{
 				if( p->iRes == m_iRes )
 				{
 					validSprites++;
 					char sz[256];
 					sprintf( sz, "sprites/%s.spr", p->szSprite );
-					m_rghSprites[index++] = gEngfuncs.pfnSPR_Load( sz );
+					m_rghSprites[idx++] = gEngfuncs.pfnSPR_Load( sz );
 
 					if( validSprites >= m_iSpriteCountAllRes )
 						break;
-				}
-				else if( ++validSprites >= m_iSpriteCountAllRes )
-				{
-					break;
 				}
 				p++;
 			}
@@ -565,7 +562,6 @@ void CHud::VidInit( void )
 	else
 	{
 		m_pSpriteList = gEngfuncs.pfnSPR_GetList( "sprites/hud.txt", &m_iSpriteCountAllRes );
-
 		if( m_pSpriteList )
 		{
 			m_iSpriteCount = 0;
@@ -583,7 +579,7 @@ void CHud::VidInit( void )
 			m_rgszSpriteNames = new char[m_iSpriteCount * MAX_SPRITE_NAME_LENGTH];
 
 			p = m_pSpriteList;
-			int index = 0;
+			int idx = 0;
 
 			for( int i = 0; i < m_iSpriteCountAllRes; i++ )
 			{
@@ -591,26 +587,44 @@ void CHud::VidInit( void )
 				{
 					char sz[256];
 					sprintf( sz, "sprites/%s.spr", p->szSprite );
-					m_rghSprites[index] = gEngfuncs.pfnSPR_Load( sz );
-					m_rgrcRects[index] = p->rc;
+					m_rghSprites[idx] = gEngfuncs.pfnSPR_Load( sz );
 
-					strncpy( m_rgszSpriteNames + ( index * MAX_SPRITE_NAME_LENGTH ), p->szName, MAX_SPRITE_NAME_LENGTH );
-					index++;
+					m_rgrcRects[idx].left = p->rc.left;
+					m_rgrcRects[idx].right = p->rc.right;
+					m_rgrcRects[idx].top = p->rc.top;
+					m_rgrcRects[idx].bottom = p->rc.bottom;
+
+					strncpy( m_rgszSpriteNames + ( idx * MAX_SPRITE_NAME_LENGTH ), p->szName, MAX_SPRITE_NAME_LENGTH );
+					idx++;
 				}
 				p++;
 			}
 		}
 	}
 
-	m_HUD_number_0 = GetSpriteIndex( "number_0" );
-	m_MG_number_0 = GetSpriteIndex( "mg_0" );
+	m_HUD_number_0 = -1;
+	m_MG_number_0 = -1;
 
-	if( m_HUD_number_0 != -1 )
-		m_iFontHeight = m_rgrcRects[m_HUD_number_0].bottom - m_rgrcRects[m_HUD_number_0].top;
-	else
-		m_iFontHeight = 16;
+	if( m_iSpriteCount > 0 )
+	{
+		for( int i = 0; i < m_iSpriteCount; i++ )
+		{
+			if( !strcmp( "number_0", m_rgszSpriteNames + ( i * MAX_SPRITE_NAME_LENGTH ) ) )
+			{
+				m_HUD_number_0 = i;
+				break;
+			}
+		}
 
-	m_iFontEngineHeight = m_iFontHeight;
+		for( int i = 0; i < m_iSpriteCount; i++ )
+		{
+			if( !strcmp( "mg_0", m_rgszSpriteNames + ( i * MAX_SPRITE_NAME_LENGTH ) ) )
+			{
+				m_MG_number_0 = i;
+				break;
+			}
+		}
+	}
 
 	m_Ammo.VidInit();
 	m_Scope.VidInit();
@@ -630,6 +644,8 @@ void CHud::VidInit( void )
 	m_StatusIcons.VidInit();
 	m_DoDCrossHair.VidInit();
 	m_MortarHud.VidInit();
+	m_VGUI2Print.VidInit();
+	m_Spectator.VidInit();
 
 	m_MOTD.VidInit();
 	m_Scoreboard.VidInit();

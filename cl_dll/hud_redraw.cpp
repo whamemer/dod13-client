@@ -52,7 +52,6 @@ void CHud::Think( void )
 {
 	HUDLIST *pList;
 	float volume;
-	float zoom_sens;
 	int newfov;
 
 	m_scrinfo.iSize = sizeof( SCREENINFO );
@@ -71,7 +70,6 @@ void CHud::Think( void )
 			if( !gEngfuncs.IsSpectateOnly() )
 			{
 				volume = 0.8f;
-
 				if( g_fStamina >= 10.0f && g_fStamina >= 25.0f )
 					volume = 0.3f;
 
@@ -83,7 +81,9 @@ void CHud::Think( void )
 	else
 	{
 		if( m_flPlaySprintSoundTime > m_flTime )
+		{
 			gEngfuncs.pEventAPI->EV_StopSound( -1, 6, "player/sprintgrunts.wav" );
+		}
 	}
 
 	if( !g_iDeadFlag || !g_iUser1 )
@@ -101,10 +101,14 @@ void CHud::Think( void )
 			i_MusicFadeCounter = m_flTime - 1.0f;
 	}
 
-	for( pList = m_pHudList; pList; pList = pList->pNext )
+	pList = m_pHudList;
+	while( pList )
 	{
 		if( pList->p->m_iFlags & 1 )
+		{
 			pList->p->Think();
+		}
+		pList = pList->pNext;
 	}
 
 	float flCurrentFOV = HUD_GetFOV();
@@ -122,8 +126,7 @@ void CHud::Think( void )
 	}
 	else
 	{
-		zoom_sens = zoom_sensitivity_ratio->value;
-
+		float zoom_sens = zoom_sensitivity_ratio ? zoom_sensitivity_ratio->value : 1.2f;
 		m_flMouseSensitivity = zoom_sens * ( ( float ) newfov / 90.0f * sensitivity->value );
 
 		if( !newfov )
@@ -139,7 +142,7 @@ void CHud::Think( void )
 		}
 		else
 		{
-			SetFOV( 90 );
+			m_iFOV = 90;
 		}
 	}
 
@@ -209,7 +212,8 @@ int CHud::Redraw( float flTime, int intermission )
 
 	char things[18];
 
-	if( r_drawentities && r_drawentities->value != 1.0f )
+	// WHAMER: TODO: uncomment later
+	/*if( r_drawentities && r_drawentities->value != 1.0f )
 	{
 		strcpy( things, "quit\n" );
 		ClientCmd( "r_drawentities 1" );
@@ -217,8 +221,7 @@ int CHud::Redraw( float flTime, int intermission )
 		ClientCmd( things );
 	}
 
-	// WHAMER: TODO: uncomment later
-	/*if( cl_lw && cl_lw->value != 1.0f )
+	if( cl_lw && cl_lw->value != 1.0f )
 	{
 		strcpy( things, "quit\n" );
 		ClientCmd( "cl_lw 1" );

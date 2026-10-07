@@ -96,13 +96,23 @@ public:
 	Element *last;
 	Element *current;
 
+	Queue()
+	{
+		count = 0;
+		maxelements = 240;
+		m_flDuration = 10.0f;
+		first = NULL;
+		last = NULL;
+		current = NULL;
+	}
+
 	~Queue( void )
 	{
 		Update( 99999.0f );
 	}
 
-	bool Full( void ) 
-	{ 
+	bool Full( void )
+	{
 		return ( count >= maxelements );
 	}
 
@@ -112,7 +122,6 @@ public:
 			return false;
 
 		Element *pNewElement = new Element( flTime );
-
 		if( !pNewElement )
 			return false;
 
@@ -134,47 +143,38 @@ public:
 		return true;
 	}
 
-
 	void Update( float flCurrentTime )
 	{
-		Element *last;
-		Element *previous;
-
-		last = this->last;
+		Element *last = this->last;
 
 		if( last )
 		{
-			while( last->flTimeCreated - flCurrentTime < 0.0f )
+			while( last && ( last->flTimeCreated + m_flDuration < flCurrentTime ) )
 			{
-				previous = last->previous;
+				Element *previous = last->previous;
 
 				delete last;
-
 				count--;
-				this->last = previous;
+
+				last = previous;
 				current = previous;
 
 				if( !previous )
 				{
 					first = NULL;
 					current = NULL;
-					return;
+					break;
 				}
 
 				last = previous;
-			}
-
-			Element *pCurr = first;
-
-			while( pCurr )
-			{
-				pCurr->flTimeCreated -= flCurrentTime;
-				pCurr = pCurr->next;
 			}
 		}
 	}
 };
 
+//
+//-----------------------------------------------------
+//
 struct pmodel_fx_t
 {
 	bool bSwitch;
