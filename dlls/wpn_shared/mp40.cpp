@@ -27,7 +27,7 @@
 
 #include "dod_shared.h"
 
-extern p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s WpnInfo[];
 
 LINK_ENTITY_TO_CLASS( weapon_mp40, CMP40 )
 

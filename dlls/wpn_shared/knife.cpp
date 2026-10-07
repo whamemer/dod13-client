@@ -29,7 +29,7 @@
 
 #define KNIFE_WALLHIT_VOLUME 512
 
-extern p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s WpnInfo[];
 
 void CMeleeWeapon::Spawn( int weapon_id )
 {
@@ -159,8 +159,8 @@ int CMeleeWeapon::Swing( int fFirst )
 	if( tr.flFraction >= 1.0f )
 	{
 		PLAYBACK_EVENT_FULL( FEV_NOTHOST, m_pPlayer->edict(), m_iFireEvent, 
-		0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim(),
-		0, 0, 0 );
+			0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim( m_iSwing ),
+			0, 0, 0 );
 
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.4f;
 		m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.5f;
@@ -175,8 +175,8 @@ int CMeleeWeapon::Swing( int fFirst )
 		return FALSE;
 	
 	PLAYBACK_EVENT_FULL( FEV_NOTHOST, m_pPlayer->edict(), m_iFireEvent, 
-	0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim(),
-	0, 1, 0 );
+		0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim( m_iSwing ),
+		0, 1, 0 );
 
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.35f;
 	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.5f;
@@ -206,7 +206,7 @@ int CMeleeWeapon::Stab( int fFirst )
 	if( tr.flFraction >= 1.0f )
 	{
 		PLAYBACK_EVENT_FULL( FEV_NOTHOST, m_pPlayer->edict(), m_iFireEvent,
-			0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim(),
+			0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim( m_iSwing ),
 			0, 0, 0 );
 
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.1f;
@@ -222,7 +222,7 @@ int CMeleeWeapon::Stab( int fFirst )
 		return FALSE;
 
 	PLAYBACK_EVENT_FULL( FEV_NOTHOST, m_pPlayer->edict(), m_iFireEvent,
-		0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim(),
+		0.0f, g_vecZero, g_vecZero, 0, 0, GetSlashAnim( m_iSwing ),
 		0, 1, 0 );
 
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.0f;

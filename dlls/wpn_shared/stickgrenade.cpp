@@ -28,7 +28,7 @@
 
 #include "dod_shared.h"
 
-extern p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s WpnInfo[];
 
 LINK_ENTITY_TO_CLASS( weapon_stickgrenade, CStickGrenade )
 
@@ -98,7 +98,7 @@ void CStickGrenade::DropGren( void )
 
         UTIL_TraceLine( eyes, vecSrc, ignore_monsters, m_pPlayer->pev->pContainingEntity, &tr );
 
-        if( tr.flFraction < 1.0f )
+		if( tr.flFraction < 1.0f )
             vecSrc = tr.vecEndPos;
 
         m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType]--;
@@ -250,8 +250,8 @@ void CStickGrenade::WeaponIdle( void )
 		{
 			m_flTimeWeaponIdle = time + RANDOM_FLOAT( 5.0f, 7.0f );;
 
-			SendWeaponAnim( STICKGRENADE_IDLE, UseDecrement() != FALSE );
-			m_flReleaseThrow = -1.0f;
+				SendWeaponAnim( STICKGRENADE_IDLE, UseDecrement() != FALSE );
+				m_flReleaseThrow = -1.0f;
 		}
 	}
 }

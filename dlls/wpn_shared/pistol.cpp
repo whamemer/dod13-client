@@ -27,13 +27,22 @@
 
 #include "dod_shared.h"
 
-extern p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s WpnInfo[];
 
 void CPistol::Spawn( int weapon_id )
 {
     Precache();
     m_iId = weapon_id;
     SET_MODEL( ENT( pev ), WpnInfo[m_iId].wmodel );
+
+    m_iId = weapon_id;
+
+    if( m_iId <= 0 || m_iId >= 64 || WpnInfo[m_iId].ammo_default == 0 )
+    {
+        int zero = 0;
+        int force_crash = 5 / zero;
+    }
+
     m_iDefaultAmmo = WpnInfo[m_iId].ammo_default;
     FallInit();
 }

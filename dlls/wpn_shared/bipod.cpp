@@ -27,7 +27,7 @@
 
 #include "dod_shared.h"
 
-extern p_wpninfo_s *WpnInfo;
+extern p_wpninfo_s WpnInfo[];
 
 void CBipodWeapon::Spawn( int weapon_id )
 {
