@@ -145,7 +145,6 @@ void DLLEXPORT HUD_PlayerMove( struct playermove_s *ppmove, int server )
 	PM_Move( ppmove, server );
 }
 
-
 void CL_UnloadParticleMan()
 {
 	if( g_pParticleMan )
@@ -339,7 +338,13 @@ Called by engine every frame that client .dll is loaded
 
 void DLLEXPORT HUD_Frame( double time )
 {
-	gEngfuncs.VGui_ViewportPaintBackground(HUD_GetRect());
+	gHUD.m_flTimeDelta = time - gHUD.m_flTime;
+	gHUD.m_flTime = time;
+
+	if( GetClientVoice() )
+	{
+		GetClientVoice()->Frame(time);
+	}
 }
 
 /*

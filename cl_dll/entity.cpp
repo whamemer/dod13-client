@@ -56,11 +56,6 @@ HUD_AddEntity
 */
 int DLLEXPORT HUD_AddEntity(int type, struct cl_entity_s *ent, const char *modelname)
 {
-	if( !modelname || modelname[0] == '\0' )
-	{
-		return 1;
-	}
-
 	int mapstate = gHUD.GetMinimapState();
 
 	if( gEngfuncs.IsSpectateOnly() || g_iUser1 || mapstate > 0 )
@@ -132,7 +127,18 @@ int DLLEXPORT HUD_AddEntity(int type, struct cl_entity_s *ent, const char *model
 		}
 	}
 
-	if( g_iUser1 || ( mapstate && cl_dmshowplayers->value > 0.0f ))
+	switch( type )
+	{
+	case ET_NORMAL:
+	case ET_PLAYER:
+	case ET_BEAM:
+	case ET_TEMPENTITY:
+	case ET_FRAGMENTED:
+	default:
+		break;
+	}
+
+	if( g_iUser1 || ( mapstate && cl_dmshowplayers->value > 0.0f ) )
 	{
 		gHUD.m_Spectator.AddOverviewEntity( type, ent, modelname );
 
