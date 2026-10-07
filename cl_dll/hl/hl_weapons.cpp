@@ -32,6 +32,7 @@
 #include "../demo.h"
 
 #include "dod_shared.h"
+#include "hud.h"
 
 extern globalvars_t *gpGlobals;
 extern int g_iUser1;
@@ -1034,12 +1035,14 @@ Remember our exact predicted origin so we can draw the egon to the right positio
 */
 void HUD_SetLastOrg( void )
 {
-	int i;
+	if( !g_finalstate )
+		return;
 
-	// Offset final origin by view_offset
-	for( i = 0; i < 3; i++ )
+	if( g_finalstate->playerstate.origin[0] != 0.0f || g_finalstate->playerstate.origin[1] != 0.0f )
 	{
-		previousorigin[i] = g_finalstate->playerstate.origin[i] + g_finalstate->client.view_ofs[i];
+		previousorigin.x = g_finalstate->playerstate.origin[0] + g_finalstate->client.view_ofs.x;
+		previousorigin.y = g_finalstate->playerstate.origin[1] + g_finalstate->client.view_ofs.y;
+		previousorigin.z = g_finalstate->playerstate.origin[2] + g_finalstate->client.view_ofs.z;
 	}
 }
 
@@ -1052,15 +1055,13 @@ Run Weapon firing code on client
 */
 void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cmd, double time, unsigned int random_seed )
 {
+	int i;
 	CBasePlayerWeapon *pWeapon = NULL;
 	CBasePlayerWeapon *pCurrent = NULL;
 	CBasePlayerWeapon *pNew = NULL;
-	weapon_data_t *pto;
+	weapon_data_t *pfrom, *pto;
 	static int lasthealth;
 	BOOL canHolster;
-
-	weapon_data_t nulldata;
-	memset( &nulldata, 0, sizeof( weapon_data_t ) );
 
 	HUD_InitClientWeapons();
 
@@ -1107,26 +1108,60 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	case WEAPON_STICKGRENADEX: pWeapon = &g_StickGrenadeEx; break;
 	}
 
-	if( !pWeapon )
-		return;
+	g_finalstate = to;
 
-	for( int j = 0; j < MAX_WEAPONS; j++ )
+	if( g_runfuncs )
 	{
-		pCurrent = g_pWpns[j];
-		if( !pCurrent )
+		if( to->client.health <= 0 && lasthealth > 0 )
 		{
-			continue;
+			player.Killed( NULL, 0 );
+		}
+		else if( to->client.health > 0 && lasthealth <= 0 )
+		{
+			player.Spawn();
 		}
 
-		pCurrent->m_fInReload = from->weapondata[j].m_fInReload;
-		pCurrent->m_fInSpecialReload = from->weapondata[j].m_fInSpecialReload;
-		pCurrent->m_iClip = from->weapondata[j].m_iClip;
-		pCurrent->m_flNextPrimaryAttack = from->weapondata[j].m_flNextPrimaryAttack;
-		pCurrent->m_flNextSecondaryAttack = from->weapondata[j].m_flNextSecondaryAttack;
-		pCurrent->m_flTimeWeaponIdle = from->weapondata[j].m_flTimeWeaponIdle;
-		pCurrent->m_iWeaponState = from->weapondata[j].m_iWeaponState;
-		pCurrent->m_flWeaponHeat = from->weapondata[j].fuser1;
+		if( to->client.health > 0.0f || lasthealth <= 0 )
+		{
+			if( to->client.health > 0.0f && lasthealth <= 0 && player.m_pActiveItem )
+			{
+				if( player.m_pActiveItem->m_iId == WEAPON_M1CARBINE || player.m_pActiveItem->m_iId == WEAPON_GREASEGUN )
+					player.m_pActiveItem->SpawnDeploy();
+				else
+					player.m_pActiveItem->Deploy();
+			}
+		}
+		else if( player.m_pActiveItem )
+		{
+			player.m_pActiveItem->Holster();
+		}
 
+		lasthealth = to->client.health;
+	}
+
+	if( !pWeapon )
+	{
+		HUD_SetLastOrg();
+		g_finalstate = NULL;
+		return;
+	}
+
+	for( i = 0; i < MAX_WEAPONS; i++ )
+	{
+		pCurrent = g_pWpns[i];
+		if( !pCurrent )
+			continue;
+
+		pfrom = &from->weapondata[i];
+
+		pCurrent->m_fInReload = pfrom->m_fInReload;
+		pCurrent->m_fInSpecialReload = pfrom->m_fInSpecialReload;
+		pCurrent->m_iClip = pfrom->m_iClip;
+		pCurrent->m_flNextPrimaryAttack = pfrom->m_flNextPrimaryAttack;
+		pCurrent->m_flNextSecondaryAttack = pfrom->m_flNextSecondaryAttack;
+		pCurrent->m_flTimeWeaponIdle = pfrom->m_flTimeWeaponIdle;
+		pCurrent->m_iWeaponState = pfrom->m_iWeaponState;
+		pCurrent->m_flWeaponHeat = pfrom->fuser1;
 	}
 
 	g_iWeaponFlags = pWeapon->m_iWeaponState;
@@ -1135,9 +1170,9 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	player.random_seed = random_seed;
 	player.m_afButtonLast = from->playerstate.oldbuttons;
 
-	int buttons = cmd->buttons;
-	player.m_afButtonPressed = ( buttons ^ player.m_afButtonLast ) & buttons;
-	player.m_afButtonReleased = ( buttons ^ player.m_afButtonLast ) & ~cmd->buttons;
+	int buttonsChanged = ( player.m_afButtonLast ^ cmd->buttons );
+	player.m_afButtonPressed = buttonsChanged & cmd->buttons;
+	player.m_afButtonReleased = buttonsChanged & ( ~cmd->buttons );
 
 	player.pev->button = cmd->buttons;
 	player.pev->velocity = from->client.velocity;
@@ -1168,32 +1203,10 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 		player.m_pActiveItem = g_pWpns[from->client.m_iId];
 	}
 
-	g_finalstate = to;
-
-	if( ( player.pev->deadflag != ( DEAD_DISCARDBODY + 1 ) ) && 
-			!CL_IsDead() && player.pev->viewmodel && !g_iUser1
-			&& player.m_flNextAttack <= 0 )
+	if( ( player.pev->deadflag != ( DEAD_DISCARDBODY + 1 ) ) &&
+		!CL_IsDead() && player.pev->viewmodel && !g_iUser1 && player.m_flNextAttack <= 0 )
 	{
-			pWeapon->ItemPostFrame();
-	}
-
-	if( g_runfuncs )
-	{
-		if( to->client.health > 0.0f || lasthealth <= 0 )
-		{
-			if( to->client.health > 0.0f && lasthealth <= 0 && player.m_pActiveItem )
-			{
-				if( player.m_pActiveItem->m_iId == WEAPON_M1CARBINE || player.m_pActiveItem->m_iId == WEAPON_GREASEGUN )
-					player.m_pActiveItem->SpawnDeploy();
-				else
-					player.m_pActiveItem->Deploy();
-
-			}
-		}
-		else if( player.m_pActiveItem )
-			player.m_pActiveItem->Holster();
-
-		lasthealth = to->client.health;
+		pWeapon->ItemPostFrame();
 	}
 
 	player.PostThink();
@@ -1244,14 +1257,16 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	if( g_runfuncs && ( HUD_GetWeaponAnim() != to->client.weaponanim ) )
 		HUD_SendWeaponAnim( to->client.weaponanim, 1 );
 
-	for( int i = 0; i < MAX_WEAPONS; i++ )
+	float flFrameTime = ( float ) cmd->msec / 1000.0f;
+
+	for( i = 0; i < MAX_WEAPONS; i++ )
 	{
 		pCurrent = g_pWpns[i];
 		pto = &to->weapondata[i];
 
 		if( !pCurrent )
 		{
-			memset( pto, 0, sizeof(weapon_data_t) );
+			memset( pto, 0, sizeof( weapon_data_t ) );
 			continue;
 		}
 
@@ -1276,51 +1291,45 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 		float m_flTimeWeaponIdle = pCurrent->m_flTimeWeaponIdle;
 		pto->m_flTimeWeaponIdle = m_flTimeWeaponIdle;
 		pto->m_iWeaponState = pCurrent->m_iWeaponState;
-
-		float flFrameTime = ( float ) cmd->msec / 1000.0f;
+		pto->fuser1 = pCurrent->m_flWeaponHeat;
 
 		pto->m_flNextReload -= flFrameTime;
 		pto->m_flNextPrimaryAttack -= flFrameTime;
 		pto->m_flNextSecondaryAttack -= flFrameTime;
 		pto->m_flTimeWeaponIdle -= flFrameTime;
+		pto->fuser1 -= flFrameTime;
 
 		if( pto->m_flNextPrimaryAttack < -1.0f )
-		{
 			pto->m_flNextPrimaryAttack = -1.0f;
-		}
 
 		if( pto->m_flNextSecondaryAttack < -0.001f )
-		{
 			pto->m_flNextSecondaryAttack = -0.001f;
-		}
 
 		if( pto->m_flTimeWeaponIdle < -0.001f )
-		{
 			pto->m_flTimeWeaponIdle = -0.001f;
-		}
 
 		if( pto->m_flNextReload < -0.001f )
-		{
 			pto->m_flNextReload = -0.001f;
-		}
-	}
 
-	float flFrameTime = ( float ) cmd->msec / 1000.0f;
+		if( pto->fuser1 < -0.001f )
+			pto->fuser1 = -0.001f;
+	}
 
 	to->client.m_flNextAttack -= flFrameTime;
 	if( to->client.m_flNextAttack < -0.001f )
-	{
 		to->client.m_flNextAttack = -0.001f;
-	}
 
 	gHUD.g_NextAttack = to->client.m_flNextAttack;
 
-	previousorigin.x = to->playerstate.origin.x + to->client.view_ofs.x;
-	previousorigin.y = to->playerstate.origin.y + to->client.view_ofs.y;
-	previousorigin.z = to->playerstate.origin.z + to->client.view_ofs.z;
+	if( from->playerstate.origin.x != 0.0f || from->playerstate.origin.y != 0.0f )
+	{
+		previousorigin.x = from->playerstate.origin.x + from->client.view_ofs.x;
+		previousorigin.y = from->playerstate.origin.y + from->client.view_ofs.y;
+		previousorigin.z = from->playerstate.origin.z + from->client.view_ofs.z;
+	}
 
+	HUD_SetLastOrg();
 	g_finalstate = NULL;
-	return;
 }
 
 void DoD_GetSequence( int *seq, int *gaitseq )
