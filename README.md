@@ -23,9 +23,9 @@ with the original server library.
 * **Bug fixes of the original client**, optional and switchable at build time (see [Building](#building)).
 
 ## Download
-Builds are published on the [Releases](https://github.com/whamemer/dod13-client/releases) page. Every push is also built by
-GitHub Actions: the artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of a run contain the `dod` folder
-that goes next to the engine.
+Builds are published on the [Releases](https://github.com/whamemer/dod13-client/releases) page: `windows` (32-bit), `windows_x64`
+and `linux`, each archive holds the `dod` folder that goes next to the engine. Every push is also built by GitHub Actions: the
+artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of a run hold the contents of that folder.
 
 ## Installation
 1. Get the [latest developer build of Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs/releases/tag/continuous) and unpack it.

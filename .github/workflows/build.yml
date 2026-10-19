@@ -2,6 +2,8 @@ name: build
 
 on:
   push:
+    tags:
+      - 'v*'
     paths-ignore:
       - 'appveyor.yml'
       - '**.md'
@@ -95,7 +97,7 @@ jobs:
 
     - name: Extract branch name
       shell: bash
-      run: echo "branch=$(echo ${GITHUB_REF#refs/heads/} | tr '/' '_')" >> $GITHUB_OUTPUT
+      run: echo "branch=$(echo ${GITHUB_REF_NAME} | tr '/' '_')" >> $GITHUB_OUTPUT
       id: extract_branch
     - name: Extract gamedir
       shell: bash
@@ -119,3 +121,40 @@ jobs:
       with:
         name: dod13-client-${{ steps.extract_branch.outputs.branch }}-windows_x64
         path: dist64/${{ steps.extract_gamedir.outputs.gamedir }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    - name: Pack the dod folder
+      run: |
+        for dir in artifacts/*; do
+          name=$(basename "$dir")
+          mkdir -p "pack/$name/dod"
+          cp -r "$dir"/. "pack/$name/dod/"
+          (cd "pack/$name" && zip -qr "$GITHUB_WORKSPACE/$name.zip" dod)
+        done
+        ls -l *.zip
+    - name: Create the release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        cat > notes.md <<'NOTES'
+        Client library of Day of Defeat 1.3 for Xash3D FWGS.
+
+        Unpack the archive into the directory of the engine, next to the `valve` and `dod` folders of the original game, so that
+        `client.dll` (or `client.so`) lands in `dod/cl_dlls/`. See the [README](https://github.com/${{ github.repository }}#installation)
+        for the details.
+
+        * `windows` is the 32-bit build, the one that is developed and tested.
+        * `windows_x64` and `linux` are built by the CI and not tested yet.
+        NOTES
+        gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag \
+          --title "DOD13-Client ${GITHUB_REF_NAME#v}" --notes-file notes.md *.zip
