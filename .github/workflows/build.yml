@@ -124,9 +124,37 @@ jobs:
         name: dod13-client-${{ steps.extract_branch.outputs.branch }}-windows_x64
         path: dist64/${{ steps.extract_gamedir.outputs.gamedir }}
 
+  android:
+    runs-on: ubuntu-latest
+    # The Android build has never been run on a device, so its failure does not fail the whole run
+    continue-on-error: true
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+        cache: gradle
+    - name: Build APK
+      working-directory: android
+      run: ./gradlew assembleDebug
+    - name: Extract branch name
+      shell: bash
+      run: echo "branch=$(echo ${GITHUB_REF_NAME} | tr '/' '_')" >> $GITHUB_OUTPUT
+      id: extract_branch
+    - name: Upload android artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dod13-client-${{ steps.extract_branch.outputs.branch }}-android
+        path: android/app/build/outputs/apk/debug/*.apk
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [build, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -139,11 +167,18 @@ jobs:
       run: |
         for dir in artifacts/*; do
           name=$(basename "$dir")
-          mkdir -p "pack/$name/dod"
-          cp -r "$dir"/. "pack/$name/dod/"
-          (cd "pack/$name" && zip -qr "$GITHUB_WORKSPACE/$name.zip" dod)
+          case "$name" in
+          *-android)
+            cp "$dir"/*.apk "$name.apk"
+            ;;
+          *)
+            mkdir -p "pack/$name/dod"
+            cp -r "$dir"/. "pack/$name/dod/"
+            (cd "pack/$name" && zip -qr "$GITHUB_WORKSPACE/$name.zip" dod)
+            ;;
+          esac
         done
-        ls -l *.zip
+        ls -l
     - name: Create the release
       env:
         GH_TOKEN: ${{ github.token }}
@@ -157,6 +192,8 @@ jobs:
 
         * `windows` is the 32-bit build, the one that is developed and tested.
         * `windows_x64` and `linux` are built by the CI and not tested yet.
+        * `android` is a debug APK that starts the game in the installed Xash3D FWGS app, not tested yet.
         NOTES
+        shopt -s nullglob
         gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag \
-          --title "DOD13-Client ${GITHUB_REF_NAME#v}" --notes-file notes.md *.zip
+          --title "DOD13-Client ${GITHUB_REF_NAME#v}" --notes-file notes.md *.zip *.apk
