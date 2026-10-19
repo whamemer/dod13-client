@@ -20,14 +20,18 @@
 # SOFTWARE.
 #
 
-# 3.9 added captures in if(MATCHES)
-cmake_minimum_required(VERSION 3.9)
+# 3.9 added captures in if(MATCHES), 3.10 is the oldest version CMake no longer warns about
+cmake_minimum_required(VERSION 3.10)
 
 if(NOT ${CMAKE_VERSION} VERSION_LESS "3.15.0")
 	cmake_policy(SET CMP0091 NEW)
 	# use the static CRT for all targets
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
+
+# the C sources (pm_shared, game_shared/vcs_info.c, public/safe_snprintf.c) are written in C99
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Install custom module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
@@ -38,13 +42,12 @@ include(CheckCSourceCompiles)
 include(VSForceXPToolchain) # Force XP toolchain for Visual Studio
 include(CheckIPOSupported)
 
-project (HLSDK-PORTABLE)
+project (DOD13-CLIENT)
 
 #--------------
 # USER DEFINES \
 ################\
 option(BUILD_CLIENT "Build client dll" ON)
-option(BUILD_SERVER "Build server dll" ON)
 option(LTO "Enable interprocedural optimization" OFF)
 option(POLLY "Enable pollyhedral optimization" OFF)
 option(ANDROID_APK "Enable APK styled deploy" OFF)
@@ -124,13 +127,9 @@ endforeach()
 
 if(ANDROID_APK)
 	set(GAMEDIR ".")
-	set(SERVER_INSTALL_DIR ".")
 	set(CLIENT_INSTALL_DIR ".")
 endif()
 
-if(HLDEMO_BUILD AND OEM_BUILD)
-	message(FATAL_ERROR "Don't mix Demo and OEM builds!")
-endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT 64BIT)
 	if(MSVC)
@@ -206,6 +205,14 @@ if(HAVE_TGMATH_H)
 	endif()
 endif()
 
+# cl_dll.h includes <cmath> first when it is usable, before cl_util.h defines the fabs macro (waf does the same)
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("#include <cmath>
+	int main(){ return (int)sqrt(2.0f); }" HAVE_CMATH)
+if(HAVE_CMATH)
+	add_definitions(-DHAVE_CMATH)
+endif()
+
 add_subdirectory(game_shared)
 
 if(BUILD_CLIENT)
@@ -215,12 +222,7 @@ if(BUILD_CLIENT)
 	add_subdirectory(cl_dll)
 endif()
 
-if(BUILD_SERVER)
-	message(STATUS "Building server enabled")
-	add_subdirectory(dlls)
-endif()
-
-if(NOT BUILD_SERVER AND NOT BUILD_CLIENT)
+if(NOT BUILD_CLIENT)
 	message(FATAL_ERROR "Nothing to build")
 endif()
 

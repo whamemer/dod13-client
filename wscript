@@ -7,8 +7,8 @@ import sys
 import os
 import re
 
-VERSION = '2.4'
-APPNAME = 'hlsdk-portable'
+VERSION = '1.3'
+APPNAME = 'dod13-client'
 top = '.'
 default_prefix = '/'
 
@@ -63,7 +63,7 @@ def options(opt):
 	grp.add_option('--enable-msvcdeps', action='store_true', dest='MSVCDEPS', default=False, help='')
 	grp.add_option('--enable-wafcache', action='store_true', dest='WAFCACHE', default=False, help='')
 
-	opt.add_subproject('cl_dll dlls')
+	opt.add_subproject('cl_dll')
 
 def configure(conf):
 	conf.env.EXPORT_DEFINES_LIST = []
@@ -121,6 +121,10 @@ def configure(conf):
 
 	cflags, linkflags = conf.get_optimization_flags()
 	cxxflags = list(cflags) # optimization flags are common between C and C++ but we need a copy
+
+	# the C sources (pm_shared, game_shared/vcs_info.c, public/safe_snprintf.c) are written in C99
+	if conf.env.COMPILER_CC != 'msvc':
+		cflags.append('-std=gnu99')
 
 	# on the Switch, allow undefined symbols by default, which is needed for libsolder to work
 	# we'll specifically disallow them for the engine executable
@@ -280,8 +284,6 @@ def configure(conf):
 			else:
 				conf.env[p[0]] = p[1]
 			conf.end_msg(p[1])
-	if conf.env.HLDEMO_BUILD and conf.env.OEM_BUILD:
-		conf.fatal('Don\'t mix Demo and OEM builds!')
 
 	# strip lib from pattern
 	if conf.env.DEST_OS != 'android':
@@ -299,7 +301,7 @@ def configure(conf):
 		conf.env.USE_STATIC_FREEVGUI = True
 
 	conf.load('library_naming')
-	conf.add_subproject('game_shared dlls freevgui cl_dll')
+	conf.add_subproject('game_shared freevgui cl_dll')
 
 def build(bld):
 	if bld.env.WAFCACHE:
@@ -313,4 +315,4 @@ def build(bld):
 		excl='*.user configuration.py .lock* *conf_check_*/** config.log %s/*' % Build.CACHE_DIR,
 		quiet=True, generator=True)
 
-	bld.add_subproject('game_shared dlls freevgui cl_dll')
+	bld.add_subproject('game_shared freevgui cl_dll')

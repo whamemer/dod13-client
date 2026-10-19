@@ -88,17 +88,16 @@ jobs:
       if: ${{ startsWith(matrix.os, 'windows') && github.event.inputs.buildtype == 'Debug' }}
       run: |
         copy build/cl_dll/client.pdb dist/${{ steps.extract_gamedir.outputs.gamedir }}/cl_dlls/
-        copy build/dlls/hl.pdb dist/${{ steps.extract_gamedir.outputs.gamedir }}/dlls/
     - name: Upload linux artifact
       if: startsWith(matrix.os, 'ubuntu')
       uses: actions/upload-artifact@v4
       with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-linux
+        name: dod13-client-${{ steps.extract_branch.outputs.branch }}-linux
         path: dist/${{ steps.extract_gamedir.outputs.gamedir }}
     - name: Upload windows artifact
       if: startsWith(matrix.os, 'windows')
       uses: actions/upload-artifact@v4
       with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-windows
+        name: dod13-client-${{ steps.extract_branch.outputs.branch }}-windows
         path: dist/${{ steps.extract_gamedir.outputs.gamedir }}
 

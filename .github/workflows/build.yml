@@ -4,12 +4,14 @@ on:
   push:
     paths-ignore:
       - 'appveyor.yml'
-      - 'README.md'
+      - '**.md'
+      - 'LICENSE'
       - '.github/workflows/manual.yml'
   pull_request:
     paths-ignore:
       - 'appveyor.yml'
-      - 'README.md'
+      - '**.md'
+      - 'LICENSE'
       - '.github/workflows/manual.yml'
 
 jobs:
@@ -103,17 +105,17 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu') && matrix.cc == 'gcc'
       uses: actions/upload-artifact@v4
       with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-linux
+        name: dod13-client-${{ steps.extract_branch.outputs.branch }}-linux
         path: dist/${{ steps.extract_gamedir.outputs.gamedir }}
     - name: Upload windows artifact
       if: startsWith(matrix.os, 'windows')
       uses: actions/upload-artifact@v4
       with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-windows
+        name: dod13-client-${{ steps.extract_branch.outputs.branch }}-windows
         path: dist/${{ steps.extract_gamedir.outputs.gamedir }}
     - name: Upload windows x64 artifact
       if: startsWith(matrix.os, 'windows')
       uses: actions/upload-artifact@v4
       with:
-        name: hlsdk-${{ steps.extract_branch.outputs.branch }}-windows_x64
+        name: dod13-client-${{ steps.extract_branch.outputs.branch }}-windows_x64
         path: dist64/${{ steps.extract_gamedir.outputs.gamedir }}

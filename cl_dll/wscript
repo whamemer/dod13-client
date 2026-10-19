@@ -34,9 +34,9 @@ def build(bld):
 		'../pm_shared',
 		'../game_shared',
 		'../public',
+		'../particleman',
 		'../utils/vgui/include']
-	excluded_files = ['GameStudioModelRenderer_Sample.cpp',
-		'game_shared/voice_vgui_tweakdlg.cpp',
+	excluded_files = ['game_shared/voice_vgui_tweakdlg.cpp',
 		'game_shared/voice_gamemgr.cpp',
 		'game_shared/voice_status.cpp']
 
@@ -47,20 +47,9 @@ def build(bld):
 	source += bld.path.parent.ant_glob([
 		'public/safe_snprintf.c',
 		'pm_shared/*.c',
-		'dlls/crossbow.cpp',
-		'dlls/crowbar.cpp',
-		'dlls/egon.cpp',
-		'dlls/gauss.cpp',
-		'dlls/glock.cpp',
-		'dlls/handgrenade.cpp',
-		'dlls/hornetgun.cpp',
-		'dlls/mp5.cpp',
-		'dlls/python.cpp',
-		'dlls/rpg.cpp',
-		'dlls/satchel.cpp',
-		'dlls/shotgun.cpp',
-		'dlls/squeakgrenade.cpp',
-		'dlls/tripmine.cpp'
+		'particleman/*.cpp',
+		'dlls/dod_shared.cpp',
+		'dlls/wpn_shared/*.cpp'
 	])
 
 
