@@ -18,16 +18,24 @@
 
 #define CBTEXTURENAMEMAX		13 		// only load first n chars of name
 
-#define CHAR_TEX_CONCRETE		'C'		// texture types
+// texture types of sound/materials.txt of Day of Defeat
+#define CHAR_TEX_CONCRETE	'C'		// concrete is the default
 #define CHAR_TEX_METAL		'M'
+#define CHAR_TEX_GRATE		'G'		// grate/ventilation (V for ventilation was removed)
 #define CHAR_TEX_DIRT		'D'
-#define CHAR_TEX_VENT		'V'
-#define CHAR_TEX_GRATE		'G'
 #define CHAR_TEX_TILE		'T'
-#define CHAR_TEX_SLOSH		'S'
 #define CHAR_TEX_WOOD		'W'
-#define CHAR_TEX_COMPUTER		'P'
+#define CHAR_TEX_GRASS		'P'
 #define CHAR_TEX_GLASS		'Y'
-#define CHAR_TEX_FLESH		'F'
+#define CHAR_TEX_SLOSH		'S'		// water
+#define CHAR_TEX_ROCK		'R'
+#define CHAR_TEX_SAND		'A'
+#define CHAR_TEX_GRAVEL		'L'
+#define CHAR_TEX_LEAVES		'E'		// leaves, bushes
 #define CHAR_TEX_SNOW		'N'
+#define CHAR_TEX_FLESH		'F'		// used in dod_anzio, the meat rack
+#define CHAR_TEX_BRICK		'B'
+#define CHAR_TEX_STUCCO		'Z'
+#define CHAR_TEX_HEAVYMETAL	'H'		// dod_charlie, hedgehogs
+#define CHAR_TEX_SKY		'K'
 #endif//PM_MATERIALS_H
