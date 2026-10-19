@@ -70,7 +70,7 @@ Non-transparent triangles-- add them here
 */
 void DLLEXPORT HUD_DrawNormalTriangles( void )
 {
-	gHUD.m_Spectator.DrawOverview();
+	/* Nothing. */
 }
 
 /*
