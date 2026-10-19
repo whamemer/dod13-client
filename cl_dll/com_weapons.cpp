@@ -19,9 +19,12 @@
 #include "hud.h"
 #include "cl_util.h"
 #include "com_weapons.h"
+#include "vgui/idodviewport.h"
 
 #include "const.h"
 #include "entity_state.h"
+#include "pm_defs.h"
+#include "ev_dod.h"
 #include "r_efx.h"
 
 // g_runfuncs is true if this is the first time we've "predicated" a particular movement/firing
@@ -64,7 +67,7 @@ void COM_Log( const char *pszFile, const char *fmt, ... )
 	fp = fopen( pfilename, "a+t");
 	if( fp )
 	{
-		fprintf( fp, "%s", string );
+		fputs( string, fp );
 		fclose( fp );
 	}
 }
@@ -80,7 +83,7 @@ HUD_SendWeaponAnim
 Change weapon model animation
 =====================
 */
-void HUD_SendWeaponAnim( int iAnim, int body, int force )
+void HUD_SendWeaponAnim( int iAnim, int force )
 {
 	// Don't actually change it.
 	if( !g_runfuncs && !force )
@@ -89,7 +92,7 @@ void HUD_SendWeaponAnim( int iAnim, int body, int force )
 	g_currentanim = iAnim;
 
 	// Tell animation system new info
-	gEngfuncs.pfnWeaponAnim( iAnim, body );
+	gEngfuncs.pfnWeaponAnim( iAnim, EV_GetWeaponBody() );
 }
 
 /*
@@ -137,7 +140,7 @@ void HUD_PlaybackEvent( int flags, const edict_t *pInvoker, unsigned short event
 
 	// Weapon prediction events are assumed to occur at the player's origin
 	org			= g_finalstate->playerstate.origin;
-	ang			= v_client_aimangles;
+	ang			= v_angles;
 	gEngfuncs.pfnPlaybackEvent( flags, pInvoker, eventindex, delay, org, ang, fparam1, fparam2, iparam1, iparam2, bparam1, bparam2 );
 }
 
@@ -149,6 +152,138 @@ HUD_SetMaxSpeed
 */
 void HUD_SetMaxSpeed( const edict_t *ed, float speed )
 {
+	/* Nothing. */
+}
+
+/*
+=====================
+HUD_GetRoundState
+
+=====================
+*/
+int HUD_GetRoundState( void )
+{
+	return gHUD.m_iRoundState;
+}
+
+/*
+=====================
+HUD_GetWaterLevel
+
+=====================
+*/
+int HUD_GetWaterLevel( void )
+{
+	return gHUD.GetWaterLevel();
+}
+
+/*
+=====================
+HUD_SetRecoil
+
+=====================
+*/
+void HUD_SetRecoil( int recoil )
+{
+	gHUD.i_Recoil = recoil;
+}
+
+/*
+=====================
+HUD_IsAutoReloadComplete
+
+=====================
+*/
+int HUD_IsAutoReloadComplete( void )
+{
+	return gHUD.m_bAutoReloadComplete;
+}
+
+/*
+=====================
+HUD_SetAutoReloadComplete
+
+=====================
+*/
+void HUD_SetAutoReloadComplete( int complete )
+{
+	gHUD.m_bAutoReloadComplete = complete != 0;
+}
+
+/*
+=====================
+HUD_SetScope
+
+Show the scope of the weapon
+=====================
+*/
+void HUD_SetScope( int weaponId )
+{
+	gHUD.m_Scope.SetScope( weaponId );
+	gHUD.m_Scope.m_iFlags |= HUD_ACTIVE;
+}
+
+/*
+=====================
+HUD_SetWeaponModel
+
+=====================
+*/
+void HUD_SetWeaponModel( int model )
+{
+	gHUD.g_pModel = model;
+}
+
+/*
+=====================
+HUD_SetClip
+
+=====================
+*/
+void HUD_SetClip( int clip )
+{
+	gHUD.g_iClip = clip;
+}
+
+/*
+=====================
+HUD_SetNextAttack
+
+=====================
+*/
+void HUD_SetNextAttack( float time )
+{
+	gHUD.g_NextAttack = time;
+}
+
+/*
+=====================
+HUD_SetVelocity
+
+=====================
+*/
+void HUD_SetVelocity( const float *velocity )
+{
+	gHUD.m_vecVelocity = Vector( velocity[0], velocity[1], velocity[2] );
+}
+
+/*
+=====================
+HUD_PostMortarValue
+
+=====================
+*/
+void HUD_PostMortarValue( float value )
+{
+	if( !gDoDViewPortInterface )
+		return;
+
+	if( value > 0 )
+		gDoDViewPortInterface->ShowMortarPanel();
+	else
+		gDoDViewPortInterface->HideMortarPanel();
+
+	gDoDViewPortInterface->PostMortarValue( value );
 }
 
 /*
@@ -290,4 +425,5 @@ const char *stub_NameForFunction( void *function )
 
 void stub_SetModel( edict_t *e, const char *m )
 {
+	/* Nothing. */
 }
