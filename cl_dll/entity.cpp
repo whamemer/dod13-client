@@ -11,6 +11,7 @@
 
 #include "hud.h"
 #include "cl_util.h"
+#include "dod_shared.h"
 #include "const.h"
 #include "entity_types.h"
 #include "studio_event.h" // def. of mstudioevent_t
@@ -20,11 +21,23 @@
 #include "pmtrace.h"	
 #include "pm_shared.h"
 
+#include "particleman.h"
+#include "tri.h"
+
 void Game_AddObjects( void );
 
 extern vec3_t v_origin;
+extern vec3_t v_angles;
+
+extern cvar_t *cl_dmshowplayers;
+extern cvar_t *cl_dmshowobjects;
+extern cvar_t *cl_dmshowgrenades;
+
+// the original has an own one, here it is the one of the embedded particleman (SetVariables sets it too)
+extern float g_flGravity;
 
 int g_iAlive = 1;
+int g_iDeadFlag = 0;
 
 extern "C"
 {
@@ -46,28 +59,81 @@ HUD_AddEntity
 */
 int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *modelname )
 {
-	switch( type )
-	{
-	case ET_NORMAL:
-	case ET_PLAYER:
-	case ET_BEAM:
-	case ET_TEMPENTITY:
-	case ET_FRAGMENTED:
-	default:
-		break;
-	}
-	// each frame every entity passes this function, so the overview hooks it to filter the overview entities
-	// in spectator mode:
-	// each frame every entity passes this function, so the overview hooks 
-	// it to filter the overview entities
+	int mapstate = gHUD.GetMinimapState();
 
-	if( g_iUser1 )
+	// each frame every entity passes this function, so the overview hooks it to filter the overview entities
+	if( gEngfuncs.IsSpectateOnly() || g_iUser1 || mapstate > 0 )
+	{
+		if( g_iTeamNumber == 1 || gEngfuncs.IsSpectateOnly() )
+		{
+			const char *hg = strstr( modelname, "w_grenade" );
+
+			if( hg && ( !mapstate || cl_dmshowgrenades->value > 0.0f ) )
+				gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprGrenade, ent, gEngfuncs.GetClientTime() - 1.0 );
+
+			const char *m = strstr( modelname, "w_mills" );
+
+			if( m && ( !mapstate || cl_dmshowgrenades->value > 0.0f ) )
+				gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprGrenade, ent, gEngfuncs.GetClientTime() - 1.0 );
+		}
+
+		if( g_iTeamNumber == 2 || gEngfuncs.IsSpectateOnly() )
+		{
+			const char *s = strstr( modelname, "w_stick" );
+
+			if( s && ( !mapstate || cl_dmshowgrenades->value > 0.0f ) )
+				gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprStick, ent, gEngfuncs.GetClientTime() - 1.0 );
+		}
+
+		const char *t = strstr( modelname, "tnt" );
+
+		if( t && ( !mapstate || cl_dmshowobjects->value > 0.0f ) )
+			gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprTnT, ent, gEngfuncs.GetClientTime() - 1.0 );
+
+		const char *b = strstr( modelname, "bangalore" );
+
+		if( b && ( !mapstate || cl_dmshowobjects->value > 0.0f ) )
+			gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprBanglr, ent, gEngfuncs.GetClientTime() - 1.0 );
+
+		const char *m = strstr( modelname, "markernull" );
+
+		if( m )
+		{
+			int marker = ent->curstate.body;
+			HSPRITE pSpr = gHUD.m_Spectator.GetMarkerSPR( marker );
+
+			if( pSpr )
+				gHUD.m_Spectator.AddOverviewEntityToList( pSpr, ent, gEngfuncs.GetClientTime() + 0.2 );
+		}
+
+		const char *c = strstr( modelname, "hltv_" );
+
+		if( c && ( ent->curstate.rendermode != kRenderTransAdd || ent->curstate.renderamt ) && ( !mapstate || cl_dmshowobjects->value > 0.0f ) )
+		{
+			char file[76];
+			char sz[128];
+
+			// the model of the marker is used as the name of the sprite
+			strcpy( file, c );
+
+			int len = strlen( file );
+
+			file[len - 3] = 0;
+			strcat( file, "spr" );
+
+			sprintf( sz, "sprites/%s", file );
+
+			gHUD.m_Spectator.m_hsprCustom = SPR_Load( sz );
+			gHUD.m_Spectator.AddOverviewEntityToList( gHUD.m_Spectator.m_hsprCustom, ent, gEngfuncs.GetClientTime() - 1.0 );
+		}
+	}
+
+	if( g_iUser1 || ( mapstate && cl_dmshowplayers->value > 0.0f ) )
 	{
 		gHUD.m_Spectator.AddOverviewEntity( type, ent, modelname );
 
-		if( (	g_iUser1 == OBS_IN_EYE || gHUD.m_Spectator.m_pip->value == INSET_IN_EYE ) &&
-				ent->index == g_iUser2 )
-			return 0;	// don't draw the player we are following in eye
+		if( ( g_iUser1 == OBS_IN_EYE || gHUD.m_Spectator.m_pip->value == INSET_IN_EYE ) && ent->index == g_iUser2 )
+			return 0; // don't draw the player we are following in eye
 	}
 
 	return 1;
@@ -95,6 +161,11 @@ void DLLEXPORT HUD_TxferLocalOverrides( struct entity_state_s *state, const stru
 
 	// Fire prevention
 	state->iuser4 = client->iuser4;
+
+	// Stamina
+	state->fuser4 = client->fuser4;
+
+	VectorCopy( client->vuser1, state->vuser1 );
 }
 
 /*
@@ -148,6 +219,21 @@ void DLLEXPORT HUD_ProcessPlayerState( struct entity_state_s *dst, const struct 
 	dst->team				= src->team;
 	dst->colormap				= src->colormap;
 
+	if( gEngfuncs.IsSpectateOnly() )
+	{
+		g_PlayerExtraInfo[dst->number].teamnumber = src->team;
+		g_PlayerExtraInfo[dst->number].playerclass = src->playerclass;
+	}
+
+	dst->iuser1				= src->iuser1;
+	dst->iuser2				= src->iuser2;
+	dst->iuser3				= src->iuser3;
+	dst->iuser4				= src->iuser4;
+	dst->fuser4				= src->fuser4;
+	VectorCopy( src->vuser1, dst->vuser1 );
+
+	g_PlayerExtraInfo[dst->number].health = src->health;
+
 	// Save off some data so other areas of the Client DLL can get to it
 	cl_entity_t *player = gEngfuncs.GetLocalPlayer();	// Get the local player's index
 	if( dst->number == player->index )
@@ -157,7 +243,22 @@ void DLLEXPORT HUD_ProcessPlayerState( struct entity_state_s *dst, const struct 
 
 		g_iUser1 = src->iuser1;
 		g_iUser2 = src->iuser2;
+
+		if( g_iUser3 == STANCE_MORTAR )
+		{
+			if( src->iuser3 != STANCE_MORTAR )
+				gHUD.SetMortarUnDeployTime();
+		}
+		else if( src->iuser3 == STANCE_MORTAR )
+			gHUD.SetMortarDeployTime();
+
 		g_iUser3 = src->iuser3;
+		g_iWeaponBits2 = src->iuser4;
+		g_iVuser1x = (int)src->vuser1[0];
+		g_iVuser1z = (int)src->vuser1[2];
+		g_iMovetype = src->movetype;
+		g_iEffects = src->effects;
+		g_fStamina = src->fuser4;
 	}
 }
 
@@ -181,8 +282,6 @@ void DLLEXPORT HUD_TxferPredictionData( struct entity_state_s *ps, const struct 
 	pcd->viewmodel				= ppcd->viewmodel;
 	pcd->m_iId				= ppcd->m_iId;
 	pcd->ammo_shells			= ppcd->ammo_shells;
-	pcd->ammo_nails				= ppcd->ammo_nails;
-	pcd->ammo_cells				= ppcd->ammo_cells;
 	pcd->ammo_rockets			= ppcd->ammo_rockets;
 	pcd->m_flNextAttack			= ppcd->m_flNextAttack;
 	pcd->fov				= ppcd->fov;
@@ -192,15 +291,20 @@ void DLLEXPORT HUD_TxferPredictionData( struct entity_state_s *ps, const struct 
 
 	pcd->deadflag				= ppcd->deadflag;
 
-	// Spectating or not dead == get control over view angles.
-	g_iAlive = ( ppcd->iuser1 || ( pcd->deadflag == DEAD_NO ) ) ? 1 : 0;
-
 	// Spectator
 	pcd->iuser1					= ppcd->iuser1;
+
+	// Spectating or not dead == get control over view angles.
+	g_iAlive = ( ppcd->iuser1 || ( pcd->deadflag == DEAD_NO ) ) ? 1 : 0;
+	g_iDeadFlag = pcd->deadflag;
+
 	pcd->iuser2					= ppcd->iuser2;
 
 	// Duck prevention
 	pcd->iuser3 = ppcd->iuser3;
+
+	// Fire prevention
+	pcd->iuser4 					= ppcd->iuser4;
 
 	if( gEngfuncs.IsSpectateOnly() )
 	{
@@ -211,16 +315,10 @@ void DLLEXPORT HUD_TxferPredictionData( struct entity_state_s *ps, const struct 
 		pcd->iuser3 = g_iUser3; // second target
 	}
 
-	// Fire prevention
-	pcd->iuser4 					= ppcd->iuser4;
-
 	pcd->fuser2					= ppcd->fuser2;
-	pcd->fuser3					= ppcd->fuser3;
+	pcd->fuser4					= ppcd->fuser4;
 
 	VectorCopy( ppcd->vuser1, pcd->vuser1 );
-	VectorCopy( ppcd->vuser2, pcd->vuser2 );
-	VectorCopy( ppcd->vuser3, pcd->vuser3 );
-	VectorCopy( ppcd->vuser4, pcd->vuser4 );
 
 	memcpy( wd, pwd, MAX_WEAPONS * sizeof(weapon_data_t) );
 }
@@ -530,6 +628,261 @@ void DLLEXPORT HUD_CreateEntities( void )
 	Game_AddObjects();
 
 	GetClientVoiceMgr()->CreateEntities();
+
+	gHUD.m_StatusBar.CreateEntities();
+}
+
+extern cvar_t *cl_bulletejects;
+
+void Event_EjectBrassP( const cl_entity_s *entity, int shelltype )
+{
+	vec3_t endpos;
+	vec3_t forward, right, up;
+	vec3_t velocity;
+	vec3_t temp;
+	int shellmodel;
+	TEMPENTITY *te;
+
+	shellmodel = gEngfuncs.pEventAPI->EV_FindModelIndex( "models/shells.mdl" );
+
+	if( cl_bulletejects->value != 0.0f && (unsigned int)shelltype <= 3 )
+	{
+		temp = Vector( entity->angles );
+
+		VectorNormalize( temp );
+		AngleVectors( temp, forward, right, up );
+		VectorScale( up, 100.0f, velocity );
+
+		endpos = Vector( 0.0f, entity->angles.y, 0.0f );
+
+		te = gEngfuncs.pEfxAPI->R_TempModel( (float *)&entity->attachment[1], velocity, endpos, 2.5f, shellmodel, 1 );
+		te->entity.curstate.body = shelltype;
+	}
+}
+
+void Event_EjectBrassV( const cl_entity_s *entity, int shelltype )
+{
+	vec3_t endpos;
+	vec3_t forward, right, up;
+	vec3_t velocity;
+	vec3_t temp;
+	int shellmodel;
+	TEMPENTITY *te;
+
+	shellmodel = gEngfuncs.pEventAPI->EV_FindModelIndex( "models/shells.mdl" );
+
+	if( cl_bulletejects->value != 0.0f && (unsigned int)shelltype <= 3 )
+	{
+		AngleVectors( v_angles, forward, right, up );
+
+		VectorScale( right, (float)gEngfuncs.pfnRandomLong( 60, 80 ), velocity );
+		VectorScale( up, (float)gEngfuncs.pfnRandomLong( 60, 80 ), temp );
+
+		endpos = Vector( 0.0f, entity->angles.y, 0.0f );
+		velocity = velocity + temp;
+
+		te = gEngfuncs.pEfxAPI->R_TempModel( (float *)&entity->attachment[1], velocity, endpos, 2.5f, shellmodel, 1 );
+		te->entity.curstate.body = shelltype;
+	}
+}
+
+// the flash of the muzzle of the weapons of the other players, the options are 10 * the scale + the type of the flash
+void Event_MuzzleFlash( const cl_entity_s *entity, int options )
+{
+	static char *sprname = "sprites/muzzleflash2.spr";
+	static char *mgsprname = "sprites/muzzleflash1.spr";
+	int i;
+	int flashtype;
+	float scale;
+	vec3_t origin;
+	vec3_t temp, forward, right, up;
+	CDoDParticle *pParticle;
+	model_s *pMGSprite = NULL;
+	model_s *pSprite;
+
+	AngleVectors( (float *)&entity->angles, forward, right, up );
+
+	scale = (float)( ( options / 10 ) * 0.1 );
+	flashtype = options % 10 % 4;
+
+	if( scale == 0.0f )
+		scale = 0.5f;
+
+	if( flashtype == 3 )
+		pMGSprite = (model_s *)gEngfuncs.GetSpritePointer( gEngfuncs.pfnSPR_Load( mgsprname ) );
+
+	pSprite = (model_s *)gEngfuncs.GetSpritePointer( gEngfuncs.pfnSPR_Load( sprname ) );
+
+	if( !pSprite )
+	{
+		gEngfuncs.Con_DPrintf( "Couldn't load Sprite: %s\n", sprname );
+		return;
+	}
+
+	forward.z = -forward.z;
+
+	for( i = 0; i < 3; i++ )
+	{
+		// 12, 8 and 4 units in front of the muzzle
+		VectorScale( forward, 12.0f - 4.0f * i, temp );
+
+		origin = Vector( entity->attachment[0] ) + temp;
+
+		if( i == 2 && flashtype == 3 )
+		{
+			pParticle = CDoDParticle::Create( origin, Vector( 0, 0, 0 ), pMGSprite, scale * 120.0f, 210.0f, "dod_particle", true );
+		}
+		else
+		{
+			pParticle = CDoDParticle::Create( origin, Vector( 0, 0, 0 ), pSprite, scale * ( i == 0 ? 20.0f : i == 1 ? 40.0f : 60.0f ), 255.0f, "dod_particle", true );
+
+			if( pParticle )
+				pParticle->m_vAngles.z = gEngfuncs.pfnRandomFloat( 0.0f, 90.0f );
+		}
+
+		if( !pParticle )
+			return;
+
+		pParticle->m_vVelocity = Vector( 0, 0, 0 );
+		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 0.0001f;
+		pParticle->m_iRendermode = kRenderTransAdd;
+		pParticle->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
+		pParticle->SetLightFlag( LIGHT_NONE );
+		pParticle->SetCullFlag( CULL_FRUSTUM_PLANE );
+	}
+}
+
+void Event_MuzzleSmoke( const cl_entity_s *entity, int options )
+{
+	static char *sprname = "sprites/bazookapuff.spr";
+	int i;
+	float scale;
+	vec3_t temp, forward, right, up;
+	CDoDParticle *pParticle;
+	model_s *pSprite;
+
+	AngleVectors( (float *)&entity->angles, forward, right, up );
+
+	scale = (float)( ( options / 10 ) * 0.1 );
+
+	if( scale == 0.0f )
+		scale = 0.5f;
+
+	pSprite = (model_s *)gEngfuncs.GetSpritePointer( gEngfuncs.pfnSPR_Load( sprname ) );
+
+	if( !pSprite )
+	{
+		gEngfuncs.Con_DPrintf( "Couldn't load Sprite: %s\n", sprname );
+		return;
+	}
+
+	forward.z = -forward.z;
+
+	for( i = 1; i <= 3; i++ )
+	{
+		pParticle = CDoDParticle::Create( Vector( entity->attachment[0] ), Vector( 0, 0, 0 ), pSprite, scale * 100.0f, 20.0f, "dod_particle", true );
+
+		if( !pParticle )
+			return;
+
+		pParticle->m_vVelocity = forward;
+
+		VectorScale( pParticle->m_vVelocity, 100.0f * i, pParticle->m_vVelocity );
+
+		pParticle->SetCollisionFlags( TRI_ANIMATEDIE );
+		pParticle->m_iRendermode = kRenderTransAdd;
+		pParticle->SetLightFlag( LIGHT_COLOR );
+		pParticle->SetCullFlag( CULL_PVS | CULL_FRUSTUM_PLANE );
+		pParticle->m_flDampingTime = 0.3f;
+		pParticle->m_flDampingVelocity = 0.5f;
+		pParticle->m_flFadeSpeed = 2.0f;
+		pParticle->m_flScaleSpeed = 6.0f;
+		pParticle->m_iFrame = 0;
+		pParticle->m_iFramerate = 15;
+		pParticle->m_vColor = Vector( 200.0f, 200.0f, 200.0f );
+		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 5.0f;
+		pParticle->AddGlobalWind();
+	}
+}
+
+// the smoke of the exhaust on the both ends of the launcher
+void Event_BazookaSmoke( const cl_entity_s *entity )
+{
+	vec3_t org;
+	model_s *pSprite;
+	float flScale;
+	int i;
+	CDoDRocketTrail *pSmoke;
+
+	pSprite = (model_s *)gEngfuncs.GetSpritePointer( gEngfuncs.pfnSPR_Load( "sprites/effects/adrian/bazooka_smoke.spr" ) );
+
+	if( pSprite )
+	{
+		flScale = gEngfuncs.pfnRandomFloat( 40.0f, 60.0f );
+
+		for( i = 0; i < 2; i++ )
+		{
+			org = Vector( entity->attachment[i] );
+
+			pSmoke = CDoDRocketTrail::Create( org, Vector( 0, 0, 1 ), pSprite, flScale, 200.0f, "dod_trailsmoke" );
+
+			if( !pSmoke )
+				return;
+
+			pSmoke->m_flGravity = -0.01f;
+			pSmoke->m_iRendermode = kRenderTransAlpha;
+			pSmoke->SetCollisionFlags( TRI_COLLIDEWORLD );
+			pSmoke->m_flSize = flScale;
+			pSmoke->SetLightFlag( LIGHT_NONE );
+			pSmoke->SetCullFlag( CULL_PVS | CULL_FRUSTUM_SPHERE );
+			pSmoke->m_vAVelocity = Vector( 0.0f, 0.0f, gEngfuncs.pfnRandomFloat( -1.5f, 1.5f ) );
+			pSmoke->m_flMass = gEngfuncs.pfnRandomFloat( 2.0f, 3.0f );
+			pSmoke->m_flDieTime = gEngfuncs.GetClientTime() + 10.0f;
+			pSmoke->m_iFrame = (int)gEngfuncs.pfnRandomFloat( 10.0f, 15.0f );
+			pSmoke->m_flScaleSpeed = 2.0f;
+			pSmoke->m_vColor = Vector( 25.0f, 25.0f, 25.0f );
+			pSmoke->m_bRocketTrail = true;
+			pSmoke->m_flFadeSpeed = -1.0f;
+			pSmoke->m_vVelocity = Vector( 0.0f, 0.0f, 0.0f );
+		}
+	}
+}
+
+void Event_PIATSmoke( const cl_entity_s *entity )
+{
+	vec3_t org;
+	model_s *pSprite;
+	float flScale;
+	CDoDRocketTrail *pSmoke;
+
+	pSprite = (model_s *)gEngfuncs.GetSpritePointer( gEngfuncs.pfnSPR_Load( "sprites/effects/adrian/bazooka_smoke.spr" ) );
+
+	if( pSprite )
+	{
+		flScale = gEngfuncs.pfnRandomFloat( 40.0f, 60.0f );
+		org = Vector( entity->attachment[0] );
+
+		pSmoke = CDoDRocketTrail::Create( org, Vector( 0, 0, 1 ), pSprite, flScale, 200.0f, "dod_trailsmoke" );
+
+		if( pSmoke )
+		{
+			pSmoke->m_flGravity = -0.01f;
+			pSmoke->m_iRendermode = kRenderTransAlpha;
+			pSmoke->m_flSize = flScale;
+			pSmoke->SetCollisionFlags( TRI_COLLIDEWORLD );
+			pSmoke->SetLightFlag( LIGHT_NONE );
+			pSmoke->SetCullFlag( CULL_PVS | CULL_FRUSTUM_SPHERE );
+			pSmoke->m_vAVelocity = Vector( 0.0f, 0.0f, gEngfuncs.pfnRandomFloat( -1.5f, 1.5f ) );
+			pSmoke->m_flMass = gEngfuncs.pfnRandomFloat( 2.0f, 3.0f );
+			pSmoke->m_flDieTime = gEngfuncs.GetClientTime() + 10.0f;
+			pSmoke->m_iFrame = (int)gEngfuncs.pfnRandomFloat( 10.0f, 15.0f );
+			pSmoke->m_flScaleSpeed = 2.0f;
+			pSmoke->m_vColor = Vector( 25.0f, 25.0f, 25.0f );
+			pSmoke->m_bRocketTrail = true;
+			pSmoke->m_flFadeSpeed = -1.0f;
+			pSmoke->m_vVelocity = Vector( 0.0f, 0.0f, 0.0f );
+		}
+	}
 }
 
 /*
@@ -542,26 +895,64 @@ fired during this frame, handle the event by it's tag ( e.g., muzzleflash, sound
 */
 void DLLEXPORT HUD_StudioEvent( const struct mstudioevent_s *event, const struct cl_entity_s *entity )
 {
+	// the original calls the default handler of the engine first (g_pcldstAddrs), Xash3D has none
+	int options = atoi( event->options );
+	pmodel_fx_t *pInfo;
+
 	switch( event->event )
 	{
 	case 5001:
-		gEngfuncs.pEfxAPI->R_MuzzleFlash( (float *)&entity->attachment[0], atoi( event->options ) );
-		break;
-	case 5011:
-		gEngfuncs.pEfxAPI->R_MuzzleFlash( (float *)&entity->attachment[1], atoi( event->options ) );
-		break;
-	case 5021:
-		gEngfuncs.pEfxAPI->R_MuzzleFlash( (float *)&entity->attachment[2], atoi( event->options ) );
-		break;
-	case 5031:
-		gEngfuncs.pEfxAPI->R_MuzzleFlash( (float *)&entity->attachment[3], atoi( event->options ) );
+		Event_MuzzleFlash( entity, options );
+		Event_MuzzleSmoke( entity, options );
 		break;
 	case 5002:
 		gEngfuncs.pEfxAPI->R_SparkEffect( (float *)&entity->attachment[0], atoi( event->options ), -100, 100 );
 		break;
 	// Client side sound
-	case 5004:		
+	case 5004:
 		gEngfuncs.pfnPlaySoundByNameAtLocation( (char *)event->options, 1.0, (float *)&entity->attachment[0] );
+		break;
+	case 5011:
+		gEngfuncs.pEfxAPI->R_MuzzleFlash( (float *)&entity->attachment[1], options );
+		break;
+	case 5021:
+		gEngfuncs.pEfxAPI->R_MuzzleFlash( (float *)&entity->attachment[2], options );
+		break;
+	case 5031:
+		gEngfuncs.pEfxAPI->R_MuzzleFlash( (float *)&entity->attachment[3], options );
+		break;
+	case 6001:
+		Event_EjectBrassP( entity, options );
+		break;
+	case 6002:
+		Event_EjectBrassV( entity, options );
+		break;
+	// the player models switch to another sequence at a frame
+	case 7000:
+		if( entity->player )
+		{
+			pInfo = &g_PModelFxInfo[entity->index];
+			pInfo->bSwitch = true;
+			pInfo->iSwitchSeq = entity->curstate.sequence;
+			pInfo->iSwitchFrame = options ? options : -1;
+		}
+		break;
+	case 7001:
+		Event_BazookaSmoke( entity );
+		break;
+	// the player models play another sequence in the middle of a sequence
+	case 7002:
+		if( entity->player )
+		{
+			pInfo = &g_PModelFxInfo[entity->index];
+			pInfo->bAnim = true;
+			pInfo->iAnimSeq = entity->curstate.sequence;
+			pInfo->iAnimFrame = event->frame;
+			pInfo->iAnimTargetSeq = options ? options : 1;
+		}
+		break;
+	case 7003:
+		Event_PIATSmoke( entity );
 		break;
 	default:
 		break;
@@ -588,6 +979,11 @@ void DLLEXPORT HUD_TempEntUpdate (
 	int			i;
 	TEMPENTITY	*pTemp, *pnext, *pprev;
 	float		/*freq,*/ gravity, gravitySlow, life, fastFreq;
+
+	g_flGravity = (float)cl_gravity;
+
+	if( g_pParticleMan )
+		g_pParticleMan->SetVariables( g_flGravity, gHUD.m_vecAngles );
 
 	// Nothing to simulate
 	if( !*ppTempEntActive )	
@@ -636,23 +1032,30 @@ void DLLEXPORT HUD_TempEntUpdate (
 
 		active = 1;
 
-		life = pTemp->die - (float)client_time;
 		pnext = pTemp->next;
-		if( life < 0 )
+
+		// DoD: the entities with FTENT_SCALE do not die by time
+		if( !( pTemp->flags & FTENT_SCALE ) )
 		{
-			if( pTemp->flags & FTENT_FADEOUT )
+			life = pTemp->die - (float)client_time;
+
+			if( life < 0 )
 			{
-				if( pTemp->entity.curstate.rendermode == kRenderNormal)
-					pTemp->entity.curstate.rendermode = kRenderTransTexture;
-				pTemp->entity.curstate.renderamt = pTemp->entity.baseline.renderamt * ( 1 + life * pTemp->fadeSpeed );
-				if( pTemp->entity.curstate.renderamt <= 0 )
+				if( pTemp->flags & FTENT_FADEOUT )
+				{
+					if( pTemp->entity.curstate.rendermode == kRenderNormal)
+						pTemp->entity.curstate.rendermode = kRenderTransTexture;
+					pTemp->entity.curstate.renderamt = pTemp->entity.baseline.renderamt * ( 1 + life * pTemp->fadeSpeed );
+					if( pTemp->entity.curstate.renderamt <= 0 )
+						active = 0;
+				}
+				else 
 					active = 0;
 			}
-			else 
-				active = 0;
 		}
 		if( !active )		// Kill it
 		{
+			pTemp->die = -1.0f;
 			pTemp->next = *ppTempEntFree;
 			*ppTempEntFree = pTemp;
 			if( !pprev )	// Deleting at head of list
@@ -698,7 +1101,15 @@ void DLLEXPORT HUD_TempEntUpdate (
 
 				pClient = gEngfuncs.GetEntityByIndex( pTemp->clientIndex );
 
-				VectorAdd( pClient->origin, pTemp->tentOffset, pTemp->entity.origin );
+				// DoD: hitSound is the number of the attachment of the player
+				if( pTemp->hitSound )
+				{
+					VectorCopy( pClient->attachment[pTemp->hitSound - 1], pTemp->entity.origin );
+				}
+				else
+				{
+					VectorAdd( pClient->origin, pTemp->tentOffset, pTemp->entity.origin );
+				}
 			}
 			else if( pTemp->flags & FTENT_SINEWAVE )
 			{
@@ -732,6 +1143,13 @@ void DLLEXPORT HUD_TempEntUpdate (
 				{
 					pTemp->entity.curstate.frame = pTemp->entity.curstate.frame - (int)( pTemp->entity.curstate.frame );
 
+					// DoD: the corpses are not removed and are not drawn on this frame
+					if( pTemp->flags & FTENT_CORPSE )
+					{
+						pTemp = pnext;
+						continue;
+					}
+
 					if( !( pTemp->flags & FTENT_SPRANIMATELOOP ) )
 					{
 						// this animating sprite isn't set to loop, so destroy it.
@@ -764,7 +1182,7 @@ void DLLEXPORT HUD_TempEntUpdate (
 				VectorCopy( pTemp->entity.angles, pTemp->entity.latched.prevangles );
 			}
 
-			if( pTemp->flags & ( FTENT_COLLIDEALL | FTENT_COLLIDEWORLD ) )
+			if( ( pTemp->flags & ( FTENT_COLLIDEALL | FTENT_COLLIDEWORLD ) ) && !( pTemp->flags & FTENT_BODYSTATIC ) )
 			{
 				vec3_t	traceNormal( 0.0f, 0.0f, 0.0f );
 				float	traceFraction = 1;
@@ -800,7 +1218,21 @@ void DLLEXPORT HUD_TempEntUpdate (
 
 					gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
 
-					gEngfuncs.pEventAPI->EV_PlayerTrace( pTemp->entity.prevstate.origin, pTemp->entity.origin, PM_STUDIO_BOX | PM_WORLD_ONLY, -1, &pmtrace );
+					if( pTemp->flags & FTENT_CORPSE )
+					{
+						// DoD: the corpses look ahead along the velocity
+						vec3_t vVel, vEndPos;
+
+						VectorCopy( pTemp->entity.baseline.origin, vVel );
+						VectorNormalize( vVel );
+						VectorMA( pTemp->entity.prevstate.origin, 36.0f, vVel, vEndPos );
+
+						gEngfuncs.pEventAPI->EV_PlayerTrace( pTemp->entity.prevstate.origin, vEndPos, PM_STUDIO_BOX | PM_WORLD_ONLY, -1, &pmtrace );
+					}
+					else
+					{
+						gEngfuncs.pEventAPI->EV_PlayerTrace( pTemp->entity.prevstate.origin, pTemp->entity.origin, PM_STUDIO_BOX | PM_WORLD_ONLY, -1, &pmtrace );
+					}
 
 					if( pmtrace.fraction != 1 )
 					{
@@ -898,10 +1330,15 @@ void DLLEXPORT HUD_TempEntUpdate (
 				gEngfuncs.pEfxAPI->R_RocketTrail( pTemp->entity.prevstate.origin, pTemp->entity.origin, 1 );
 			}
 
-			if( pTemp->flags & FTENT_GRAVITY )
-				pTemp->entity.baseline.origin[2] += gravity;
-			else if( pTemp->flags & FTENT_SLOWGRAVITY )
-				pTemp->entity.baseline.origin[2] += gravitySlow;
+			if( !( pTemp->flags & FTENT_BODYSTATIC ) )
+			{
+				if( pTemp->flags & FTENT_GRAVITY )
+					pTemp->entity.baseline.origin[2] += gravity;
+				else if( pTemp->flags & FTENT_SLOWGRAVITY )
+					pTemp->entity.baseline.origin[2] += gravitySlow;
+				else if( pTemp->flags & FTENT_SCALEDGRAVITY )
+					pTemp->entity.baseline.origin[2] += gravity * pTemp->entity.baseline.gravity;
+			}
 
 			if( pTemp->flags & FTENT_CLIENTCUSTOM )
 			{
@@ -911,8 +1348,20 @@ void DLLEXPORT HUD_TempEntUpdate (
 				}
 			}
 
+			if( pTemp->flags & FTENT_SCALE )
+			{
+				// DoD: the entity is never culled
+				pTemp->entity.model->mins[0] = -999.0f;
+				pTemp->entity.model->mins[1] = -999.0f;
+				pTemp->entity.model->mins[2] = -999.0f;
+				pTemp->entity.model->maxs[0] = 999.0f;
+				pTemp->entity.model->maxs[1] = 999.0f;
+				pTemp->entity.model->maxs[2] = 999.0f;
+
+				Callback_AddVisibleEntity( &pTemp->entity );
+			}
 			// Cull to PVS (not frustum cull, just PVS)
-			if( !( pTemp->flags & FTENT_NOMODEL ) )
+			else if( !( pTemp->flags & FTENT_NOMODEL ) )
 			{
 				if( !Callback_AddVisibleEntity( &pTemp->entity ) )
 				{

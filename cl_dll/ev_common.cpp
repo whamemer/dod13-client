@@ -26,7 +26,10 @@
 #include "event_api.h"
 #include "pm_shared.h"
 
-#define IS_FIRSTPERSON_SPEC ( g_iUser1 == OBS_IN_EYE || ( g_iUser1 && ( gHUD.m_Spectator.m_pip->value == INSET_IN_EYE ) ) )
+#include "tri.h"
+
+extern cvar_t *cl_dynamiclights;
+
 /*
 =================
 GetEntity
@@ -87,11 +90,10 @@ Is the entity == the local player
 */
 qboolean EV_IsLocal( int idx )
 {
-	// check if we are in some way in first person spec mode
-	if( IS_FIRSTPERSON_SPEC )
-		return ( g_iUser2 == idx );
-	else
-		return gEngfuncs.pEventAPI->EV_IsLocal( idx - 1 ) ? true : false;
+	if( g_iUser1 == OBS_IN_EYE )
+		return g_iUser2 == idx;
+
+	return gEngfuncs.pEventAPI->EV_IsLocal( idx - 1 ) ? true : false;
 }
 
 /*
@@ -114,7 +116,7 @@ void EV_GetGunPosition( event_args_t *args, float *pos, float *origin )
 	if( EV_IsPlayer( idx ) )
 	{
 		// in spec mode use entity viewheigh, not own
-		if( EV_IsLocal( idx ) && !IS_FIRSTPERSON_SPEC )
+		if( EV_IsLocal( idx ) && g_iUser1 != OBS_IN_EYE )
 		{
 			// Grab predicted result for local player
 			gEngfuncs.pEventAPI->EV_LocalPlayerViewheight( view_ofs );
@@ -143,6 +145,95 @@ void EV_EjectBrass( float *origin, float *velocity, float rotation, int model, i
 	gEngfuncs.pEfxAPI->R_TempModel( origin, velocity, endpos, 2.5, model, soundtype );
 }
 
+int speeds[8] = { 0, 0, -4, 4, -6, 6, -8, 8 };
+
+/*
+=================
+EV_PSchreckSmoke
+
+Exhaust of the launcher (nothing calls it in the original)
+=================
+*/
+void EV_PSchreckSmoke( cl_entity_t *ent )
+{
+	EV_BazookaSmoke( ent );
+}
+
+/*
+=================
+EV_BazookaSmoke
+
+Exhaust of the launcher (nothing calls it in the original, HUD_StudioEvent uses Event_BazookaSmoke)
+=================
+*/
+void EV_BazookaSmoke( cl_entity_t *ent )
+{
+	vec3_t forward, right, up, temp;
+	model_s *pSprite;
+	int ccw;
+	int i;
+
+	if( ent )
+	{
+		temp = Vector( ent->angles );
+		temp.z = -ent->angles.z;
+
+		AngleVectors( temp, forward, right, up );
+
+		pSprite = (model_s *)gEngfuncs.GetSpritePointer( gEngfuncs.pfnSPR_Load( "sprites/bazookapuff.spr" ) );
+
+		if( pSprite )
+		{
+			ccw = 1;
+
+			for( i = 0; i < 8; i++ )
+			{
+				vec3_t org;
+				CDoDParticle *pParticle;
+				int speed;
+				float flRand;
+
+				if( i & 1 )
+				{
+					org = forward * 30.0f + up * 16.0f + ent->origin;
+				}
+				else
+				{
+					ccw = 1 - ccw;
+					org = up * 16.0f + ent->origin - forward * 30.0f;
+				}
+
+				speed = speeds[i];
+				flRand = gEngfuncs.pfnRandomFloat( -1.0f, 1.0f );
+
+				pParticle = CDoDParticle::Create( org, Vector( 0, 0, 0 ), pSprite, 90.0f, 80.0f, "dod_particle", true );
+
+				if( !pParticle )
+					break;
+
+				pParticle->SetCollisionFlags( TRI_COLLIDEWORLD | TRI_ANIMATEDIE );
+				pParticle->m_iRendermode = kRenderTransAdd;
+				pParticle->SetLightFlag( LIGHT_NONE );
+				pParticle->SetCullFlag( CULL_PVS | CULL_FRUSTUM_PLANE );
+				pParticle->m_flFadeSpeed = 0.7f;
+				pParticle->m_flScaleSpeed = 1.1f;
+				pParticle->m_flDampingTime = 0.5f;
+				pParticle->m_iFrame = 0;
+				pParticle->m_iFramerate = 2;
+				pParticle->m_vColor = Vector( 200.0f, 200.0f, 200.0f );
+				pParticle->m_vVelocity = forward * (float)speed + up * flRand;
+				pParticle->m_vAVelocity.z = ccw ? 1.0f : -1.0f;
+				pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 5.0f;
+				pParticle->AddGlobalWind();
+			}
+		}
+		else
+		{
+			gEngfuncs.Con_DPrintf( "Couldn't load Sprite: %s\n", "sprites/bazookapuff.spr" );
+		}
+	}
+}
+
 /*
 =================
 EV_GetDefaultShellInfo
@@ -152,55 +243,49 @@ Determine where to eject shells from
 */
 void EV_GetDefaultShellInfo( event_args_t *args, float *origin, float *velocity, float *ShellVelocity, float *ShellOrigin, float *forward, float *right, float *up, float forwardScale, float upScale, float rightScale )
 {
-	int i;
-	vec3_t view_ofs;
-	float fR, fU;
-
-	int idx;
-
-	idx = args->entindex;
-
-	VectorClear( view_ofs );
-	view_ofs[2] = DEFAULT_VIEWHEIGHT;
-
-	if( EV_IsPlayer( idx ) )
-	{
-		if( EV_IsLocal( idx ) )
-		{
-			gEngfuncs.pEventAPI->EV_LocalPlayerViewheight( view_ofs );
-		}
-		else if( args->ducking == 1 )
-		{
-			view_ofs[2] = VEC_DUCK_VIEW;
-		}
-	}
-
-	fR = gEngfuncs.pfnRandomFloat( 50, 70 );
-	fU = gEngfuncs.pfnRandomFloat( 100, 150 );
-
-	for( i = 0; i < 3; i++ )
-	{
-		ShellVelocity[i] = velocity[i] + right[i] * fR + up[i] * fU + forward[i] * 25;
-		ShellOrigin[i] = origin[i] + view_ofs[i] + up[i] * upScale + forward[i] * forwardScale + right[i] * rightScale;
-	}
+	/* Nothing. */
 }
 
 /*
 =================
 EV_MuzzleFlash
 
-Flag weapon/view model for muzzle flash
+Dynamic light of the muzzle flash
 =================
 */
-void EV_MuzzleFlash( void )
+void EV_MuzzleFlash( int idx, int guntype )
 {
-	// Add muzzle flash to current weapon model
-	cl_entity_t *ent = GetViewEntity();
-	if( !ent )
+	cl_entity_t *ent;
+	vec3_t vLightOrigin;
+	bool bShowLight = false;
+
+	if( EV_IsLocal( idx ) )
 	{
-		return;
+		ent = GetViewEntity();
+		VectorCopy( ent->attachment[0], vLightOrigin );
+		bShowLight = true;
+	}
+	else
+	{
+		cl_entity_t *thisent = gEngfuncs.GetEntityByIndex( idx );
+
+		if( thisent && thisent->curstate.messagenum >= gEngfuncs.GetLocalPlayer()->curstate.messagenum )
+		{
+			VectorCopy( thisent->curstate.origin, vLightOrigin );
+			bShowLight = true;
+		}
 	}
 
-	// Or in the muzzle flash
-	ent->curstate.effects |= EF_MUZZLEFLASH;
+	if( bShowLight && cl_dynamiclights->value > 0.0f )
+	{
+		dlight_t *dl = gEngfuncs.pEfxAPI->CL_AllocDlight( 0 );
+
+		VectorCopy( vLightOrigin, dl->origin );
+		dl->radius = ( float )( 50 * guntype + 50 );
+		dl->color.r = 248;
+		dl->color.g = 255;
+		dl->color.b = 120;
+		dl->decay = ( float )( 50 * guntype + 600 );
+		dl->die = gHUD.m_flTime + 1.0;
+	}
 }
