@@ -1,4 +1,4 @@
-package su.xash.hlsdk;
+package su.xash.dod13client;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
 
         startActivity(new Intent().setComponent(new ComponentName(pkg, "su.xash.engine.XashActivity"))
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                .putExtra("gamedir", "valve")
+                .putExtra("gamedir", "dod")
                 .putExtra("gamelibdir", getApplicationInfo().nativeLibraryDir)
                 .putExtra("package", getPackageName()));
         finish();

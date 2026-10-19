@@ -4,16 +4,17 @@
 
     <application
         android:forceQueryable="true"
-        android:icon="@android:mipmap/sym_def_app_icon"
-        android:label="hlsdk-portable"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="dod13-client"
         tools:targetApi="r">
 
         <meta-data
             android:name="su.xash.engine.gamedir"
-            android:value="valve" />
+            android:value="dod" />
 
         <activity
-            android:name="su.xash.hlsdk.MainActivity"
+            android:name="su.xash.dod13client.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
