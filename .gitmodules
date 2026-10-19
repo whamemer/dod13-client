@@ -1,3 +1,9 @@
 [submodule "freevgui"]
 	path = freevgui
 	url = https://github.com/FWGS/freevgui.git
+[submodule "mainui_cpp"]
+	path = 3rdparty/mainui_cpp
+	url = https://github.com/whamemer/mainui_cpp
+[submodule "3rdparty/MiniUTL"]
+	path = 3rdparty/MiniUTL
+	url = https://github.com/FWGS/MiniUTL
