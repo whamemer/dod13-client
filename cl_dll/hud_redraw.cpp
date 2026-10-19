@@ -19,9 +19,9 @@
 
 #include "hud.h"
 #include "cl_util.h"
-#include "triangleapi.h"
+//#include "triangleapi.h"
 
-#include "event_api.h"
+#include "vgui_TeamFortressViewport.h"
 
 #define MAX_LOGO_FRAMES 56
 
@@ -32,121 +32,62 @@ int grgLogoFrame[MAX_LOGO_FRAMES] =
 	29, 29, 29, 29, 29, 28, 27, 26, 25, 24, 30, 31 
 };
 
-extern vec3_t v_origin;
-
-Queue g_RubbleQueue;
-
-char cmd[50];
+extern int g_iVisibleMouse;
 
 float HUD_GetFOV( void );
 
-int i_dodmusic;
-
 extern cvar_t *sensitivity;
-extern int g_iDeadFlag;
-extern float flBoltHideXHair;
-int g_SpecScoreboardActive;
 
 // Think
 void CHud::Think( void )
 {
-	HUDLIST *pList;
-	float volume;
+	m_scrinfo.iSize = sizeof(m_scrinfo);
+	GetScreenInfo(&m_scrinfo);
+
 	int newfov;
+	HUDLIST *pList = m_pHudList;
 
-	m_scrinfo.iSize = sizeof( SCREENINFO );
-	gEngfuncs.pfnGetScreenInfo( &m_scrinfo );
-
-	if( flBoltHideXHair > 0.0f )
-		flBoltHideXHair -= m_flTimeDelta;
-
-	if( flBoltHideXHair < 0.0f )
-		flBoltHideXHair = 0.0f;
-
-	if( !g_iDeadFlag )
-	{
-		if( m_flTime > m_flPlaySprintSoundTime && g_fStamina < 60.0f )
-		{
-			if( !gEngfuncs.IsSpectateOnly() )
-			{
-				volume = 0.8f;
-				if( g_fStamina >= 10.0f && g_fStamina >= 25.0f )
-					volume = 0.3f;
-
-				gEngfuncs.pEventAPI->EV_PlaySound( -1, &v_origin.x, 6, "player/sprintgrunts.wav", volume, 0.0f, 0, 100 );
-				m_flPlaySprintSoundTime = m_flTime + 1.4f;
-			}
-		}
-	}
-	else
-	{
-		if( m_flPlaySprintSoundTime > m_flTime )
-		{
-			gEngfuncs.pEventAPI->EV_StopSound( -1, 6, "player/sprintgrunts.wav" );
-		}
-	}
-
-	if( !g_iDeadFlag || !g_iUser1 )
-		m_iSensLevel = 0;
-
-	if( !gEngfuncs.IsSpectateOnly() )
-	{
-		if( i_dodmusic == 1 && m_flTime > i_MusicFadeCounter )
-		{
-			gEngfuncs.pfnPlaySoundByName( "player/prewarmup.wav", 1.0f );
-			i_dodmusic = 0;
-		}
-
-		if( i_MusicFadeCounter - m_flTime > 10.0f )
-			i_MusicFadeCounter = m_flTime - 1.0f;
-	}
-
-	pList = m_pHudList;
 	while( pList )
 	{
-		if( pList->p->m_iFlags & 1 )
-		{
+		if( pList->p->m_iFlags & HUD_ACTIVE )
 			pList->p->Think();
-		}
 		pList = pList->pNext;
 	}
 
-	float flCurrentFOV = HUD_GetFOV();
-	newfov = ( int ) flCurrentFOV;
-
-	if( !flCurrentFOV )
-		newfov = 90;
-
-	if( newfov != m_iFOV )
-		SetFOV( newfov );
-
-	if( newfov == 90 )
+	newfov = HUD_GetFOV();
+	if( newfov == 0 )
 	{
-		m_flMouseSensitivity = 0.0f;
+		m_iFOV = default_fov->value;
 	}
 	else
 	{
-		float zoom_sens = zoom_sensitivity_ratio ? zoom_sensitivity_ratio->value : 1.2f;
-		m_flMouseSensitivity = zoom_sens * ( ( float ) newfov / 90.0f * sensitivity->value );
+		m_iFOV = newfov;
+	}
 
-		if( !newfov )
-			SetFOV( 90 );
+	// the clients fov is actually set in the client data update section of the hud
+	// Set a new sensitivity
+	if( m_iFOV == default_fov->value )
+	{
+		// reset to saved sensitivity
+		m_flMouseSensitivity = 0;
+	}
+	else
+	{
+		// set a new sensitivity that is proportional to the change from the FOV default
+		m_flMouseSensitivity = sensitivity->value * ((float)newfov / Q_max( default_fov->value, 90 )) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
+	}
+
+	// think about default fov
+	if( m_iFOV == 0 )
+	{
+		// only let players adjust up in fov,  and only if they are not overriden by something else
+		m_iFOV = Q_max( default_fov->value, 90 );  
 	}
 
 	if( gEngfuncs.IsSpectateOnly() )
 	{
-		if( g_iUser1 == 4 && g_iUser2 != 0 )
-		{
-			newfov = ( m_PlayerFOV[g_iUser2] != 0 ) ? m_PlayerFOV[g_iUser2] : 90;
-			SetFOV( newfov );
-		}
-		else
-		{
-			m_iFOV = 90;
-		}
+		m_iFOV = gHUD.m_Spectator.GetFOV(); // default_fov->value;
 	}
-
-	g_RubbleQueue.Update( m_flTime );
 }
 
 // Redraw
@@ -154,92 +95,114 @@ void CHud::Think( void )
 // returns 1 if they've changed, 0 otherwise
 int CHud::Redraw( float flTime, int intermission )
 {
-	m_fOldTime = m_flTime;
+	m_fOldTime = m_flTime;	// save time of previous redraw
 	m_flTime = flTime;
-	m_flTimeDelta = ( double ) ( m_flTime - m_fOldTime );
+	m_flTimeDelta = (double)( m_flTime - m_fOldTime );
+	static float m_flShotTime = 0;
 
-	static float m_flShotTime = 0.0f;
+	// Clock was reset, reset delta
+	if( m_flTimeDelta < 0 )
+		m_flTimeDelta = 0;
 
-	if( m_flTimeDelta < 0.0f )
-		m_flTimeDelta = 0.0f;
-
-	if( intermission )
+	// Bring up the scoreboard during intermission
+	if (gViewPort)
 	{
-		if( !m_iIntermission )
+		if( m_iIntermission && !intermission )
+		{
+			// Have to do this here so the scoreboard goes away
+			m_iIntermission = intermission;
+			gViewPort->HideCommandMenu();
+			gViewPort->HideScoreBoard();
+			gViewPort->UpdateSpectatorPanel();
+		}
+		else if( !m_iIntermission && intermission )
 		{
 			m_iIntermission = intermission;
-
-			if( hud_takesshots && hud_takesshots->value != 0.0f )
-				m_flShotTime = flTime + 1.0f;
+			gViewPort->HideCommandMenu();
+			gViewPort->HideVGUIMenu();
+			if (UseVguiScoreBoard())
+				gViewPort->ShowScoreBoard();
+			gViewPort->UpdateSpectatorPanel();
+			// Take a screenshot if the client's got the cvar set
+			if( CVAR_GET_FLOAT( "hud_takesshots" ) != 0 )
+				m_flShotTime = flTime + 1.0;	// Take a screenshot in a second
 		}
 	}
-	else
+	if( m_flShotTime && m_flShotTime < flTime )
 	{
-		m_iIntermission = 0;
+		gEngfuncs.pfnClientCmd( "snapshot\n" );
+		m_flShotTime = 0;
 	}
 
-	if( m_flShotTime != 0.0f && flTime > m_flShotTime )
-	{
-		ClientCmd( "snapshot\n" );
-		m_flShotTime = 0.0f;
-	}
+	m_iIntermission = intermission;
 
-	if( m_pCvarDraw && m_pCvarDraw->value != 0.0f )
+	// if no redrawing is necessary
+	// return 0;
+
+	m_iHudNumbersYOffset = IsHL25() ? m_iFontHeight * 0.2 : 0;
+
+	if( m_pCvarDraw->value )
 	{
 		HUDLIST *pList = m_pHudList;
 
-		if( intermission )
+		while( pList )
 		{
-			while( pList )
+			if( !intermission )
 			{
+				if ( ( pList->p->m_iFlags & HUD_ACTIVE ) && !( m_iHideHUDDisplay & HIDEHUD_ALL ) )
+					pList->p->Draw( flTime );
+			}
+			else
+			{
+				// it's an intermission,  so only draw hud elements that are set to draw during intermissions
 				if( pList->p->m_iFlags & HUD_INTERMISSION )
 					pList->p->Draw( flTime );
-
-				pList = pList->pNext;
 			}
+
+			pList = pList->pNext;
 		}
-		else
+	}
+
+	// are we in demo mode? do we need to draw the logo in the top corner?
+	if( m_iLogo )
+	{
+		int x, y, i;
+
+		if( m_hsprLogo == 0 )
+			m_hsprLogo = LoadSprite( "sprites/%d_logo.spr" );
+
+		SPR_Set( m_hsprLogo, 250, 250, 250 );
+
+		x = SPR_Width( m_hsprLogo, 0 );
+		x = ScreenWidth - x;
+		y = SPR_Height( m_hsprLogo, 0 ) / 2;
+
+		// Draw the logo at 20 fps
+		int iFrame = (int)( flTime * 20 ) % MAX_LOGO_FRAMES;
+		i = grgLogoFrame[iFrame] - 1;
+
+		SPR_DrawAdditive( i, x, y, NULL );
+	}
+
+	/*
+	if( g_iVisibleMouse )
+	{
+		void IN_GetMousePos( int *mx, int *my );
+		int mx, my;
+
+		IN_GetMousePos( &mx, &my );
+
+		if( m_hsprCursor == 0 )
 		{
-			while( pList )
-			{
-				if( ( pList->p->m_iFlags & HUD_ACTIVE ) && !( m_iHideHUDDisplay & HIDEHUD_ALL ) )
-					pList->p->Draw( flTime );
-
-				pList = pList->pNext;
-			}
+			m_hsprCursor = SPR_Load( "sprites/cursor.spr" );
 		}
+
+		SPR_Set( m_hsprCursor, 250, 250, 250 );
+
+		// Draw the logo at 20 fps
+		SPR_DrawAdditive( 0, mx, my, NULL );
 	}
-
-	char things[18];
-
-	// WHAMER: TODO: uncomment later
-	/*if( r_drawentities && r_drawentities->value != 1.0f )
-	{
-		strcpy( things, "quit\n" );
-		ClientCmd( "r_drawentities 1" );
-		ConsolePrint( "r_drawentities is not a valid command. Do not use it.\n" );
-		ClientCmd( things );
-	}
-
-	if( cl_lw && cl_lw->value != 1.0f )
-	{
-		strcpy( things, "quit\n" );
-		ClientCmd( "cl_lw 1" );
-		ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
-		ClientCmd( things );
-	}*/
-
-	if( cl_pitchdown && ( cl_pitchdown->value > 89.0f || cl_pitchdown->value < 0.0f ) )
-		ClientCmd( "cl_pitchdown 89" );
-
-	if( cl_pitchup && ( cl_pitchup->value > 89.0f || cl_pitchup->value < 0.0f ) )
-		ClientCmd( "cl_pitchup 89" );
-
-	if( crosshair && crosshair->value > 0.0f )
-		ClientCmd( "crosshair 0" );
-
-	if( max_rubble )
-		g_RubbleQueue.maxelements = ( int ) max_rubble->value;
+	*/
 
 	return 1;
 }
@@ -333,6 +296,16 @@ int DrawUtfString( int xpos, int ypos, int iMaxX, const char *szIt, int r, int g
 	}
 }
 
+int CHud::DrawHudStringLen( const char *szIt )
+{
+	int l = 0;
+	for( ; *szIt != 0 && *szIt != '\n'; szIt++ )
+	{
+		l += gHUD.m_scrinfo.charWidths[(unsigned char)*szIt];
+	}
+	return l;
+}
+
 int CHud::DrawHudNumberString( int xpos, int ypos, int iMinX, int iNumber, int r, int g, int b )
 {
 	char szString[32];
@@ -348,7 +321,7 @@ int CHud::DrawHudStringReverse( int xpos, int ypos, int iMinX, const char *szStr
 		xpos -= gHUD.m_scrinfo.charWidths[(unsigned char)*szIt];
 	if( xpos < iMinX )
 		xpos = iMinX;
-	DrawHudString( xpos, ypos, ScreenWidth, szString, r, g, b );
+	DrawHudString( xpos, ypos, gHUD.m_scrinfo.iWidth, szString, r, g, b );
 	return xpos;
 }
 
@@ -441,17 +414,7 @@ int CHud::GetNumWidth( int iNumber, int iFlags )
 		return 2;
 
 	return 3;
-}
-
-int CHud::DrawHudStringLen( const char *szIt )
-{
-	int l = 0;
-	for( ; *szIt != 0 && *szIt != '\n'; szIt++ )
-	{
-		l += gHUD.m_scrinfo.charWidths[( unsigned char ) *szIt];
-	}
-	return l;
-}
+}	
 
 void CHud::DrawDarkRectangle( int x, int y, int wide, int tall )
 {

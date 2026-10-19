@@ -1,9 +1,9 @@
 /***
 *
 *	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
-*
-*	This product contains software technology licensed from Id
-*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	
+*	This product contains software technology licensed from Id 
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
 *	All Rights Reserved.
 *
 *   This source code contains proprietary and confidential information of
@@ -40,7 +40,7 @@ public:
 	Vector  m_vecOriginPeek; // location of this node (LAND nodes are NODE_HEIGHT higher).
 	BYTE    m_Region[3]; // Which of 256 regions do each of the coordinate belong?
 	int		m_afNodeInfo;// bits that tell us more about this location
-
+	
 	int		m_cNumLinks; // how many links this node has
 	int		m_iFirstLink;// index of this node's first link in the link pool.
 
@@ -80,11 +80,11 @@ class CLink
 public:
 	int		m_iSrcNode;// the node that 'owns' this link ( keeps us from having to make reverse lookups )
 	int		m_iDestNode;// the node on the other end of the link. 
-
-	entvars_t *m_pLinkEnt;// the entity that blocks this connection (doors, etc)
+	
+	entvars_t	*m_pLinkEnt;// the entity that blocks this connection (doors, etc)
 
 	// m_szLinkEntModelname is not necessarily NULL terminated (so we can store it in a more alignment-friendly 4 bytes)
-	char	m_szLinkEntModelname[4];// the unique name of the brush model that blocks the connection (this is kept for save/restore)
+	char	m_szLinkEntModelname[ 4 ];// the unique name of the brush model that blocks the connection (this is kept for save/restore)
 
 	int		m_afLinkInfo;// information about this link
 	float	m_flWeight;// length of the link line segment
@@ -118,14 +118,14 @@ class CGraph
 {
 public:
 
-	// the graph has two flags, and should not be accessed unless both flags are TRUE!
+// the graph has two flags, and should not be accessed unless both flags are TRUE!
 	BOOL	m_fGraphPresent;// is the graph in memory?
 	BOOL	m_fGraphPointersSet;// are the entity pointers for the graph all set?
 	BOOL    m_fRoutingComplete; // are the optimal routes computed, yet?
 
-	CNode *m_pNodes;// pointer to the memory block that contains all node info
-	CLink *m_pLinkPool;// big list of all node connections
-	signed char *m_pRouteInfo; // compressed routing information the nodes use.
+	CNode	*m_pNodes;// pointer to the memory block that contains all node info
+	CLink	*m_pLinkPool;// big list of all node connections
+	signed char    *m_pRouteInfo; // compressed routing information the nodes use.
 
 	int		m_cNodes;// total number of nodes
 	int		m_cLinks;// total number of links
@@ -168,11 +168,11 @@ public:
 	int		m_iLastCoverSearch;
 
 	// functions to create the graph
-	int		LinkVisibleNodes( CLink *pLinkPool, FILE *file, int *piBadNode );
-	int		RejectInlineLinks( CLink *pLinkPool, FILE *file );
-	int		FindShortestPath( int *piPath, int iStart, int iDest, int iHull, int afCapMask );
-	int		FindNearestNode( const Vector &vecOrigin, CBaseEntity *pEntity );
-	int		FindNearestNode( const Vector &vecOrigin, int afNodeTypes );
+	int		LinkVisibleNodes ( CLink *pLinkPool, FILE *file, int *piBadNode );
+	int		RejectInlineLinks ( CLink *pLinkPool, FILE *file );
+	int		FindShortestPath ( int *piPath, int iStart, int iDest, int iHull, int afCapMask);
+	int		FindNearestNode ( const Vector &vecOrigin, CBaseEntity *pEntity );
+	int		FindNearestNode ( const Vector &vecOrigin, int afNodeTypes );
 	//int		FindNearestLink ( const Vector &vecTestPoint, int *piNearestLink, BOOL *pfAlongLine );
 	float	PathLength( int iStart, int iDest, int iHull, int afCapMask );
 	int		NextNodeInRoute( int iCurrentNode, int iDest, int iHull, int iCap );
@@ -180,36 +180,36 @@ public:
 	enum NODEQUERY { NODEGRAPH_DYNAMIC, NODEGRAPH_STATIC };
 	// A static query means we're asking about the possiblity of handling this entity at ANY time
 	// A dynamic query means we're asking about it RIGHT NOW.  So we should query the current state
-	int		HandleLinkEnt( int iNode, entvars_t *pevLinkEnt, int afCapMask, NODEQUERY queryType );
-	entvars_t *LinkEntForLink( CLink *pLink, CNode *pNode );
-	void	ShowNodeConnections( int iNode );
+	int		HandleLinkEnt ( int iNode, entvars_t *pevLinkEnt, int afCapMask, NODEQUERY queryType );
+	entvars_t*	LinkEntForLink ( CLink *pLink, CNode *pNode );
+	void	ShowNodeConnections ( int iNode );
 	void	InitGraph( void );
-	int		AllocNodes( void );
+	int		AllocNodes ( void );
+	
+	int		CheckNODFile(const char *szMapName);
+	int		FLoadGraph(const char *szMapName);
+	int		FSaveGraph(const char *szMapName);
+	int		FSetGraphPointers(void);
+	void	CheckNode(Vector vecOrigin, int iNode);
 
-	int		CheckNODFile( const char *szMapName );
-	int		FLoadGraph( const char *szMapName );
-	int		FSaveGraph( const char *szMapName );
-	int		FSetGraphPointers( void );
-	void	CheckNode( Vector vecOrigin, int iNode );
+	void    BuildRegionTables(void);
+	void    ComputeStaticRoutingTables(void);
+	void    TestRoutingTables(void);
 
-	void    BuildRegionTables( void );
-	void    ComputeStaticRoutingTables( void );
-	void    TestRoutingTables( void );
+	void	HashInsert(int iSrcNode, int iDestNode, int iKey);
+	void    HashSearch(int iSrcNode, int iDestNode, int &iKey);
+	void	HashChoosePrimes(int TableSize);
+	void    BuildLinkLookups(void);
 
-	void	HashInsert( int iSrcNode, int iDestNode, int iKey );
-	void    HashSearch( int iSrcNode, int iDestNode, int &iKey );
-	void	HashChoosePrimes( int TableSize );
-	void    BuildLinkLookups( void );
-
-	void    SortNodes( void );
+	void    SortNodes(void);
 
 	int			HullIndex( const CBaseEntity *pEntity );	// what hull the monster uses
 	int			NodeType( const CBaseEntity *pEntity );		// what node type the monster uses
-	inline int	CapIndex( int afCapMask )
-	{
-		if ( afCapMask & ( bits_CAP_OPEN_DOORS | bits_CAP_AUTO_DOORS | bits_CAP_USE ) )
-			return 1;
-		return 0;
+	inline int	CapIndex( int afCapMask ) 
+	{ 
+		if (afCapMask & (bits_CAP_OPEN_DOORS | bits_CAP_AUTO_DOORS | bits_CAP_USE)) 
+			return 1; 
+		return 0; 
 	}
 
 	void	ByteswapGraph();
@@ -235,7 +235,7 @@ public:
 #endif
 		return m_pLinkPool[i];
 	}
-
+	
 	inline CLink &NodeLink( int iNode, int iLink )
 	{
 		return Link( Node( iNode ).m_iFirstLink + iLink );
@@ -246,7 +246,7 @@ public:
 		return Link( node.m_iFirstLink + iLink );
 	}
 
-	inline  int	INodeLink( int iNode, int iLink )
+	inline  int	INodeLink ( int iNode, int iLink )
 	{
 		return NodeLink( iNode, iLink ).m_iDestNode;
 	}
@@ -262,7 +262,7 @@ public:
 		return Node( NodeLink( iNode, iLink ).m_iDestNode );
 	}
 
-	inline	CNode *PNodeLink( int iNode, int iLink )
+	inline	CNode *PNodeLink ( int iNode, int iLink ) 
 	{
 		return &DestNode( iNode, iLink );
 	}
@@ -277,7 +277,7 @@ class CNodeEnt : public CBaseEntity
 {
 	void Spawn( void );
 	void KeyValue( KeyValueData *pkvd );
-	virtual int	ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
+	virtual int	ObjectCaps( void ) { return CBaseEntity :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 
 	short m_sHintType;
 	short m_sHintActivity;
@@ -286,19 +286,19 @@ class CNodeEnt : public CBaseEntity
 //=========================================================
 // CStack - last in, first out.
 //=========================================================
-class CStack
+class CStack 
 {
 public:
-	CStack( void );
+			CStack( void );
 	void	Push( int value );
 	int		Pop( void );
 	int		Top( void );
-	int		Empty( void ) { return m_level == 0; }
+	int		Empty( void ) { return m_level==0; }
 	int		Size( void ) { return m_level; }
-	void    CopyToArray( int *piArray );
+	void    CopyToArray ( int *piArray );
 
 private:
-	int		m_stack[MAX_STACK_NODES];
+	int		m_stack[ MAX_STACK_NODES ];
 	int		m_level;
 };
 
@@ -310,20 +310,20 @@ class CQueue
 public:
 
 	CQueue( void );// constructor
-	inline int Full( void ) { return ( m_cSize == MAX_STACK_NODES ); }
-	inline int Empty( void ) { return ( m_cSize == 0 ); }
+	inline int Full ( void ) { return ( m_cSize == MAX_STACK_NODES ); }
+	inline int Empty ( void ) { return ( m_cSize == 0 ); }
 	//inline int Tail ( void ) { return ( m_queue[ m_tail ] ); }
-	inline int Size( void ) { return ( m_cSize ); }
+	inline int Size ( void ) { return ( m_cSize ); }
 	void Insert( int, float );
 	int Remove( float & );
 
 private:
 	int	m_cSize;
-	struct tag_QUEUE_NODE
-	{
-		int   Id;
-		float Priority;
-	} m_queue[MAX_STACK_NODES];
+    struct tag_QUEUE_NODE
+    {
+        int   Id;
+        float Priority;
+    } m_queue[ MAX_STACK_NODES ];
 	int m_head;
 	int m_tail;
 };
@@ -337,22 +337,22 @@ class CQueuePriority
 public:
 
 	CQueuePriority( void );// constructor
-	inline int Full( void ) { return ( m_cSize == MAX_STACK_NODES ); }
-	inline int Empty( void ) { return ( m_cSize == 0 ); }
+	inline int Full ( void ) { return ( m_cSize == MAX_STACK_NODES ); }
+	inline int Empty ( void ) { return ( m_cSize == 0 ); }
 	//inline int Tail ( float & ) { return ( m_queue[ m_tail ].Id ); }
-	inline int Size( void ) { return ( m_cSize ); }
+	inline int Size ( void ) { return ( m_cSize ); }
 	void Insert( int, float );
-	int Remove( float & );
+	int Remove( float &);
 
 private:
 	int	m_cSize;
-	struct tag_HEAP_NODE
-	{
-		int   Id;
-		float Priority;
-	} m_heap[MAX_STACK_NODES];
-	void Heap_SiftDown( int );
-	void Heap_SiftUp( void );
+    struct tag_HEAP_NODE
+    {
+        int   Id;
+        float Priority;
+    } m_heap[ MAX_STACK_NODES ];
+	void Heap_SiftDown(int);
+	void Heap_SiftUp(void);
 
 };
 

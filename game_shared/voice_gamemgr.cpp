@@ -5,7 +5,6 @@
 // $NoKeywords: $
 //=============================================================================
 
-#include "archtypes.h"     // DAL
 #include "voice_gamemgr.h"
 #include <string.h>
 #include <assert.h>
@@ -74,8 +73,10 @@ static void VoiceServerDebug( char const *pFmt, ... )
 		return;
 
 	va_start( marker, pFmt );
-	_vsnprintf( msg, sizeof(msg), pFmt, marker );
+	_vsnprintf( msg, sizeof( msg ) - 1, pFmt, marker );
 	va_end( marker );
+
+	msg[sizeof( msg ) - 1] = 0;
 
 	ALERT( at_console, "%s", msg );
 }
@@ -179,7 +180,7 @@ bool CVoiceGameMgr::ClientCommand(CBasePlayer *pPlayer, const char *cmd)
 	{
 		for(int i=1; i < CMD_ARGC(); i++)
 		{
-			uint32 mask = 0;
+			unsigned mask = 0;
 			sscanf(CMD_ARGV(i), "%x", &mask);
 
 			if(i <= VOICE_MAX_PLAYERS_DW)
@@ -219,8 +220,8 @@ void CVoiceGameMgr::UpdateMasks()
 	bool bAllTalk = !!(sv_alltalk.value);
 
 	for(int iClient=0; iClient < m_nMaxPlayers; iClient++)
-	{   // SERVER PART
-		/*CBaseEntity *pEnt = UTIL_PlayerByIndex(iClient + 1);
+	{
+		CBaseEntity *pEnt = UTIL_PlayerByIndex(iClient+1);
 		if(!pEnt || !pEnt->IsPlayer())
 			continue;
 
@@ -269,6 +270,6 @@ void CVoiceGameMgr::UpdateMasks()
 		{
 			bool bCanHear = gameRulesMask[iOtherClient] && !g_BanMasks[iClient][iOtherClient];
 			g_engfuncs.pfnVoice_SetClientListening(iClient+1, iOtherClient+1, bCanHear);
-		}*/
+		}
 	}
 }

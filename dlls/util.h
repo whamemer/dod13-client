@@ -35,7 +35,7 @@ extern globalvars_t				*gpGlobals;
 // Use this instead of ALLOC_STRING on constant strings
 #define STRING(offset)		(const char *)(gpGlobals->pStringBase + (int)offset)
 
-#if !XASH_64BIT
+#if !XASH_64BIT || CLIENT_DLL
 #define MAKE_STRING(str)	((int)(long int)str - (int)(long int)STRING(0))
 #else
 static inline int MAKE_STRING(const char *szValue)
@@ -104,7 +104,11 @@ typedef int BOOL;
 // The _declspec forces them to be exported by name so we can do a lookup with GetProcAddress()
 // The function is used to intialize / allocate the object for the entity
 
+#if CLIENT_DLL
 #define LINK_ENTITY_TO_CLASS(mapClassName,DLLClassName)
+#else // CLIENT_DLL
+#define LINK_ENTITY_TO_CLASS(mapClassName,DLLClassName) extern "C" EXPORT void mapClassName( entvars_t *pev ); void mapClassName( entvars_t *pev ) { GetClassPtr( (DLLClassName *)pev ); }
+#endif // CLIENT_DLL
 
 //
 // Conversion among the three types of "entity", including identity-conversions.
@@ -191,14 +195,7 @@ typedef enum
 	MONSTERSTATE_DEAD
 } MONSTERSTATE;
 
-typedef enum
-{
-	STATE_OFF = 0,
-	STATE_TURN_ON,
-	STATE_ON,
-	STATE_TURN_OFF,
-	STATE_IN_USE
-} STATE;
+
 
 // Things that toggle (buttons/triggers/doors) need this
 typedef enum

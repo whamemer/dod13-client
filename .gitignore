@@ -9,7 +9,6 @@
 *.dll
 *.pdb
 build/
-out/
 CMakeLists.txt.*
 cmake_install.cmake
 *.orig
@@ -40,3 +39,6 @@ local.properties
 .project
 .classpath
 .settings
+
+#Finder cache
+.DS_Store

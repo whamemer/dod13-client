@@ -1,24 +1,150 @@
-cmake_minimum_required(VERSION 3.10)
-project(client)
+#
+# Copyright (c) 2016 Alibek Omarov
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
 
-set(CLIENT_LIB client)
+cmake_minimum_required(VERSION 3.9)
+project (CLDLL)
 
-file(GLOB DOD_CLIENT_SRC "*.cpp")
-file(GLOB DOD_CLIENT_MISC "misc/*.cpp")
-file(GLOB DOD_WPNSH_SRC "../dlls/wpn_shared/*.cpp")
-file(GLOB DOD_SHARED_SRC "../dlls/dod_shared.cpp")
-file(GLOB DOD_PM_SRC "../pm_shared/*.cpp")
-file(GLOB DOD_GAMSH_SRC "../game_shared/*.cpp")
-file(GLOB MINIUTL_SRC "../3rdparty/MiniUTL/*.cpp")
-file(GLOB DOD_PARTICLEMAN_SRC "../particleman/*.cpp")
+set (CLDLL_LIBRARY client)
 
-list(APPEND DOD_CLIENT_SRC ${DOD_CLIENT_MISC})
-list(APPEND DOD_CLIENT_SRC ${DOD_WPNSH_SRC})
-list(APPEND DOD_CLIENT_SRC ${DOD_SHARED_SRC})
-list(APPEND DOD_CLIENT_SRC ${DOD_PM_SRC})
-list(APPEND DOD_CLIENT_SRC ${DOD_GAMSH_SRC})
-list(APPEND DOD_CLIENT_SRC ${MINIUTL_SRC})
-list(APPEND DOD_CLIENT_SRC ${DOD_PARTICLEMAN_SRC})
+add_definitions(-DCLIENT_DLL)
+
+if(NOT MSVC)
+	add_compile_options(-fno-exceptions) # GCC/Clang flag
+	add_compile_options(-fno-rtti) # GCC/Clang flag
+	add_compile_options(-fvisibility=hidden) # GCC/Clang flag
+	add_definitions(-D_LINUX -DLINUX) # It seems enough for all non-Win32 systems
+	add_definitions(-Dstricmp=strcasecmp -Dstrnicmp=strncasecmp)
+	if(NOT MINGW)
+		add_definitions(-D_snprintf=snprintf -D_vsnprintf=vsnprintf)
+	endif()
+	if(CMAKE_BUILD_TYPE MATCHES "Release"
+		OR (CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo"
+		AND CMAKE_SYSTEM_NAME STREQUAL "Android"))
+		add_compile_options(-fno-unwind-tables -fno-asynchronous-unwind-tables) # GCC/Clang flag
+		add_compile_options(-fomit-frame-pointer) # GCC/Clang flag
+		add_compile_options(-ftree-vectorize) # GCC/Clang flag
+		add_compile_options(-funsafe-math-optimizations) # GCC/Clang flag
+	endif()
+else()
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+endif()
+
+if (GOLDSOURCE_SUPPORT)
+	add_definitions(-DGOLDSOURCE_SUPPORT)
+endif()
+
+if (USE_STATIC_FREEVGUI)
+	add_definitions(-DINTERNAL_VGUI_SUPPORT)
+endif()
+
+set (CLDLL_SOURCES
+	../dlls/crossbow.cpp
+	../dlls/crowbar.cpp
+	../dlls/egon.cpp
+	../dlls/gauss.cpp
+	../dlls/handgrenade.cpp
+	../dlls/hornetgun.cpp
+	../dlls/mp5.cpp
+	../dlls/python.cpp
+	../dlls/rpg.cpp
+	../dlls/satchel.cpp
+	../dlls/shotgun.cpp
+	../dlls/squeakgrenade.cpp
+	../dlls/tripmine.cpp
+	../dlls/glock.cpp
+	ev_hldm.cpp
+	hl/hl_baseentity.cpp
+	hl/hl_events.cpp
+	hl/hl_objects.cpp
+	hl/hl_weapons.cpp
+	ammo.cpp
+	ammo_secondary.cpp
+	ammohistory.cpp
+	battery.cpp
+	cdll_int.cpp
+	com_weapons.cpp
+	death.cpp
+	demo.cpp
+	entity.cpp
+	ev_common.cpp
+	events.cpp
+	flashlight.cpp
+	GameStudioModelRenderer.cpp
+	geiger.cpp
+	health.cpp
+	hud.cpp
+	hud_msg.cpp
+	hud_redraw.cpp
+	hud_spectator.cpp
+	hud_update.cpp
+	in_camera.cpp
+	input.cpp
+	input_goldsource.cpp
+	input_mouse.cpp
+	input_xash3d.cpp
+	interpolation.cpp
+	menu.cpp
+	message.cpp
+	MOTD.cpp
+	parsemsg.cpp
+	../pm_shared/pm_debug.c
+	../pm_shared/pm_math.c
+	../pm_shared/pm_shared.c
+	saytext.cpp
+	scoreboard.cpp
+	status_icons.cpp
+	statusbar.cpp
+	studio_util.cpp
+	StudioModelRenderer.cpp
+	text_message.cpp
+	train.cpp
+	tri.cpp
+	util.cpp
+	view.cpp
+	../public/safe_snprintf.c
+)
+
+list(APPEND CLDLL_SOURCES
+	vgui_int.cpp
+	vgui_ClassMenu.cpp
+	vgui_ConsolePanel.cpp
+	vgui_ControlConfigPanel.cpp
+	vgui_CustomObjects.cpp
+	vgui_MOTDWindow.cpp
+	vgui_SchemeManager.cpp
+	vgui_ScorePanel.cpp
+	vgui_TeamFortressViewport.cpp
+	vgui_SpectatorPanel.cpp
+	vgui_teammenu.cpp
+	voice_status.cpp
+	../game_shared/vgui_checkbutton2.cpp
+	../game_shared/vgui_grid.cpp
+	../game_shared/vgui_helpers.cpp
+	../game_shared/vgui_listbox.cpp
+	../game_shared/vgui_loadtga.cpp
+	../game_shared/vgui_scrollbar2.cpp
+	../game_shared/vgui_slider2.cpp
+	../game_shared/voice_banmgr.cpp
+)
 
 if (HAVE_STRLCPY)
 	add_definitions(-DHAVE_STRLCPY)
@@ -34,44 +160,55 @@ else()
 		../external/openbsd/strlcat.c)
 endif()
 
-include_directories(
-	include
-	include/misc
-	../cl_dll
-	../common
-	../engine
-	../pm_shared
-	../dlls
-	../game_shared
-	../public
-	../particleman
-	../3rdparty/MiniUTL)
+include_directories (. hl/ ../dlls ../dlls/wpn_shared ../common ../engine ../pm_shared ../game_shared ../public)
 
-if (WIN32)
+if (GOLDSOURCE_SUPPORT)
 	include_directories (../external/)
 endif()
 
-add_definitions(-DSTDINT_H=<cstdint>)
 
-if(NOT MSVC)
-	add_definitions(-DLINUX -D_LINUX)
-	add_definitions(-Dstricmp=strcasecmp -D_strnicmp=strncasecmp -Dstrnicmp=strncasecmp -fms-extensions)
-else()
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+include_directories(../utils/vgui/include)
+
+add_library (${CLDLL_LIBRARY} SHARED ${CLDLL_SOURCES})
+target_link_libraries(${CLDLL_LIBRARY} vcs_info)
+
+if (GOLDSOURCE_SUPPORT)
+	target_link_libraries( ${CLDLL_LIBRARY} ${CMAKE_DL_LIBS} )
 endif()
 
-add_library(${CLIENT_LIB} SHARED ${DOD_CLIENT_SRC})
+target_link_libraries(${CLDLL_LIBRARY} vgui)
 
-set_target_postfix(${CLIENT_LIB})
+if(WIN32)
+	target_link_libraries( ${CLDLL_LIBRARY} user32.lib )
+	if (GOLDSOURCE_SUPPORT)
+		target_link_libraries( ${CLDLL_LIBRARY} winmm.lib )
+	endif()
+endif()
 
-install(TARGETS ${CLIENT_LIB}
-	DESTINATION "${GAME_DIR}/${CLIENT_INSTALL_DIR}/"
+set_target_properties (${CLDLL_LIBRARY} PROPERTIES
+	POSITION_INDEPENDENT_CODE 1)
+
+set_target_postfix(${CLDLL_LIBRARY})
+
+if(HAVE_LTO)
+	set_property(TARGET ${CLDLL_LIBRARY} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
+install(TARGETS ${CLDLL_LIBRARY}
+	RUNTIME DESTINATION "${GAMEDIR}/${CLIENT_INSTALL_DIR}/"
+	LIBRARY DESTINATION "${GAMEDIR}/${CLIENT_INSTALL_DIR}/"
 	PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-	    GROUP_READ GROUP_EXECUTE
+		GROUP_READ GROUP_EXECUTE
 		WORLD_READ WORLD_EXECUTE)
 
-# Install PDB file on Windows
-if(MSVC)
-	install(FILES $<TARGET_PDB_FILE:${CLIENT_LIB}>
-		DESTINATION "${GAME_DIR}/${CLIENT_INSTALL_DIR}/" OPTIONAL)
+if(CMAKE_BUILD_TYPE MATCHES "Release" AND NOT WIN32)
+	if(APPLE)
+		# Apple strip treats -s as a symbol list file, -x keeps exported symbols
+		set(STRIP_FLAGS -x)
+	else()
+		set(STRIP_FLAGS -s)
+	endif()
+	add_custom_command(TARGET ${CLDLL_LIBRARY}
+			POST_BUILD DEPENDS ${CLDLL_LIBRARY}
+			COMMAND ${CMAKE_STRIP} ${STRIP_FLAGS} $<TARGET_FILE:${CLDLL_LIBRARY}>)
 endif()

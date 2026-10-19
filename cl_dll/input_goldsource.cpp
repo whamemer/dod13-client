@@ -170,6 +170,11 @@ static void IN_SetMouseRelative(bool enable)
 int CL_IsDead( void );
 extern Vector dead_viewangles;
 
+void V_StopPitchDrift( void )
+{
+
+}
+
 // mouse variables
 cvar_t *m_filter;
 extern cvar_t *sensitivity;
@@ -416,7 +421,7 @@ void IN_SetMouseMode(bool enable)
 	}
 }
 
-void IN_SetVisibleMouse(bool visible)
+void GoldSourceInput::IN_SetVisibleMouse(bool visible)
 {
 #if XASH_WIN32
 	bool lockEntered = MouseThread_ActiveLock_Enter();

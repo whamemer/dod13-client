@@ -22,194 +22,223 @@
 #include "hud.h"
 #include "cl_util.h"
 #include "parsemsg.h"
-#include "event_api.h"
-#include "pmtrace.h"
 
 #include <string.h>
 #include <stdio.h>
 
+DECLARE_MESSAGE( m_StatusBar, StatusText )
 DECLARE_MESSAGE( m_StatusBar, StatusValue )
 
 #define STATUSBAR_ID_LINE		1
 
 float *GetClientColor( int clientIndex );
 extern float g_ColorYellow[3];
-extern cvar_t *cl_identiconmode;
-extern float g_lastFOV;
-extern int g_iAlive;
 
 int CHudStatusBar::Init( void )
 {
 	gHUD.AddHudElem( this );
 
+	HOOK_MESSAGE( StatusText );
 	HOOK_MESSAGE( StatusValue );
-	Reset();
-	m_flNextUpdateTime = 0.0f;
-	hud_centerid = CVAR_CREATE( "hud_centerid", "1", FCVAR_CLIENTDLL );
 
-	memset( m_TargetTalking, 0, sizeof( m_TargetTalking ) );
+	Reset();
+
+	CVAR_CREATE( "hud_centerid", "0", FCVAR_ARCHIVE );
+
 	return 1;
 }
 
 int CHudStatusBar::VidInit( void )
 {
-	Reset();
-	m_flNextUpdateTime = 0.0f;
-
-	m_StatusBarAllieModel = SPR_Load( "sprites/american.spr" );
-	m_StatusBarBritishModel = SPR_Load( "sprites/british.spr" );
-	m_StatusBarGermanModel = SPR_Load( "sprites/german.spr" );
+	// Load sprites here
 	return 1;
 }
 
 void CHudStatusBar::Reset( void )
 {
-	m_iHealth = 100;
-	m_iTargetIndex = -1;
-	m_iTargetTeam = 0;
+	int i = 0;
+
+	m_iFlags &= ~HUD_ACTIVE;  // start out inactive
+	for( i = 0; i < MAX_STATUSBAR_LINES; i++ )
+		m_szStatusText[i][0] = 0;
+	memset( m_iStatusValues, 0, sizeof m_iStatusValues );
+
+	m_iStatusValues[0] = 1;  // 0 is the special index, which always returns true
+
+	// reset our colors for the status bar lines (yellow is default)
+	for ( i = 0; i < MAX_STATUSBAR_LINES; i++ )
+		m_pflNameColors[i] = g_ColorYellow;
 }
 
-extern vec3_t v_angles;
-extern int g_iDeadFlag;
-
-bool CHudStatusBar::InDeathCamMode( void )
+void CHudStatusBar::ParseStatusString( int line_num )
 {
-	if( g_iDeadFlag != DEAD_NO && g_iUser3 > 0 && g_iUser3 <= gEngfuncs.GetMaxClients() )
-		return true;
+	// localise string first
+	char szBuffer[MAX_STATUSTEXT_LENGTH] = {0};
+	gHUD.m_TextMessage.LocaliseTextString( m_szStatusText[line_num], szBuffer, MAX_STATUSTEXT_LENGTH );
 
-	return false;
-}
+	// parse m_szStatusText & m_iStatusValues into m_szStatusBar
+	memset( m_szStatusBar[line_num], 0, MAX_STATUSTEXT_LENGTH );
+	char *src = szBuffer;
+	char *dst = m_szStatusBar[line_num];
 
-void CHudStatusBar::Think( void )
-{
-	cl_entity_t *localPlayer;
-	cl_entity_t *killerEnt;
-	cl_entity_t *hitPlayer;
+	char *src_start = src, *dst_start = dst;
 
-	vec3_t start, view_ofs, forward, right, up, end;
-	pmtrace_t tr;
-
-	if( m_flNextUpdateTime <= gEngfuncs.GetClientTime() )
+	while( *src != 0 )
 	{
-		cl_entity_t *pTargetEntity = gEngfuncs.GetEntityByIndex( g_iUser2 );
+		while( *src == '\n' )
+			src++;  // skip over any newlines
 
-		if( InDeathCamMode() )
+		if( ( ( src - src_start ) >= MAX_STATUSTEXT_LENGTH ) || ( ( dst - dst_start ) >= MAX_STATUSTEXT_LENGTH ) )
+			break;
+
+		int index = atoi( src );
+		// should we draw this line?
+		if( ( index >= 0 && index < MAX_STATUSBAR_VALUES ) && ( m_iStatusValues[index] != 0 ) )
 		{
-			killerEnt = gEngfuncs.GetEntityByIndex( g_iUser3 );
+			// parse this line and append result to the status bar
+			while ( *src >= '0' && *src <= '9' )
+				src++;
 
-			if( killerEnt )
+			if( *src == '\n' || *src == 0 )
+				continue; // no more left in this text line
+
+			// copy the text, char by char, until we hit a % or a \n
+			while( *src != '\n' && *src != 0 )
 			{
-				int iKillerIdx = killerEnt->index;
-
-				if( iKillerIdx != gEngfuncs.GetLocalPlayer()->index && iKillerIdx > 0 && iKillerIdx <= gEngfuncs.GetMaxClients() )
+				if( *src != '%' )
 				{
-					m_iTargetIndex = iKillerIdx;
-					m_iTargetTeam = g_PlayerExtraInfo[iKillerIdx].teamnumber;
+					// just copy the character
+					*dst = *src;
+					dst++, src++;
+				}
+				else
+				{
+					// get the descriptor
+					char valtype = *(++src); // move over %
 
-					m_flNextUpdateTime = gEngfuncs.GetClientTime() + 0.1f;
-					return;
+					// if it's a %, draw a % sign
+					if ( valtype == '%' )
+					{
+						*dst = valtype;
+						dst++, src++;
+						continue;
+					}
+
+					// move over descriptor, then get and move over the index
+					index = atoi( ++src ); 
+					while( *src >= '0' && *src <= '9' )
+						src++;
+
+					if( index >= 0 && index < MAX_STATUSBAR_VALUES )
+					{
+						int indexval = m_iStatusValues[index];
+
+						// get the string to substitute in place of the %XX
+						char szRepString[MAX_PLAYER_NAME_LENGTH];
+						switch( valtype )
+						{
+						case 'p':  // player name
+							GetPlayerInfo( indexval, &g_PlayerInfoList[indexval] );
+							if( g_PlayerInfoList[indexval].name != NULL )
+							{
+								strlcpy( szRepString, g_PlayerInfoList[indexval].name, MAX_PLAYER_NAME_LENGTH );
+								m_pflNameColors[line_num] = GetClientColor( indexval );
+							}
+							else
+							{
+								strcpy( szRepString, "******" );
+							}
+							break;
+						case 'i':  // number
+							sprintf( szRepString, "%d", indexval );
+							break;
+						default:
+							szRepString[0] = 0;
+						}
+
+						for( char *cp = szRepString; *cp != 0 && ( ( dst - dst_start ) < MAX_STATUSTEXT_LENGTH ); cp++, dst++ )
+							*dst = *cp;
+					}
 				}
 			}
 		}
 		else
 		{
-			localPlayer = gEngfuncs.GetLocalPlayer();
-			gEngfuncs.pEventAPI->EV_LocalPlayerViewheight( view_ofs );
-
-			start = localPlayer->curstate.origin + view_ofs;
-
-			AngleVectors( v_angles, forward, right, up );
-
-			end = forward * 2048.0f + start;
-
-			gEngfuncs.pEventAPI->EV_SetSolidPlayers( localPlayer->index - 1 );
-			gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
-			gEngfuncs.pEventAPI->EV_PlayerTrace( start, end, 2, -1, &tr );
-
-			if( gEngfuncs.pEventAPI->EV_IndexFromTrace( &tr ) > 0 && gEngfuncs.pEventAPI->EV_IndexFromTrace( &tr ) <= gEngfuncs.GetMaxClients() )
-			{
-				hitPlayer = gEngfuncs.GetEntityByIndex( gEngfuncs.pEventAPI->EV_IndexFromTrace( &tr ) );
-				cl_entity_t *localPlayerEnt = gEngfuncs.GetLocalPlayer();
-
-				gEngfuncs.pfnGetPlayerInfo( hitPlayer->index, &g_PlayerInfoList[hitPlayer->index] );
-				gEngfuncs.pfnGetPlayerInfo( localPlayerEnt->index, &g_PlayerInfoList[localPlayerEnt->index] );
-
-				int iTargetIdx = hitPlayer->index;
-				int iLocalTeam = g_PlayerExtraInfo[localPlayerEnt->index].teamnumber;
-				int iTargetTeam = g_PlayerExtraInfo[iTargetIdx].teamnumber;
-
-				if( iTargetTeam == iLocalTeam || iLocalTeam == 3 || g_iDeadFlag > DEAD_DYING )
-				{
-					m_iTargetIndex = iTargetIdx;
-					m_iTargetTeam = iTargetTeam;
-					m_flNextUpdateTime = gEngfuncs.GetClientTime() + 0.1f;
-					return;
-				}
-			}
+			// skip to next line of text
+			while( *src != 0 && *src != '\n' )
+				src++;
 		}
-
-		m_iTargetIndex = -1;
-		m_iTargetTeam = 0;
-
-		m_flNextUpdateTime = gEngfuncs.GetClientTime() + 0.1f;
 	}
 }
 
 int CHudStatusBar::Draw( float fTime )
 {
-	char *playerName;
-	float *color;
-	char szStatusBar[128];
-	int TextWidth;
-	int y;
-	float h;
-
-	cvar_t *hud_centerid;
-
-	if( !g_iUser1 )
+	if( m_bReparseString )
 	{
-		if( g_iAlive )
+		for( int i = 0; i < MAX_STATUSBAR_LINES; i++ )
 		{
-			if( m_iTargetIndex > 0 && m_iTargetIndex <= gEngfuncs.GetMaxClients() )
-			{
-				hud_player_info_t playerInfo;
-				gEngfuncs.pfnGetPlayerInfo( m_iTargetIndex, &playerInfo );
-
-				playerName = playerInfo.name;
-				color = GetClientColor( m_iTargetIndex );
-
-				if( m_iHealth > 0 )
-				{
-					sprintf( szStatusBar, "%s (%d)", playerName, m_iHealth );
-
-					int iTextHeight;
-					gEngfuncs.pfnDrawConsoleStringLen( szStatusBar, &TextWidth, &iTextHeight );
-					h = ( float ) iTextHeight;
-					int x = 4;
-
-					if( hud_centerid && hud_centerid->value > 0.0f )
-					{
-						x = ( ScreenWidth - TextWidth ) / 2;
-						if( x < 0 )
-							x = 0;
-
-						h = hud_centerid->value * h + ( h + ( float ) ( ScreenHeight / 2 ) );
-						y = ( int ) h;
-					}
-					else
-					{
-						x = ScreenWidth / 2 - TextWidth / 2;
-						y = ScreenHeight - 2 * ( int ) h;
-					}
-
-					if( color )
-						DrawSetTextColor( color[0], color[1], color[2] );
-
-					DrawConsoleString( x, y, szStatusBar );
-				}
-			}
+			m_pflNameColors[i] = g_ColorYellow;
+			ParseStatusString( i );
 		}
+		m_bReparseString = FALSE;
 	}
+
+	int Y_START = ScreenHeight - YRES( 32 + 4 );
+
+	// Draw the status bar lines
+	for( int i = 0; i < MAX_STATUSBAR_LINES; i++ )
+	{
+		int TextHeight, TextWidth;
+		GetConsoleStringSize( m_szStatusBar[i], &TextWidth, &TextHeight );
+
+		int x = 4;
+		int y = Y_START - ( 4 + TextHeight * i ); // draw along bottom of screen
+
+		// let user set status ID bar centering
+		if( ( i == STATUSBAR_ID_LINE ) && CVAR_GET_FLOAT( "hud_centerid" ) )
+		{
+			x = Q_max( 0, Q_max( 2, ( ScreenWidth - TextWidth ) ) / 2 );
+			y = ( ScreenHeight / 2 ) + ( TextHeight * CVAR_GET_FLOAT( "hud_centerid" ) );
+		}
+
+		if( m_pflNameColors[i] )
+			DrawSetTextColor( m_pflNameColors[i][0], m_pflNameColors[i][1], m_pflNameColors[i][2] );
+
+		DrawConsoleString( x, y, m_szStatusBar[i] );
+	}
+
+	return 1;
+}
+
+// Message handler for StatusText message
+// accepts two values:
+//		byte: line number of status bar text 
+//		string: status bar text
+// this string describes how the status bar should be drawn
+// a semi-regular expression:
+// ( slotnum ([a..z] [%pX] [%iX])*)*
+// where slotnum is an index into the Value table (see below)
+// if slotnum is 0, the string is always drawn
+// if StatusValue[slotnum] != 0, the following string is drawn, upto the next newline - otherwise the text is skipped upto next newline
+// %pX, where X is an integer, will substitute a player name here, getting the player index from StatusValue[X]
+// %iX, where X is an integer, will substitute a number here, getting the number from StatusValue[X]
+int CHudStatusBar::MsgFunc_StatusText( const char *pszName, int iSize, void *pbuf )
+{
+	BEGIN_READ( pbuf, iSize );
+
+	int line = READ_BYTE();
+
+	if( line < 0 || line >= MAX_STATUSBAR_LINES )
+		return 1;
+
+	strlcpy( m_szStatusText[line], READ_STRING(), MAX_STATUSTEXT_LENGTH );
+
+	if( m_szStatusText[0] == 0 )
+		m_iFlags &= ~HUD_ACTIVE;
+	else
+		m_iFlags |= HUD_ACTIVE;  // we have status text, so turn on the status bar
+
+	m_bReparseString = TRUE;
 
 	return 1;
 }
@@ -221,201 +250,14 @@ int CHudStatusBar::Draw( float fTime )
 int CHudStatusBar::MsgFunc_StatusValue( const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
-	m_iHealth = READ_BYTE();
+
+	int index = READ_BYTE();
+	if( index < 1 || index >= MAX_STATUSBAR_VALUES )
+		return 1; // index out of range
+
+	m_iStatusValues[index] = READ_SHORT();
+
+	m_bReparseString = TRUE;
+
 	return 1;
-}
-
-char *CHudStatusBar::GetTargetName( void )
-{
-	if( m_iTargetIndex > 0 && m_iTargetIndex <= gEngfuncs.GetMaxClients() )
-	{
-		hud_player_info_t info;
-
-		gEngfuncs.pfnGetPlayerInfo( m_iTargetIndex, &info );
-
-		return info.name;
-	}
-
-	return "";
-}
-
-extern int g_iEffects;
-
-void CHudStatusBar::CreateEntities( void )
-{
-	if( m_StatusBarAllieModel && m_StatusBarBritishModel && m_StatusBarGermanModel )
-	{
-		if( !g_iUser1 && ( g_iEffects & EF_NODRAW ) == 0 && !g_iDeadFlag )
-		{
-			if( cl_identiconmode && cl_identiconmode->value >= 2.0f )
-			{
-				DrawEntitiesOverTeam();
-			}
-			else if( cl_identiconmode && cl_identiconmode->value >= 1.0f )
-			{
-				DrawEntitiesOverTarget();
-			}
-		}
-	}
-}
-
-void CHudStatusBar::DrawEntitiesOverTeam( void )
-{
-	cl_entity_t *localPlayer;
-	cl_entity_t *pClient;
-	cl_entity_t *pEnt;
-	vec3_t vecDist;
-	float f_scaleMult;
-
-	localPlayer = gEngfuncs.GetLocalPlayer();
-	if( !localPlayer )
-		return;
-
-	for( int i = 1; i <= MAX_PLAYERS; i++ )
-	{
-		pClient = gEngfuncs.GetEntityByIndex( i );
-		if( !pClient )
-			continue;
-
-		if( pClient->curstate.messagenum >= localPlayer->curstate.messagenum && pClient->curstate.effects >= 0 &&
-			pClient != localPlayer && !m_TargetTalking[i] )
-		{
-			int team = pClient->curstate.team;
-
-			if( team == localPlayer->curstate.team && pClient->curstate.solid && !g_PlayerExtraInfo[i].dead )
-			{
-				if( team == 1 )
-				{
-					if( gHUD.m_bBritish )
-						m_StatusBarHeadModel = m_StatusBarBritishModel;
-					else
-						m_StatusBarHeadModel = m_StatusBarAllieModel;
-				}
-				else
-				{
-					m_StatusBarHeadModel = m_StatusBarGermanModel;
-				}
-
-				pEnt = &m_TargetHeadModel[i];
-				memset( pEnt, 0, sizeof( cl_entity_t ) );
-
-				pEnt->curstate.rendermode = kRenderTransAdd;
-				pEnt->curstate.renderamt = 127;
-				pEnt->curstate.frame = 0.0f;
-				pEnt->baseline.renderamt = 127;
-				pEnt->curstate.renderfx = kRenderFxNoDissipation;
-				pEnt->curstate.framerate = 1.0f;
-
-				pEnt->model = (model_s *)gEngfuncs.GetSpritePointer( m_StatusBarHeadModel );
-
-				pEnt->angles = { 0.0f, 0.0f, 0.0f };
-
-				pEnt->origin[0] = pClient->origin[0];
-				pEnt->origin[1] = pClient->origin[1];
-				pEnt->origin[2] = pClient->origin[2] + 45.0f;
-
-				vecDist.x = pEnt->origin[0] - localPlayer->origin[0];
-				vecDist.y = pEnt->origin[1] - localPlayer->origin[1];
-				vecDist.z = pEnt->origin[2] - localPlayer->origin[2];
-
-				float flDistance = vecDist.Length();
-
-				if( flDistance >= 378.0f && g_lastFOV == 0.0f )
-				{
-					f_scaleMult = flDistance / 175.0f / 10.0f;
-
-					if( f_scaleMult > 2.0f )
-						f_scaleMult = 2.0f;
-
-					pEnt->curstate.scale = f_scaleMult;
-				}
-				else
-				{
-					pEnt->curstate.scale = 0.2f;
-				}
-
-				gEngfuncs.CL_CreateVisibleEntity( 0, pEnt );
-			}
-		}
-	}
-}
-
-void CHudStatusBar::DrawEntitiesOverTarget( void )
-{
-	cl_entity_t *localPlayer;
-	cl_entity_t *pClient;
-	cl_entity_t *pEnt;
-	vec3_t vecDist;
-	float f_scaleMult;
-
-	if( m_iTargetIndex >= 0 )
-	{
-		localPlayer = gEngfuncs.GetLocalPlayer();
-		pClient = gEngfuncs.GetEntityByIndex( m_iTargetIndex );
-
-		if( pClient )
-		{
-			if( pClient->curstate.messagenum >= localPlayer->curstate.messagenum &&
-				pClient->curstate.effects >= 0 &&
-				pClient != localPlayer )
-			{
-				int team = pClient->curstate.team;
-
-				if( team == localPlayer->curstate.team && m_TargetTalking[m_iTargetIndex] != 1 )
-				{
-					if( team == 1 )
-					{
-						if( gHUD.m_bBritish )
-							m_StatusBarHeadModel = m_StatusBarBritishModel;
-						else
-							m_StatusBarHeadModel = m_StatusBarAllieModel;
-					}
-					else
-					{
-						m_StatusBarHeadModel = m_StatusBarGermanModel;
-					}
-
-					pEnt = &m_TargetHeadModel[0];
-					memset( pEnt, 0, sizeof( cl_entity_t ) );
-
-					pEnt->curstate.rendermode = kRenderTransAdd;
-					pEnt->curstate.renderamt = 127;
-					pEnt->curstate.renderfx = kRenderFxNoDissipation;
-					pEnt->baseline.renderamt = 127;
-					pEnt->curstate.frame = 0.0f;
-					pEnt->curstate.framerate = 1.0f;
-
-					pEnt->model = (model_s *)gEngfuncs.GetSpritePointer( m_StatusBarHeadModel );
-
-					pEnt->angles = { 0.0f, 0.0f, 0.0f };
-
-					pEnt->origin.x = pClient->origin.x;
-					pEnt->origin.y = pClient->origin.y;
-					pEnt->origin.z = pClient->origin.z + 45.0f;
-
-					vecDist.x = pEnt->origin.x - localPlayer->origin.x;
-					vecDist.y = pEnt->origin.y - localPlayer->origin.y;
-					vecDist.z = pEnt->origin.z - localPlayer->origin.z;
-
-					float flDistance = vecDist.Length();
-
-					if( flDistance >= 378.0f && g_lastFOV == 0.0f )
-					{
-						f_scaleMult = flDistance / 175.0f / 10.0f;
-						if( f_scaleMult > 2.0f )
-						{
-							f_scaleMult = 2.0f;
-						}
-						pEnt->curstate.scale = f_scaleMult;
-					}
-					else
-					{
-						pEnt->curstate.scale = 0.2f;
-					}
-
-					gEngfuncs.CL_CreateVisibleEntity( 0, pEnt );
-				}
-			}
-		}
-	}
 }

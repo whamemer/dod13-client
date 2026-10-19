@@ -24,6 +24,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "vgui_TeamFortressViewport.h"
+
 #define MAX_MENU_STRING	512
 char g_szMenuString[MAX_MENU_STRING];
 char g_szPrelocalisedMenuString[MAX_MENU_STRING];
@@ -141,6 +143,10 @@ int CHudMenu::Draw( float flTime )
 		}
 	}
 
+	// don't draw the menu if the scoreboard is being shown
+	if( gViewPort && gViewPort->IsScoreBoardVisible() )
+		return 1;
+
 	SCREENINFO screenInfo;
 
 	screenInfo.iSize = sizeof( SCREENINFO );
@@ -153,7 +159,7 @@ int CHudMenu::Draw( float flTime )
 		if( g_szMenuString[i] == '\n' )
 			nlc++;
 
-	int nFontHeight = max( 12, screenInfo.iCharHeight );
+	int nFontHeight = Q_max( 12, screenInfo.iCharHeight );
 
 	// center it
 	int y = ( ScreenHeight / 2 ) - (( nlc / 2 )* nFontHeight ) - ( 3 * nFontHeight + nFontHeight / 3 ); // make sure it is above the say text
@@ -183,7 +189,7 @@ int CHudMenu::Draw( float flTime )
 			const char *ptr = sptr;
 			while( *sptr != '\0' && *sptr != '\n' && *sptr != '\\' )
 				sptr++;
-			strlcpy( menubuf, ptr, min(( sptr - ptr + 1 ), (int)sizeof( menubuf )));
+			strlcpy( menubuf, ptr, Q_min(( sptr - ptr + 1 ), (int)sizeof( menubuf )));
 			if( menu_ralign )
 				// IMPORTANT: Right-to-left rendered text does not parse escape tokens!
 				menu_x = gHUD.DrawHudStringReverse( menu_x, y, 0, menubuf, menu_r, menu_g, menu_b );

@@ -26,13 +26,7 @@
 #include "event_api.h"
 #include "pm_shared.h"
 
-#include "tri.h"
-#include "fx_flags.h"
-
 #define IS_FIRSTPERSON_SPEC ( g_iUser1 == OBS_IN_EYE || ( g_iUser1 && ( gHUD.m_Spectator.m_pip->value == INSET_IN_EYE ) ) )
-
-extern cvar_t *cl_dynamiclights;
-
 /*
 =================
 GetEntity
@@ -151,105 +145,6 @@ void EV_EjectBrass( float *origin, float *velocity, float rotation, int model, i
 
 /*
 =================
-EV_BazookaSmoke
-
-=================
-*/
-void EV_BazookaSmoke( cl_entity_t *ent )
-{
-	static const int speeds[8] = { 200, 300, 450, 150, 250, 400, 350, 100 };
-
-	vec3_t forward, right, up, org, vel, temp;
-	char *sprname;
-	model_s *pSprite;
-	int ccw;
-	int i;
-	CDoDParticle *pParticle;
-
-	if( !ent )
-		return;
-
-	temp.x = ent->angles.x;
-	temp.y = ent->angles.y;
-	temp.z = -ent->angles.z;
-
-	gEngfuncs.pfnAngleVectors( temp, forward, right, up );
-
-	sprname = "sprites/bazookapuff.spr";
-	HSPRITE hSprite = gEngfuncs.pfnSPR_Load( sprname );
-	pSprite = ( model_s * ) gEngfuncs.GetSpritePointer( hSprite );
-
-	if( !pSprite )
-	{
-		gEngfuncs.Con_DPrintf( "Couldn't load Sprite: %s\n", sprname );
-		return;
-	}
-
-	ccw = 1;
-
-	for( i = 0; i < 8; ++i )
-	{
-		vec3_t p_normal = Vector( 0.0f, 0.0f, 0.0f );
-
-		if( ( i & 1 ) != 0 )
-		{
-			org.x = ent->origin.x + forward.x * 30.0f + up.x * 16.0f;
-			org.y = ent->origin.y + forward.y * 30.0f + up.y * 16.0f;
-			org.z = ent->origin.z + forward.z * 30.0f + up.z * 16.0f;
-		}
-		else
-		{
-			ccw = 1 - ccw;
-			org.x = ent->origin.x - forward.x * 30.0f + up.x * 16.0f;
-			org.y = ent->origin.y - forward.y * 30.0f + up.y * 16.0f;
-			org.z = ent->origin.z - forward.z * 30.0f + up.z * 16.0f;
-		}
-
-		float flSpeed = ( float ) speeds[i];
-		float flRandModifier = gEngfuncs.pfnRandomFloat( -1.0f, 1.0f );
-
-		pParticle = pParticle->Create( org, p_normal, pSprite, 90.0f, 80.0f, "dod_particle", 1 );
-
-		if( !pParticle )
-			break;
-
-		pParticle->SetCollisionFlags( TRI_COLLIDESLIDE | TRI_COLLIDEDAMP | TRI_COLLIDEKILL_ANIM | TRI_WATERTRACE );
-		pParticle->SetLightFlag( PARTICLE_LIGHT_DEFAULT );
-		pParticle->SetCullFlag( CULL_FRUSTUM_POINT );
-
-		pParticle->m_iRendermode = kRenderTransAdd;
-		pParticle->m_flFadeSpeed = 0.7f;
-		pParticle->m_flScaleSpeed = 1.1f;
-		pParticle->m_flDampingTime = 0.5f;
-		pParticle->m_iFrame = 0;
-		pParticle->m_iFramerate = 2;
-		pParticle->m_vColor = Vector( 200.0f, 200.0f, 200.0f );
-
-		vel.x = forward.x * flSpeed + up.x * flRandModifier;
-		vel.y = forward.y * flSpeed + up.y * flRandModifier;
-		vel.z = forward.z * flSpeed + up.z * flRandModifier;
-
-		pParticle->m_vVelocity = vel;
-		pParticle->m_vAVelocity.z = ccw ? 1.0f : -1.0f;
-		pParticle->m_flDieTime = gEngfuncs.GetClientTime() + 5.0f;
-
-		pParticle->AddGlobalWind();
-	}
-}
-
-/*
-=================
-EV_PSchreckSmoke
-
-=================
-*/
-void EV_PSchreckSmoke( cl_entity_t *ent )
-{
-	EV_BazookaSmoke( ent );
-}
-
-/*
-=================
 EV_GetDefaultShellInfo
 
 Determine where to eject shells from
@@ -297,63 +192,15 @@ EV_MuzzleFlash
 Flag weapon/view model for muzzle flash
 =================
 */
-void EV_MuzzleFlash( int idx, int guntype )
+void EV_MuzzleFlash( void )
 {
-	cl_entity_t *ent = gEngfuncs.GetEntityByIndex( idx );
-	cl_entity_t *entview = gEngfuncs.GetViewModel();
-	cl_entity_t *localPlayer = gEngfuncs.GetLocalPlayer();
-
-	vec3_t vecOrigin;
-	bool bIsLocal = false;
-
-	if( g_iUser1 == OBS_IN_EYE )
+	// Add muzzle flash to current weapon model
+	cl_entity_t *ent = GetViewEntity();
+	if( !ent )
 	{
-		bIsLocal = ( idx == g_iUser2 );
-	}
-	else
-	{
-		bIsLocal = ( gEngfuncs.pEventAPI->EV_IsLocal( idx - 1 ) != 0 );
+		return;
 	}
 
-	if( bIsLocal )
-	{
-		if( entview )
-			vecOrigin = entview->attachment[0];
-	}
-	else
-	{
-		if( ent && localPlayer )
-		{
-			if( ent->curstate.messagenum >= localPlayer->curstate.messagenum )
-				vecOrigin = ent->curstate.origin;
-			else
-				return;
-		}
-		else
-		{
-			return;
-		}
-	}
-
-	if( cl_dynamiclights && cl_dynamiclights->value > 0.0f )
-	{
-		dlight_t *dl = gEngfuncs.pEfxAPI->CL_AllocDlight( 0 );
-		if( dl )
-		{
-			dl->origin = vecOrigin;
-			dl->radius = ( float ) ( 50 * guntype + 50 );
-			dl->decay = ( float ) ( 50 * guntype + 600 );
-			dl->die = gHUD.m_flTime + 1.0f;
-			dl->color.r = 248;
-			dl->color.g = 255;
-			dl->color.b = 120;
-		}
-	}
-
-	cl_entity_t *thisent = gEngfuncs.GetEntityByIndex( idx );
-
-	if( thisent )
-	{
-		thisent->curstate.effects |= EF_MUZZLEFLASH;
-	}
+	// Or in the muzzle flash
+	ent->curstate.effects |= EF_MUZZLEFLASH;
 }

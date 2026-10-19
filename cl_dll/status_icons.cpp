@@ -30,9 +30,9 @@ DECLARE_MESSAGE( m_StatusIcons, StatusIcon )
 
 int CHudStatusIcons::Init( void )
 {
-	gHUD.AddHudElem( this );
-
 	HOOK_MESSAGE( StatusIcon );
+
+	gHUD.AddHudElem( this );
 
 	Reset();
 
@@ -53,9 +53,8 @@ void CHudStatusIcons::Reset( void )
 // Draw status icons along the left-hand side of the screen
 int CHudStatusIcons::Draw( float flTime )
 {
-	if( g_iUser1 )
+	if( gEngfuncs.IsSpectateOnly() )
 		return 1;
-
 	// find starting position to draw from, along right-hand side of screen
 	int x = 5;
 	int y = ScreenHeight / 2;
@@ -105,7 +104,7 @@ int CHudStatusIcons::MsgFunc_StatusIcon( const char *pszName, int iSize, void *p
 }
 
 // add the icon to the icon list, and set it's drawing color
-void CHudStatusIcons::EnableIcon( char *pszIconName, unsigned char red, unsigned char green, unsigned char blue )
+void CHudStatusIcons::EnableIcon( const char *pszIconName, unsigned char red, unsigned char green, unsigned char blue )
 {
 	int i;
 
@@ -150,7 +149,7 @@ void CHudStatusIcons::EnableIcon( char *pszIconName, unsigned char red, unsigned
 	}
 }
 
-void CHudStatusIcons::DisableIcon( char *pszIconName )
+void CHudStatusIcons::DisableIcon( const char *pszIconName )
 {
 	// find the sprite is in the current list
 	for( int i = 0; i < MAX_ICONSPRITES; i++ )

@@ -21,8 +21,6 @@
 #include "exportdef.h"
 #include "cvardef.h"
 
-#include "hud.h"
-
 #if !defined(TRUE)
 #define TRUE 1
 #define FALSE 0
@@ -74,8 +72,8 @@ inline struct cvar_s *CVAR_CREATE( const char *cv, const char *val, const int fl
 // Use this to set any co-ords in 640x480 space
 #define XRES(x)		( (int)( float(x) * ( (float)ScreenWidth / 640.0f ) + 0.5f ) )
 #define YRES(y)		( (int)( float(y) * ( (float)ScreenHeight / 480.0f ) + 0.5f ) )
-#define XRES_HD(x)      ( (int)( float(x) * max(1.f, (float)ScreenWidth / 1280.f )))
-#define YRES_HD(y)	( (int)( float(y) * max(1.f, (float)ScreenHeight / 720.f )))
+#define XRES_HD(x)      ( (int)( float(x) * Q_max(1.f, (float)ScreenWidth / 1280.f )))
+#define YRES_HD(y)	( (int)( float(y) * Q_max(1.f, (float)ScreenHeight / 720.f )))
 
 // use this to project world coordinates to screen coordinates
 #define XPROJECT(x)	( ( 1.0f + (x) ) * ScreenWidth * 0.5f )
@@ -154,34 +152,9 @@ inline void CenterPrint( const char *string )
 inline void PlaySound( const char *szSound, float vol ) { gEngfuncs.pfnPlaySoundByName( szSound, vol ); }
 inline void PlaySound( int iSound, float vol ) { gEngfuncs.pfnPlaySoundByIndex( iSound, vol ); }
 
-#ifdef __cplusplus
-#include <type_traits>
-#ifndef CL_UTIL_MAX_MIN_DEFINED
-#define CL_UTIL_MAX_MIN_DEFINED
-#ifdef max
-#undef max
-#endif
-#ifdef min
-#undef min
-#endif
-template<typename T, typename U>
-inline auto max( T a, U b ) -> typename std::decay<decltype( ( a > b ) ? a : b )>::type{ return ( a > b ) ? a : b; }
-template<typename T, typename U>
-inline auto min( T a, U b ) -> typename std::decay<decltype( ( a < b ) ? a : b )>::type{ return ( a < b ) ? a : b; }
-#endif
-#else
-#ifdef max
-#undef max
-#endif
-#define max(a, b)  (((a) > (b)) ? (a) : (b))
-#ifdef min
-#undef min
-#endif
-#define min(a, b)  (((a) < (b)) ? (a) : (b))
-#endif
-#if !defined(_WIN32)
+#define Q_max(a, b)  (((a) > (b)) ? (a) : (b))
+#define Q_min(a, b)  (((a) < (b)) ? (a) : (b))
 #define fabs(x)	   ((x) > 0 ? (x) : 0 - (x))
-#endif
 
 inline int GetSpriteRes( int width, int height )
 {
@@ -189,7 +162,7 @@ inline int GetSpriteRes( int width, int height )
 
 	if( width < 640 )
 		i = 320;
-	else if( width < 1280 )
+	else if( width < 1280 || !gHUD.m_pAllowHD->value )
 		i = 640;
 	else
 	{
@@ -201,12 +174,8 @@ inline int GetSpriteRes( int width, int height )
 			i = 2560;
 	}
 
-	return i;
+	return Q_min( i, gHUD.m_iMaxRes );
 }
-
-#define bound( min, num, max ) ((num) >= (min) ? ((num) < (max) ? (num) : (max)) : (min))
-#define RAD2DEG( x )	((float)(x) * (float)(180.f / M_PI))
-#define DEG2RAD( x )	((float)(x) * (float)(M_PI / 180.f))
 
 void ScaleColors( int &r, int &g, int &b, int a );
 
@@ -214,7 +183,6 @@ void ScaleColors( int &r, int &g, int &b, int a );
 #define VectorSubtract(a, b, c) { (c)[0] = (a)[0] - (b)[0]; (c)[1] = (a)[1] - (b)[1]; (c)[2] = (a)[2] - (b)[2]; }
 #define VectorAdd(a, b, c) { (c)[0] = (a)[0] + (b)[0]; (c)[1] = (a)[1] + (b)[1]; (c)[2] = (a)[2] + (b)[2]; }
 #define VectorCopy(a, b) { (b)[0] = (a)[0]; (b)[1] = (a)[1]; (b)[2] = (a)[2]; }
-#define VectorCompare2(a, b) ( (a)[0] == (b)[0] && (a)[1] == (b)[1] && (a)[2] == (b)[2] )
 inline void VectorClear( float *a ) { a[0] = 0.0; a[1] = 0.0; a[2] = 0.0; }
 float Length( const float *v );
 void VectorMA( const float *veca, float scale, const float *vecb, float *vecc );

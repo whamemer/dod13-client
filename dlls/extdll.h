@@ -92,7 +92,7 @@ typedef int string_t;				// from engine's pr_comp.h;
 typedef float vec_t;				// needed before including progdefs.h
 
 // Vector class
-#include "util_vector.h"
+#include "vector.h"
 
 // Defining it as a (bogus) struct helps enforce type-checking
 #define vec3_t Vector
@@ -107,13 +107,11 @@ typedef float vec_t;				// needed before including progdefs.h
 
 // Shared header between the client DLL and the game DLLs
 #include "cdll_dll.h"
-#ifndef __cplusplus
-#if !defined(min)
-#define min(a,b)  (((a) < (b)) ? (a) : (b))
+#if !defined(Q_min)
+#define Q_min(a,b)  (((a) < (b)) ? (a) : (b))
 #endif
-#if !defined(max)
-#define max(a,b)  (((a) > (b)) ? (a) : (b))
-#endif
+#if !defined(Q_max)
+#define Q_max(a,b)  (((a) > (b)) ? (a) : (b))
 #endif
 
 #endif //EXTDLL_H

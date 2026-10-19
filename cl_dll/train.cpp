@@ -15,7 +15,7 @@
 //
 // Train.cpp
 //
-// implementation of CHudTrain class
+// implementation of CHudAmmo class
 //
 
 #include "hud.h"
@@ -51,9 +51,10 @@ int CHudTrain::Draw( float fTime )
 
 	if( m_iPos )
 	{
-		int x, y;
+		int r, g, b, x, y;
 
-		SPR_Set( m_hSprite, 255, 255, 255 );
+		UnpackRGB( r, g, b, RGB_YELLOWISH );
+		SPR_Set( m_hSprite, r, g, b );
 
 		// This should show up to the right and part way up the armor number
 		y = ScreenHeight - SPR_Height( m_hSprite, 0 ) - gHUD.m_iFontHeight;

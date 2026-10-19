@@ -1,9 +1,9 @@
 /***
 *
 *	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
-*
-*	This product contains software technology licensed from Id
-*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	
+*	This product contains software technology licensed from Id 
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
 *	All Rights Reserved.
 *
 *   Use, distribution, and modification of this source code and/or resulting
@@ -38,11 +38,11 @@ public:
 	void Precache( void );
 
 	int ObjectCaps( void )
-	{
+	{ 
 		int flags = 0;
 		if( pev->spawnflags & SF_SPRITE_TEMPORARY )
 			flags = FCAP_DONT_SAVE;
-		return ( CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION ) | flags;
+		return ( CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION ) | flags; 
 	}
 	void EXPORT AnimateThink( void );
 	void EXPORT ExpandThink( void );
@@ -100,12 +100,12 @@ public:
 		pev->renderamt = brightness;
 	}
 
-	inline void AnimateAndDie( float framerate )
-	{
+	inline void AnimateAndDie( float framerate ) 
+	{ 
 		SetThink( &CSprite::AnimateUntilDead );
 		pev->framerate = framerate;
-		pev->dmgtime = gpGlobals->time + ( m_maxFrame / framerate );
-		pev->nextthink = gpGlobals->time;
+		pev->dmgtime = gpGlobals->time + ( m_maxFrame / framerate ); 
+		pev->nextthink = gpGlobals->time; 
 	}
 
 	void EXPORT AnimateUntilDead( void );
@@ -126,11 +126,11 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	int ObjectCaps( void )
-	{
+	{ 
 		int flags = 0;
 		if( pev->spawnflags & SF_BEAM_TEMPORARY )
 			flags = FCAP_DONT_SAVE;
-		return ( CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION ) | flags;
+		return ( CBaseEntity :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION ) | flags; 
 	}
 
 	void EXPORT TriggerTouch( CBaseEntity *pOther );
@@ -147,12 +147,12 @@ public:
 		pev->rendermode = ( pev->rendermode & 0x0F ) | ( flags & 0xF0 );
 	}
 
-	inline void SetStartPos( const Vector &pos )
+	inline void SetStartPos( const Vector& pos )
 	{
 		pev->origin = pos;
 	}
 
-	inline void SetEndPos( const Vector &pos )
+	inline void SetEndPos( const Vector& pos )
 	{
 		pev->angles = pos;
 	}
@@ -230,7 +230,7 @@ public:
 	const Vector &GetStartPos( void );
 	const Vector &GetEndPos( void );
 
-	Vector Center( void ) { return ( GetStartPos() + GetEndPos() ) * 0.5; }; // center point of beam
+	Vector Center( void ) { return (GetStartPos() + GetEndPos()) * 0.5; }; // center point of beam
 
 	inline int GetTexture( void )
 	{
@@ -239,7 +239,7 @@ public:
 
 	inline int GetWidth( void )
 	{
-		return ( int ) pev->scale;
+		return (int)pev->scale;
 	}
 
 	inline int GetNoise( void )
@@ -256,17 +256,17 @@ public:
 
 	inline int GetBrightness( void )
 	{
-		return ( int ) pev->renderamt;
+		return (int)pev->renderamt;
 	}
 
 	inline int GetFrame( void )
 	{
-		return ( int ) pev->frame;
+		return (int)pev->frame;
 	}
 
 	inline int GetScrollRate( void )
 	{
-		return ( int ) pev->animtime;
+		return (int)pev->animtime;
 	}
 
 	// Call after you change start/end positions
@@ -291,11 +291,11 @@ public:
 		pev->nextthink = gpGlobals->time + time;
 	}
 
-	inline void BeamDamageInstant( TraceResult *ptr, float damage )
-	{
-		pev->dmg = damage;
+	inline void BeamDamageInstant( TraceResult *ptr, float damage ) 
+	{ 
+		pev->dmg = damage; 
 		pev->dmgtime = gpGlobals->time - 1;
-		BeamDamage( ptr );
+		BeamDamage( ptr ); 
 	}
 };
 
@@ -321,7 +321,7 @@ public:
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
 
-	CSprite *m_pSprite;
+	CSprite	*m_pSprite;
 	string_t	m_iszSpriteName;
 	Vector	m_firePosition;
 };

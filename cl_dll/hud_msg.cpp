@@ -21,17 +21,13 @@
 #include "parsemsg.h"
 #include "r_efx.h"
 
-#include "particleman.h"
-
-extern IParticleMan *g_pParticleMan;
-
 #define MAX_CLIENTS 32
 
 extern BEAM *pBeam;
 extern BEAM *pBeam2;
+extern TEMPENTITY *pFlare;	// Vit_amiN
 
-extern float g_lastFOV;
-extern int g_iAlive;
+extern float g_lastFOV;			// Vit_amiN
 
 /// USER-DEFINED SERVER MESSAGE HANDLERS
 
@@ -49,43 +45,26 @@ int CHud::MsgFunc_ResetHUD( const char *pszName, int iSize, void *pbuf )
 		pList = pList->pNext;
 	}
 
-	if( g_iAlive )
-	{
-		g_lastFOV = 0.0f;
-		m_iFOV = 0;
-		m_flMouseSensitivity = 0.0f;
+	// reset sensitivity
+	m_flMouseSensitivity = 0;
 
-		for( int i = 0; i < MAX_PLAYERS; i++ )
-		{
-			m_PlayerFOV[i] = 90;
-		}
-	}
+	// reset concussion effect
+	m_iConcussionEffect = 0;
 
-	if( g_pParticleMan )
-		g_pParticleMan->ResetParticles();
-
-	return 1;
-}
-
-int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
-{
-	HUDLIST *pList = m_pHudList;
-
-	while( pList )
-	{
-		if( pList->p )
-			pList->p->PlayerDied();
-		pList = pList->pNext;
-	}
-
-	m_flMouseSensitivity = 0.0f;
-
-	m_iFOV = 0;
+	// Vit_amiN: reset the FOV
+	m_iFOV = 0;	// default_fov
 	g_lastFOV = 0.0f;
+	m_inScope = false;
+
 	return 1;
 }
 
-extern void DoD_LoadClientEnts( const char *map );
+void CAM_ToFirstPerson( void );
+
+void CHud::MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
+{
+	CAM_ToFirstPerson();
+}
 
 void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
@@ -101,16 +80,56 @@ void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 
 	//Probably not a good place to put this.
 	pBeam = pBeam2 = NULL;
-	DoD_LoadClientEnts( gEngfuncs.pfnGetLevelName() );
+	pFlare = NULL;	// Vit_amiN: clear egon's beam flare
+}
+
+int CHud::MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
+{
+	BEGIN_READ( pbuf, iSize );
+	m_Teamplay = READ_BYTE();
+
+	if( m_Teamplay )
+		ClientCmd( "richpresence_gamemode Teamplay\n" );
+	else
+		ClientCmd( "richpresence_gamemode\n" );
+	ClientCmd( "richpresence_update\n" );
+	return 1;
 }
 
 int CHud::MsgFunc_Damage( const char *pszName, int iSize, void *pbuf )
 {
+	int		armor, blood;
+	Vector	from;
+	int		i;
+	float	count;
+
 	BEGIN_READ( pbuf, iSize );
-	READ_BYTE();
-	READ_BYTE();
-	READ_COORD();
-	READ_COORD();
-	READ_COORD();
+	armor = READ_BYTE();
+	blood = READ_BYTE();
+
+	for( i = 0; i < 3; i++)
+		from[i] = READ_COORD();
+
+	count = ( blood * 0.5 ) + ( armor * 0.5 );
+
+	if( count < 10 )
+		count = 10;
+
+	// TODO: kick viewangles,  show damage visually
+	return 1;
+}
+
+int CHud::MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf )
+{
+	int r, g, b;
+	BEGIN_READ( pbuf, iSize );
+	m_iConcussionEffect = READ_BYTE();
+	if( m_iConcussionEffect )
+	{
+		UnpackRGB( r, g, b, RGB_YELLOWISH );	// Vit_amiN: fixed
+		this->m_StatusIcons.EnableIcon( "dmg_concuss", r, g, b );
+	}
+	else
+		this->m_StatusIcons.DisableIcon( "dmg_concuss" );
 	return 1;
 }
