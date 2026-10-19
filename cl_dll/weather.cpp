@@ -125,7 +125,7 @@ void CDoDSnowFlake::Think( float time )
 
 		// the spiral snowflakes swing on the x axis, every one with an own phase
 		if( m_bSpiral )
-			m_vOrigin.x = m_vVelocity.x * frametime + sin( 5.0f * time + (float)(int)this ) * 2.0f + m_vOrigin.x;
+			m_vOrigin.x = m_vVelocity.x * frametime + sin( 5.0f * time + (float)(int)(size_t)this ) * 2.0f + m_vOrigin.x;
 		else
 			m_vOrigin.x = m_vVelocity.x * frametime + m_vOrigin.x;
 

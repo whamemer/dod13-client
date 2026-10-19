@@ -24,6 +24,8 @@
 #include <stdio.h>
 
 #include <VGUI_Font.h>
+#include <VGUI_MouseCode.h>
+#include <VGUI_KeyCode.h>
 
 #include "vgui_defaultinputsignal.h"
 #include "hud.h"
