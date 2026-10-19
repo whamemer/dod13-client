@@ -1,0 +1,117 @@
+/***
+*
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
+*
+*	This product contains software technology licensed from Id
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc.
+*	All Rights Reserved.
+*
+*   Use, distribution, and modification of this source code and/or resulting
+*   object code is restricted to non-commercial enhancements to products from
+*   Valve LLC.  All other use, distribution, or modification is prohibited
+*   without written permission from Valve LLC.
+*
+****/
+
+#include "extdll.h"
+#include "util.h"
+#include "cbase.h"
+#include "weapons.h"
+
+#include "dod_shared.h"
+
+LINK_ENTITY_TO_CLASS( weapon_bar, CBAR )
+
+extern p_wpninfo_s P_WpnInfo[];
+
+void CBAR::Spawn( void )
+{
+	CBipodWeapon::Spawn( WEAPON_BAR );
+}
+
+void CBAR::Precache( void )
+{
+	PRECACHE_MODEL( P_WpnInfo[WEAPON_BAR].vmodel );
+	PRECACHE_MODEL( P_WpnInfo[WEAPON_BAR].wmodel );
+
+	PRECACHE_SOUND( "weapons/357_cock1.wav" );
+	PRECACHE_SOUND( "weapons/bar_shoot.wav" );
+
+	m_iFireEvent = PRECACHE_EVENT( 1, "events/weapons/bar.sc" );
+}
+
+int CBAR::GetItemInfo( ItemInfo *p )
+{
+	p->pszName = STRING( pev->classname );
+	p->pszAmmo1 = "ammo_55mm";
+	p->iMaxAmmo1 = P_WpnInfo[WEAPON_BAR].ammo_maxcarry;
+	p->pszAmmo2 = NULL;
+	p->iMaxAmmo2 = -1;
+	p->iMaxClip = P_WpnInfo[WEAPON_BAR].ammo_maxclip;
+	p->iSlot = 2;
+	p->iPosition = 0;
+	p->iFlags = ITEM_FLAG_RIFLE;
+	p->iId = m_iId = WEAPON_BAR;
+	p->iBulletId = BULLET_PLAYER_BAR;
+	p->flRecoil = 2.0f;
+	p->iWeight = P_WpnInfo[WEAPON_BAR].misc_weight;
+
+	return 1;
+}
+
+int CBAR::Classify( void )
+{
+	return CLASS_MACHINEGUN;
+}
+
+int CBAR::GetReloadAnim( void )
+{
+	return !IsDeployed() ? BAR_UP_RELOAD : BAR_DOWN_RELOAD;
+}
+
+int CBAR::GetDrawAnim( void )
+{
+	return BAR_UP_DRAW;
+}
+
+int CBAR::GetIdleAnim( void )
+{
+	ResetEmptySound();
+
+	if( m_flTimeWeaponIdle <= UTIL_WeaponTimeBase() )
+		return IsDeployed() ? BAR_DOWN_IDLE : BAR_UP_IDLE;
+
+	return -1;
+}
+
+int CBAR::GetUpToDownAnim( void )
+{
+	return BAR_UP_TO_DOWN;
+}
+
+int CBAR::GetDownToUpAnim( void )
+{
+	return BAR_DOWN_TO_UP;
+}
+
+class CBARAmmoClip : public CBasePlayerAmmo
+{
+public:
+	virtual void Spawn( void )
+	{
+		SET_MODEL( ENT( pev ), "models/allied_ammo.mdl" );
+		CBasePlayerAmmo::Spawn();
+	}
+
+	virtual BOOL AddAmmo( CBaseEntity *pOther )
+	{
+		BOOL bResult = pOther->GiveAmmo( P_WpnInfo[WEAPON_BAR].ammo_maxclip, "ammo_55mm", P_WpnInfo[WEAPON_BAR].ammo_maxcarry ) != -1;
+
+		if( bResult )
+			EMIT_SOUND( ENT( pev ), CHAN_ITEM, "items/ammopickup.wav", 1, ATTN_NORM );
+
+		return bResult;
+	}
+};
+
+LINK_ENTITY_TO_CLASS( ammo_bar, CBARAmmoClip )
