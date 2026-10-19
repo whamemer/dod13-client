@@ -38,7 +38,7 @@ public:
 	EHANDLE m_hEnemy;		 // the entity that the monster is fighting.
 	EHANDLE m_hTargetEnt;	 // the entity that the monster is trying to reach
 	EHANDLE m_hOldEnemy[MAX_OLD_ENEMIES];
-	Vector m_vecOldEnemy[MAX_OLD_ENEMIES];
+	vec3_t m_vecOldEnemy[MAX_OLD_ENEMIES];
 
 	float m_flFieldOfView;// width of monster's field of view ( dot product )
 	float m_flWaitFinished;// if we're told to wait, this is the time that the wait will be over.
@@ -61,13 +61,13 @@ public:
 	int m_iRouteIndex;			// index into m_Route[]
 	float m_moveWaitTime;			// How long I should wait for something to move
 
-	Vector m_vecMoveGoal; // kept around for node graph moves, so we know our ultimate goal
+	vec3_t m_vecMoveGoal; // kept around for node graph moves, so we know our ultimate goal
 	Activity m_movementActivity;	// When moving, set this activity
 
 	int m_iAudibleList; // first index of a linked list of sounds that the monster can hear.
 	int m_afSoundTypes;
 
-	Vector m_vecLastPosition;// monster sometimes wants to return to where it started after an operation.
+	vec3_t m_vecLastPosition;// monster sometimes wants to return to where it started after an operation.
 
 	int m_iHintNode; // this is the hint node that the monster is moving towards or performing active idle on.
 
@@ -75,7 +75,7 @@ public:
 
 	int m_iMaxHealth;// keeps track of monster's maximum health value (for re-healing, etc)
 
-	Vector m_vecEnemyLKP;// last known position of enemy. (enemy's origin)
+	vec3_t m_vecEnemyLKP;// last known position of enemy. (enemy's origin)
 
 	int m_cAmmoLoaded;		// how much ammo is in the weapon (used to trigger reload anim sequences)
 
@@ -100,7 +100,7 @@ public:
 	int m_iTriggerCondition;// for scripted AI, this is the condition that will cause the activation of the monster's TriggerTarget
 	string_t m_iszTriggerTarget;// name of target that should be fired. 
 
-	Vector m_HackedGunPos;	// HACK until we can query end of gun
+	vec3_t m_HackedGunPos;	// HACK until we can query end of gun
 
 	// Scripted sequence Info
 	SCRIPTSTATE m_scriptState;		// internal cinematic state
@@ -108,7 +108,9 @@ public:
 
 	float m_flLastYawTime;
 
-	virtual int Save( CSave &save ); 
+	int m_iClass;
+
+	virtual int Save( CSave &save );
 	virtual int Restore( CRestore &restore );
 	static TYPEDESCRIPTION m_SaveData[];
 
@@ -119,6 +121,7 @@ public:
 	void EXPORT CorpseUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
 	// overrideable Monster member functions
+	virtual int Classify( void ) { return m_iClass; }
 	virtual int BloodColor( void ) { return m_bloodColor; }
 
 	virtual CBaseMonster *MyMonsterPointer( void ) { return this; }
@@ -188,15 +191,10 @@ public:
 	virtual void ScheduleChange( void ) {}
 	// virtual int CanPlaySequence( void ) { return ((m_pCine == NULL) && (m_MonsterState == MONSTERSTATE_NONE || m_MonsterState == MONSTERSTATE_IDLE || m_IdealMonsterState == MONSTERSTATE_IDLE)); }
 	virtual int CanPlaySequence( BOOL fDisregardState, int interruptLevel );
-#if SPEAKABLE_TARGETS
-	virtual int CanPlaySentence( BOOL fDisregardState ) { return IsAllowedToSpeak(); }
-	virtual BOOL IsAllowedToSpeak( void ) { return IsAlive(); }
-#else
 	virtual int CanPlaySentence( BOOL fDisregardState ) { return IsAlive(); }
 	virtual void PlaySentence( const char *pszSentence, float duration, float volume, float attenuation );
 	virtual void PlayScriptedSentence( const char *pszSentence, float duration, float volume, float attenuation, BOOL bConcurrent, CBaseEntity *pListener );
 	virtual void SentenceStop( void );
-#endif
 	Task_t *GetTask( void );
 	virtual MONSTERSTATE GetIdealState( void );
 	virtual void SetActivity( Activity NewActivity );
@@ -265,11 +263,12 @@ public:
 	virtual CSound* PBestScent( void );
 	virtual float HearingSensitivity( void ) { return 1.0; };
 
-	BOOL FBecomeProne( void );
+	virtual BOOL FBecomeProne( void );
 	virtual void BarnacleVictimBitten( entvars_t *pevBarnacle );
 	virtual void BarnacleVictimReleased( void );
 
 	void SetEyePosition( void );
+	virtual void DoDSetScriptReset( void ) { m_scriptState = SCRIPT_CLEANUP; }
 
 	BOOL FShouldEat( void );// see if a monster is 'hungry'
 	void Eat( float flFullDuration );// make the monster 'full' for a while.
@@ -331,6 +330,7 @@ public:
 
 	BOOL ExitScriptedSequence();
 	BOOL CineCleanup();
+	void StartPatrol( CBaseEntity *pPathEnt );
 
 	CBaseEntity* DropItem( const char *pszItemName, const Vector &vecPos, const Vector &vecAng );// drop an item.
 };

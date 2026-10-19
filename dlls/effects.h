@@ -230,7 +230,7 @@ public:
 	const Vector &GetStartPos( void );
 	const Vector &GetEndPos( void );
 
-	Vector Center( void ) { return (GetStartPos() + GetEndPos()) * 0.5; }; // center point of beam
+	vec3_t Center( void ) { return (GetStartPos() + GetEndPos()) * 0.5; }; // center point of beam
 
 	inline int GetTexture( void )
 	{
@@ -323,6 +323,6 @@ public:
 
 	CSprite	*m_pSprite;
 	string_t	m_iszSpriteName;
-	Vector	m_firePosition;
+	vec3_t	m_firePosition;
 };
 #endif		//EFFECTS_H

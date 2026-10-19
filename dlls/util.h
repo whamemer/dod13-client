@@ -105,7 +105,8 @@ typedef int BOOL;
 // The function is used to intialize / allocate the object for the entity
 
 #if CLIENT_DLL
-#define LINK_ENTITY_TO_CLASS(mapClassName,DLLClassName)
+// DoD keeps the entity factories in the client binary as well, but they are never looked up by name
+#define LINK_ENTITY_TO_CLASS(mapClassName,DLLClassName) extern "C" void mapClassName( entvars_t *pev ); void mapClassName( entvars_t *pev ) { GetClassPtr( (DLLClassName *)pev ); }
 #else // CLIENT_DLL
 #define LINK_ENTITY_TO_CLASS(mapClassName,DLLClassName) extern "C" EXPORT void mapClassName( entvars_t *pev ); void mapClassName( entvars_t *pev ) { GetClassPtr( (DLLClassName *)pev ); }
 #endif // CLIENT_DLL
@@ -194,6 +195,15 @@ typedef enum
 	MONSTERSTATE_PLAYDEAD,
 	MONSTERSTATE_DEAD
 } MONSTERSTATE;
+
+typedef enum
+{
+	STATE_OFF = 0,
+	STATE_TURN_ON,
+	STATE_ON,
+	STATE_TURN_OFF,
+	STATE_IN_USE
+} STATE;
 
 
 
@@ -399,7 +409,7 @@ void DBG_AssertFunction(BOOL fExpr, const char* szExpr, const char* szFile, int 
 #define ASSERTSZ(f, sz)
 #endif	// !DEBUG
 
-extern DLL_GLOBAL const Vector g_vecZero;
+extern DLL_GLOBAL const vec3_t g_vecZero;
 
 #define AMBIENT_SOUND_STATIC			0	// medium radius attenuation
 #define AMBIENT_SOUND_EVERYWHERE		1
