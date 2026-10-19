@@ -29,8 +29,8 @@
 cvar_t *cl_scoreboard_bg;
 cvar_t *cl_showpacketloss;
 
-#include "vgui_TeamFortressViewport.h"
-#include "vgui_SpectatorPanel.h"
+#include "vgui/vgui_TeamFortressViewport.h"
+#include "vgui/dodspectatorgui.h"
 
 DECLARE_COMMAND( m_Scoreboard, ShowScores )
 DECLARE_COMMAND( m_Scoreboard, HideScores )
@@ -116,7 +116,7 @@ int CHudScoreboard::Draw( float fTime )
 
 	bool showToDead = !gHUD.UseVguiScoreBoard();
 
-	if( !m_iShowscoresHeld && (showToDead ? gHUD.m_Health.m_iHealth > 0 : true) && !gHUD.m_iIntermission )
+	if( !m_iShowscoresHeld && (showToDead ? gHUD.m_Icons.m_iHealth > 0 : true) && !gHUD.m_iIntermission )
 		return 1;
 	
 	if (gViewPort && gViewPort->IsScoreBoardVisible())

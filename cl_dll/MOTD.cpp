@@ -24,7 +24,6 @@
 #include "kbutton.h"
 #include "triangleapi.h"
 #include <string.h>
-#include <stdio.h>
 
 int CHudMOTD::Init( void )
 {

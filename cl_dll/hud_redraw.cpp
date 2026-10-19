@@ -15,13 +15,14 @@
 //
 // hud_redraw.cpp
 //
-#include <cmath>
 
 #include "hud.h"
 #include "cl_util.h"
+#include "event_api.h"
+#include "pm_shared.h"
 //#include "triangleapi.h"
 
-#include "vgui_TeamFortressViewport.h"
+#include "vgui/vgui_TeamFortressViewport.h"
 
 #define MAX_LOGO_FRAMES 56
 
@@ -32,17 +33,63 @@ int grgLogoFrame[MAX_LOGO_FRAMES] =
 	29, 29, 29, 29, 29, 28, 27, 26, 25, 24, 30, 31 
 };
 
-extern int g_iVisibleMouse;
+extern vec3_t v_origin;
 
-float HUD_GetFOV( void );
+Queue g_RubbleQueue;
+
+int i_dodmusic;
 
 extern cvar_t *sensitivity;
+
+float HUD_GetFOV( void );
 
 // Think
 void CHud::Think( void )
 {
 	m_scrinfo.iSize = sizeof(m_scrinfo);
 	GetScreenInfo(&m_scrinfo);
+
+	if( flBoltHideXHair > 0.0f )
+		flBoltHideXHair -= m_flTimeDelta;
+
+	if( flBoltHideXHair < 0.0f )
+		flBoltHideXHair = 0.0f;
+
+	if( g_iDeadFlag )
+	{
+		if( g_iDeadFlag > 0 && m_flPlaySprintSoundTime > m_flTime )
+			gEngfuncs.pEventAPI->EV_StopSound( -1, CHAN_STATIC, "player/sprintgrunts.wav" );
+
+		m_iSensLevel = 0;
+	}
+	else
+	{
+		if( m_flTime > m_flPlaySprintSoundTime && g_fStamina < 60.0f && !gEngfuncs.IsSpectateOnly() )
+		{
+			float volume = 0.8f;
+
+			if( g_fStamina >= 25.0f )
+				volume = 0.3f;
+
+			gEngfuncs.pEventAPI->EV_PlaySound( -1, v_origin, CHAN_STATIC, "player/sprintgrunts.wav", volume, ATTN_NONE, 0, PITCH_NORM );
+			m_flPlaySprintSoundTime = m_flTime + 1.4f;
+		}
+
+		if( g_iUser1 )
+			m_iSensLevel = 0;
+	}
+
+	if( !gEngfuncs.IsSpectateOnly() )
+	{
+		if( i_dodmusic == 1 && m_flTime > i_MusicFadeCounter )
+		{
+			PlaySound( "player/prewarmup.wav", 1.0f );
+			i_dodmusic = 0;
+		}
+
+		if( i_MusicFadeCounter - m_flTime > 10.0f )
+			i_MusicFadeCounter = m_flTime - 1.0f;
+	}
 
 	int newfov;
 	HUDLIST *pList = m_pHudList;
@@ -54,40 +101,36 @@ void CHud::Think( void )
 		pList = pList->pNext;
 	}
 
-	newfov = HUD_GetFOV();
-	if( newfov == 0 )
-	{
-		m_iFOV = default_fov->value;
-	}
-	else
-	{
-		m_iFOV = newfov;
-	}
+	newfov = (int)HUD_GetFOV();
 
-	// the clients fov is actually set in the client data update section of the hud
-	// Set a new sensitivity
-	if( m_iFOV == default_fov->value )
+	if( newfov == 0 )
+		newfov = 90;
+
+	if( newfov != m_iFOV )
+		SetFOV( newfov );
+
+	if( newfov == 90 )
 	{
-		// reset to saved sensitivity
 		m_flMouseSensitivity = 0;
 	}
 	else
 	{
-		// set a new sensitivity that is proportional to the change from the FOV default
-		m_flMouseSensitivity = sensitivity->value * ((float)newfov / Q_max( default_fov->value, 90 )) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
-	}
+		float zoom_sens = zoom_sensitivity_ratio ? zoom_sensitivity_ratio->value : 1.0f;
 
-	// think about default fov
-	if( m_iFOV == 0 )
-	{
-		// only let players adjust up in fov,  and only if they are not overriden by something else
-		m_iFOV = Q_max( default_fov->value, 90 );  
+		m_flMouseSensitivity = zoom_sens * ( (float)newfov / 90.0f * sensitivity->value );
 	}
 
 	if( gEngfuncs.IsSpectateOnly() )
 	{
-		m_iFOV = gHUD.m_Spectator.GetFOV(); // default_fov->value;
+		if( g_iUser1 == OBS_IN_EYE && g_iUser2 )
+			SetFOV( m_PlayerFOV[g_iUser2] ? m_PlayerFOV[g_iUser2] : 90 );
+		else
+			SetFOV( 90 );
 	}
+
+	g_RubbleQueue.Update( m_flTime );
+
+	// the original also calls the VGUI2 viewport's OnTick() here
 }
 
 // Redraw
@@ -95,10 +138,11 @@ void CHud::Think( void )
 // returns 1 if they've changed, 0 otherwise
 int CHud::Redraw( float flTime, int intermission )
 {
+	static float m_flShotTime = 0;
+
 	m_fOldTime = m_flTime;	// save time of previous redraw
 	m_flTime = flTime;
 	m_flTimeDelta = (double)( m_flTime - m_fOldTime );
-	static float m_flShotTime = 0;
 
 	// Clock was reset, reset delta
 	if( m_flTimeDelta < 0 )
@@ -124,7 +168,7 @@ int CHud::Redraw( float flTime, int intermission )
 				gViewPort->ShowScoreBoard();
 			gViewPort->UpdateSpectatorPanel();
 			// Take a screenshot if the client's got the cvar set
-			if( CVAR_GET_FLOAT( "hud_takesshots" ) != 0 )
+			if( hud_takesshots && hud_takesshots->value != 0 )
 				m_flShotTime = flTime + 1.0;	// Take a screenshot in a second
 		}
 	}
@@ -163,46 +207,39 @@ int CHud::Redraw( float flTime, int intermission )
 		}
 	}
 
-	// are we in demo mode? do we need to draw the logo in the top corner?
-	if( m_iLogo )
-	{
-		int x, y, i;
-
-		if( m_hsprLogo == 0 )
-			m_hsprLogo = LoadSprite( "sprites/%d_logo.spr" );
-
-		SPR_Set( m_hsprLogo, 250, 250, 250 );
-
-		x = SPR_Width( m_hsprLogo, 0 );
-		x = ScreenWidth - x;
-		y = SPR_Height( m_hsprLogo, 0 ) / 2;
-
-		// Draw the logo at 20 fps
-		int iFrame = (int)( flTime * 20 ) % MAX_LOGO_FRAMES;
-		i = grgLogoFrame[iFrame] - 1;
-
-		SPR_DrawAdditive( i, x, y, NULL );
-	}
-
+	// disabled for now (cl_lw 0 is used for testing): the original forces cl_lw 1 and quits the game
 	/*
-	if( g_iVisibleMouse )
+	if( cl_lw && cl_lw->value != 1.0f )
 	{
-		void IN_GetMousePos( int *mx, int *my );
-		int mx, my;
+		char things[18];
 
-		IN_GetMousePos( &mx, &my );
-
-		if( m_hsprCursor == 0 )
-		{
-			m_hsprCursor = SPR_Load( "sprites/cursor.spr" );
-		}
-
-		SPR_Set( m_hsprCursor, 250, 250, 250 );
-
-		// Draw the logo at 20 fps
-		SPR_DrawAdditive( 0, mx, my, NULL );
+		strcpy( things, "quit\n" );
+		ClientCmd( "cl_lw 1" );
+		ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
+		ClientCmd( things );
 	}
 	*/
+
+	if( r_drawentities && r_drawentities->value != 1.0f )
+	{
+		char things[18];
+
+		strcpy( things, "quit\n" );
+		ClientCmd( "r_drawentities 1" );
+		ConsolePrint( "r_drawentities is not a valid command. Do not use it.\n" );
+		ClientCmd( things );
+	}
+
+	if( cl_pitchdown && ( cl_pitchdown->value > 89.0f || cl_pitchdown->value < 0.0f ) )
+		ClientCmd( "cl_pitchdown 89" );
+
+	if( cl_pitchup && ( cl_pitchup->value > 89.0f || cl_pitchup->value < 0.0f ) )
+		ClientCmd( "cl_pitchup 89" );
+
+	if( crosshair && crosshair->value > 0.0f )
+		ClientCmd( "crosshair 0" );
+
+	g_RubbleQueue.maxelements = max_rubble ? (int)max_rubble->value : 0;
 
 	return 1;
 }
@@ -321,7 +358,7 @@ int CHud::DrawHudStringReverse( int xpos, int ypos, int iMinX, const char *szStr
 		xpos -= gHUD.m_scrinfo.charWidths[(unsigned char)*szIt];
 	if( xpos < iMinX )
 		xpos = iMinX;
-	DrawHudString( xpos, ypos, gHUD.m_scrinfo.iWidth, szString, r, g, b );
+	DrawHudString( xpos, ypos, ScreenWidth, szString, r, g, b );
 	return xpos;
 }
 

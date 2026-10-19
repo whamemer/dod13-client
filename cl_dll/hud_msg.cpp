@@ -20,21 +20,18 @@
 #include "cl_util.h"
 #include "parsemsg.h"
 #include "r_efx.h"
-
-#define MAX_CLIENTS 32
+#include "particleman.h"
+#include "dod_camera.h"
 
 extern BEAM *pBeam;
 extern BEAM *pBeam2;
-extern TEMPENTITY *pFlare;	// Vit_amiN
 
-extern float g_lastFOV;			// Vit_amiN
+extern float g_lastFOV;
 
 /// USER-DEFINED SERVER MESSAGE HANDLERS
 
 int CHud::MsgFunc_ResetHUD( const char *pszName, int iSize, void *pbuf )
 {
-	ASSERT( iSize == 0 );
-
 	// clear all hud data
 	HUDLIST *pList = m_pHudList;
 
@@ -45,29 +42,48 @@ int CHud::MsgFunc_ResetHUD( const char *pszName, int iSize, void *pbuf )
 		pList = pList->pNext;
 	}
 
-	// reset sensitivity
-	m_flMouseSensitivity = 0;
+	if( g_iAlive )
+	{
+		g_lastFOV = 0.0f;
+		SetFOV( 0 );
 
-	// reset concussion effect
-	m_iConcussionEffect = 0;
+		// reset sensitivity
+		m_flMouseSensitivity = 0;
 
-	// Vit_amiN: reset the FOV
-	m_iFOV = 0;	// default_fov
-	g_lastFOV = 0.0f;
-	m_inScope = false;
+		for( int i = 0; i < MAX_PLAYERS; i++ )
+			m_PlayerFOV[i] = 90;
+
+		if( g_pParticleMan )
+			g_pParticleMan->ResetParticles();
+	}
 
 	return 1;
 }
 
-void CAM_ToFirstPerson( void );
-
-void CHud::MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
+int CHud::MsgFunc_YouDied( const char *pszName, int iSize, void *pbuf )
 {
-	CAM_ToFirstPerson();
+	HUDLIST *pList = m_pHudList;
+
+	while( pList )
+	{
+		if( pList->p )
+			pList->p->PlayerDied();
+		pList = pList->pNext;
+	}
+
+	m_flMouseSensitivity = 0;
+
+	// the original returns here when the VGUI2 viewport shows the widescreen bars (IDoDViewPort::isWidescreenVisible()) and g_iVuser1z is 0
+	SetFOV( 0 );
+	g_lastFOV = 0.0f;
+
+	return 1;
 }
 
 void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
+	// the original first calls IViewPort::OnLevelChange() (VGUI2 viewport)
+
 	// prepare all hud data
 	HUDLIST *pList = m_pHudList;
 
@@ -80,26 +96,17 @@ void CHud::MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 
 	//Probably not a good place to put this.
 	pBeam = pBeam2 = NULL;
-	pFlare = NULL;	// Vit_amiN: clear egon's beam flare
-}
 
-int CHud::MsgFunc_GameMode( const char *pszName, int iSize, void *pbuf )
-{
-	BEGIN_READ( pbuf, iSize );
-	m_Teamplay = READ_BYTE();
+	// the points of the new map come with InitObj (the original forgets them in VidInit)
+	m_ObjectiveIcons.ClearAllCapPoints();
 
-	if( m_Teamplay )
-		ClientCmd( "richpresence_gamemode Teamplay\n" );
-	else
-		ClientCmd( "richpresence_gamemode\n" );
-	ClientCmd( "richpresence_update\n" );
-	return 1;
+	DoD_LoadClientEnts( gEngfuncs.pfnGetLevelName() );
 }
 
 int CHud::MsgFunc_Damage( const char *pszName, int iSize, void *pbuf )
 {
 	int		armor, blood;
-	Vector	from;
+	vec3_t	from;
 	int		i;
 	float	count;
 
@@ -116,20 +123,5 @@ int CHud::MsgFunc_Damage( const char *pszName, int iSize, void *pbuf )
 		count = 10;
 
 	// TODO: kick viewangles,  show damage visually
-	return 1;
-}
-
-int CHud::MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf )
-{
-	int r, g, b;
-	BEGIN_READ( pbuf, iSize );
-	m_iConcussionEffect = READ_BYTE();
-	if( m_iConcussionEffect )
-	{
-		UnpackRGB( r, g, b, RGB_YELLOWISH );	// Vit_amiN: fixed
-		this->m_StatusIcons.EnableIcon( "dmg_concuss", r, g, b );
-	}
-	else
-		this->m_StatusIcons.DisableIcon( "dmg_concuss" );
 	return 1;
 }

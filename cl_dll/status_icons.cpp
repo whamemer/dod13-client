@@ -22,7 +22,6 @@
 #include "entity_state.h"
 #include "cl_entity.h"
 #include <string.h>
-#include <stdio.h>
 #include "parsemsg.h"
 #include "event_api.h"
 
@@ -53,8 +52,9 @@ void CHudStatusIcons::Reset( void )
 // Draw status icons along the left-hand side of the screen
 int CHudStatusIcons::Draw( float flTime )
 {
-	if( gEngfuncs.IsSpectateOnly() )
+	if( g_iUser1 )
 		return 1;
+
 	// find starting position to draw from, along right-hand side of screen
 	int x = 5;
 	int y = ScreenHeight / 2;

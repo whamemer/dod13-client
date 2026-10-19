@@ -16,10 +16,8 @@
 //  hud_update.cpp
 //
 
-#include <cmath>
 #include "hud.h"
 #include "cl_util.h"
-#include <stdlib.h>
 
 int CL_ButtonBits( int );
 void CL_ResetButtonBits( int bits );
@@ -30,8 +28,8 @@ extern void HUD_SetCmdBits( int bits );
 
 int CHud::UpdateClientData( client_data_t *cdata, float time )
 {
-	memcpy( m_vecOrigin, cdata->origin, sizeof(vec3_t) );
-	memcpy( m_vecAngles, cdata->viewangles, sizeof(vec3_t) );
+	m_vecOrigin = cdata->origin;
+	m_vecAngles = cdata->viewangles;
 
 	m_iKeyBits = CL_ButtonBits( 0 );
 	m_iWeaponBits = cdata->iWeaponBits;
@@ -40,9 +38,9 @@ int CHud::UpdateClientData( client_data_t *cdata, float time )
 
 	Think();
 
-	cdata->fov = m_iFOV;
+	v_idlescale = 0.0f;
 
-	v_idlescale = m_iConcussionEffect;
+	cdata->fov = m_iFOV;
 
 	CL_ResetButtonBits( m_iKeyBits );
 

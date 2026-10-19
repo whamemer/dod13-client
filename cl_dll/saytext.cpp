@@ -24,8 +24,11 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
-#include "vgui_TeamFortressViewport.h"
+#include "vgui/dod_localize.h"
+
+#include "vgui/vgui_TeamFortressViewport.h"
 
 extern float *GetClientColor( int clientIndex );
 
@@ -45,7 +48,19 @@ static float flScrollTime = 0;  // the time at which the lines next scroll up
 static int Y_START = 0;
 static int line_height = 0;
 
+// the color of the messages of the server (spectators only)
+float ColorBlue[3] = { 1.0f, 0.7f, 0.0f };
+
 DECLARE_MESSAGE( m_SayText, SayText )
+
+// the command "hud_saytext" switches the cvar "hud_saytext_internal"
+void HudSayTextToggle( void )
+{
+	if( gHUD.m_SayText.m_HUD_saytext->value == 0.0f )
+		gHUD.m_SayText.m_HUD_saytext->value = 1.0f;
+	else
+		gHUD.m_SayText.m_HUD_saytext->value = 0.0f;
+}
 
 int CHudSayText::Init( void )
 {
@@ -55,7 +70,9 @@ int CHudSayText::Init( void )
 
 	InitHUDData();
 
-	m_HUD_saytext =		gEngfuncs.pfnRegisterVariable( "hud_saytext", "1", 0 );
+	gEngfuncs.pfnAddCommand( "hud_saytext", HudSayTextToggle );
+
+	m_HUD_saytext =		gEngfuncs.pfnRegisterVariable( "hud_saytext_internal", "1", 0 );
 	m_HUD_saytext_time =	gEngfuncs.pfnRegisterVariable( "hud_saytext_time", "5", 0 );
 
 	m_iFlags |= HUD_INTERMISSION; // is always drawn during an intermission
@@ -77,7 +94,13 @@ int CHudSayText::VidInit( void )
 
 int ScrollTextUp( void )
 {
-	ConsolePrint( g_szLineBuffer[0] ); // move the first line into the console buffer
+	char buf[MAX_CHARS_PER_LINE + 2];
+
+	// move the first line into the console buffer
+	strlcpy( buf, g_szLineBuffer[0], MAX_CHARS_PER_LINE );
+	strlcat( buf, "\n", sizeof( buf ) );
+	ConsolePrint( buf );
+
 	g_szLineBuffer[MAX_LINES][0] = 0;
 	memmove( g_szLineBuffer[0], g_szLineBuffer[1], sizeof(g_szLineBuffer) - sizeof(g_szLineBuffer[0]) ); // overwrite the first line
 	memmove( &g_pflNameColors[0], &g_pflNameColors[1], sizeof(g_pflNameColors) - sizeof(g_pflNameColors[0]) );
@@ -96,6 +119,7 @@ int ScrollTextUp( void )
 int CHudSayText::Draw( float flTime )
 {
 	int y = Y_START;
+	int r = 255, g = 255, b = 255;
 
 	if( ( gViewPort && gViewPort->AllowedToPrintText() == FALSE ) || !m_HUD_saytext->value )
 		return 1;
@@ -118,6 +142,16 @@ int CHudSayText::Draw( float flTime )
 		}
 	}
 
+	DrawConsoleString( LINE_START, y, "" );
+
+	// the text is drawn in the color of the console
+	char *colour = CVAR_GET_STRING( "con_color" );
+	sscanf( colour, "%i %i %i", &r, &g, &b );
+
+	float fR = r / 255.0f;
+	float fG = g / 255.0f;
+	float fB = b / 255.0f;
+
 	for( int i = 0; i < MAX_LINES; i++ )
 	{
 		if( *g_szLineBuffer[i] )
@@ -125,20 +159,19 @@ int CHudSayText::Draw( float flTime )
 			if( *g_szLineBuffer[i] == 2 && g_pflNameColors[i] )
 			{
 				// it's a saytext string
-				static char buf[MAX_PLAYER_NAME_LENGTH + 32];
+				char buf[MAX_PLAYER_NAME_LENGTH + 32];
 
 				// draw the first x characters in the player color
-				strlcpy( buf, g_szLineBuffer[i], Q_min(g_iNameLengths[i] + 1, MAX_PLAYER_NAME_LENGTH + 32 ) );
-				DrawSetTextColor( g_pflNameColors[i][0], g_pflNameColors[i][1], g_pflNameColors[i][2] );
-				int x = DrawConsoleString( LINE_START, y, buf );
+				strlcpy( buf, g_szLineBuffer[i], Q_min( g_iNameLengths[i] + 1, (int)sizeof( buf ) ) );
+				int x = gHUD.m_VGUI2Print.DrawLocalizedString( buf, LINE_START, y, g_pflNameColors[i][0], g_pflNameColors[i][1], g_pflNameColors[i][2] );
 
 				// color is reset after each string draw
-				DrawConsoleString( x, y, g_szLineBuffer[i] + g_iNameLengths[i] );
+				gHUD.m_VGUI2Print.DrawLocalizedString( g_szLineBuffer[i] + g_iNameLengths[i], x, y, fR, fG, fB );
 			}
 			else
 			{
 				// normal draw
-				DrawConsoleString( LINE_START, y, g_szLineBuffer[i] );
+				gHUD.m_VGUI2Print.DrawLocalizedString( g_szLineBuffer[i], LINE_START, y, fR, fG, fB );
 			}
 		}
 
@@ -153,13 +186,43 @@ int CHudSayText::MsgFunc_SayText( const char *pszName, int iSize, void *pbuf )
 	BEGIN_READ( pbuf, iSize );
 
 	int client_index = READ_BYTE();		// the client who spoke the message
-	SayTextPrint( READ_STRING(), iSize - 1,  client_index );
+	SayTextPrint( READ_STRING(), iSize - 1, client_index, NULL, NULL, NULL, NULL );
 
 	return 1;
 }
 
-void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex )
+int CHudSayText::GetTextPrintY( void )
 {
+	int iHeight = ScreenHeight;
+	int y;
+
+	if( !g_iUser1 && !gEngfuncs.IsSpectateOnly() )
+	{
+		y = iHeight - (int)( (float)gHUD.m_iFontHeight * 2.75f );
+	}
+	else
+	{
+		// the bottom bar of the spectator GUI (VGUI2) is not here
+		y = iHeight - 4;
+	}
+
+	return y - 5 * line_height - (int)( (float)line_height * 0.5f );
+}
+
+// the words that begin with '#' are tokens of the localization, %s1..%s4 are replaced with sstr1..sstr4
+void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex, char *sstr1, char *sstr2, char *sstr3, char *sstr4 )
+{
+	int i;
+	bool colorName;
+	const char *localized;
+	char buf[512];
+	int len;
+	char text[MAX_CHARS_PER_LINE];
+	const char *args[4];
+	int j;
+	const char *pName;
+	const char *nameInString;
+
 	if( gViewPort && gViewPort->AllowedToPrintText() == FALSE )
 	{
 		// Print it straight to the console
@@ -167,13 +230,13 @@ void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientInde
 		return;
 	}
 
-	int i;
 	// find an empty string slot
 	for( i = 0; i < MAX_LINES; i++ )
 	{
 		if( !( *g_szLineBuffer[i] ) )
 			break;
 	}
+
 	if( i == MAX_LINES )
 	{
 		// force scroll buffer up
@@ -184,25 +247,104 @@ void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientInde
 	g_iNameLengths[i] = 0;
 	g_pflNameColors[i] = NULL;
 
+	if( gEngfuncs.IsSpectateOnly() && !clientIndex )
+		g_pflNameColors[i] = ColorBlue;
+
+	colorName = ( *pszBuf == 2 && clientIndex > 0 );
+
+	// the line ends are not shown
+	len = strlen( pszBuf );
+
+	if( len > 0 && ( pszBuf[len - 1] == '\n' || pszBuf[len - 1] == '\r' ) )
+	{
+		strlcpy( buf, pszBuf, sizeof( buf ) );
+		len = strlen( buf );
+
+		while( len > 0 && ( buf[len - 1] == '\n' || buf[len - 1] == '\r' ) )
+			buf[--len] = 0;
+
+		pszBuf = buf;
+	}
+
+	localized = DoD_FindLocalized( pszBuf );
+
+	if( localized )
+	{
+		strlcpy( text, localized, sizeof( text ) );
+	}
+	else
+	{
+		const char *src = pszBuf;
+		int outPos = 0;
+
+		while( *src && outPos < (int)sizeof( text ) - 1 )
+		{
+			if( *src == '#' )
+			{
+				char word[128];
+				int wordLen = 0;
+				int n;
+
+				while( src[wordLen] && !isspace( (unsigned char)src[wordLen] ) )
+					wordLen++;
+
+				strlcpy( word, src, Q_min( wordLen + 1, (int)sizeof( word ) ) );
+
+				localized = DoD_FindLocalized( word );
+
+				if( !localized )
+					localized = word;
+
+				n = Q_min( (int)strlen( localized ), (int)sizeof( text ) - 1 - outPos );
+				memcpy( text + outPos, localized, n );
+				outPos += n;
+
+				src += wordLen;
+			}
+			else
+			{
+				text[outPos++] = *src++;
+			}
+		}
+
+		text[outPos] = 0;
+	}
+
+	args[0] = sstr1;
+	args[1] = sstr2;
+	args[2] = sstr3;
+	args[3] = sstr4;
+
+	// the arguments are tokens too
+	for( j = 0; j < 4; j++ )
+	{
+		localized = args[j] ? DoD_FindLocalized( args[j] ) : NULL;
+
+		if( localized )
+			args[j] = localized;
+		else if( !args[j] )
+			args[j] = "";
+	}
+
+	DoD_ConstructLocalized( g_szLineBuffer[i], MAX_CHARS_PER_LINE, text, args[0], args[1], args[2], args[3] );
+
 	// if it's a say message, search for the players name in the string
-	if( *pszBuf == 2 && clientIndex > 0 )
+	if( colorName )
 	{
 		GetPlayerInfo( clientIndex, &g_PlayerInfoList[clientIndex] );
-		const char *pName = g_PlayerInfoList[clientIndex].name;
+		pName = g_PlayerInfoList[clientIndex].name;
 
 		if( pName )
 		{
-			const char *nameInString = strstr( pszBuf, pName );
+			nameInString = strstr( g_szLineBuffer[i], pName );
 
 			if( nameInString )
 			{
-				g_iNameLengths[i] = strlen( pName ) + ( nameInString - pszBuf );
+				g_iNameLengths[i] = strlen( pName ) + ( nameInString - g_szLineBuffer[i] );
 				g_pflNameColors[i] = GetClientColor( clientIndex );
 			}
 		}
 	}
-
-	strlcpy( g_szLineBuffer[i], pszBuf, Q_max( iBufSize, MAX_CHARS_PER_LINE ) );
 
 	// make sure the text fits in one line
 	EnsureTextFitsInOneLineAndWrapIfHaveTo( i );
@@ -214,19 +356,14 @@ void CHudSayText::SayTextPrint( const char *pszBuf, int iBufSize, int clientInde
 	}
 
 	m_iFlags |= HUD_ACTIVE;
-	PlaySound( "misc/talk.wav", 1 );
 
-	if( ScreenHeight >= 480 )
-		Y_START = ScreenHeight - 60;
-	else
-		Y_START = ScreenHeight - 45;
-	Y_START -= ( line_height * ( MAX_LINES + 1 ) );
+	Y_START = GetTextPrintY();
 }
 
 void CHudSayText::EnsureTextFitsInOneLineAndWrapIfHaveTo( int line )
 {
 	int line_width = 0;
-	GetConsoleStringSize( g_szLineBuffer[line], &line_width, &line_height );
+	gHUD.m_VGUI2Print.GetStringSize( g_szLineBuffer[line], &line_width, &line_height );
 
 	if( ( line_width + LINE_START ) > MAX_LINE_WIDTH )
 	{
@@ -259,7 +396,7 @@ void CHudSayText::EnsureTextFitsInOneLineAndWrapIfHaveTo( int line )
 				last_break = x;
 
 			buf[0] = *x;  // get the length of the current character
-			GetConsoleStringSize( buf, &tmp_len, &line_height );
+			gHUD.m_VGUI2Print.GetStringSize( buf, &tmp_len, &line_height );
 			length += tmp_len;
 
 			if( length > MAX_LINE_WIDTH )

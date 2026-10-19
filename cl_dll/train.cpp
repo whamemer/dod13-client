@@ -20,8 +20,6 @@
 
 #include "hud.h"
 #include "cl_util.h"
-#include <string.h>
-#include <stdio.h>
 #include "parsemsg.h"
 
 DECLARE_MESSAGE( m_Train, Train )
@@ -46,15 +44,14 @@ int CHudTrain::VidInit( void )
 
 int CHudTrain::Draw( float fTime )
 {
-	if( !m_hSprite )
-		m_hSprite = LoadSprite( "sprites/%d_train.spr" );
-
 	if( m_iPos )
 	{
-		int r, g, b, x, y;
+		int x, y;
 
-		UnpackRGB( r, g, b, RGB_YELLOWISH );
-		SPR_Set( m_hSprite, r, g, b );
+		if( !m_hSprite )
+			m_hSprite = LoadSprite( "sprites/%d_train.spr" );
+
+		SPR_Set( m_hSprite, 255, 255, 255 );
 
 		// This should show up to the right and part way up the armor number
 		y = ScreenHeight - SPR_Height( m_hSprite, 0 ) - gHUD.m_iFontHeight;

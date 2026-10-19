@@ -10,7 +10,6 @@
 #define HUD_SPECTATOR_H
 
 #include "cl_entity.h"
-#include "interpolation.h"
 
 #define INSET_OFF			0
 #define	INSET_CHASE_FREE		1
@@ -24,6 +23,7 @@
 #define OVERVIEW_MAX_LAYERS		1
 
 extern void VectorAngles( const float *forward, float *angles );
+extern const char *GetSpectatorLabel( int iMode );
 extern "C" void NormalizeAngles( float *angles );
 
 //-----------------------------------------------------------------------------
@@ -51,19 +51,11 @@ typedef struct overviewEntity_s
 	HSPRITE					hSprite;
 	struct cl_entity_s *	entity;
 	double					killTime;
+	bool					b_dodMapTag;
+	vec3_t					origin;
 } overviewEntity_t;
 
-typedef struct cameraWayPoint_s
-{
-	float	time;
-	vec3_t	position;
-	vec3_t	angle;
-	float	fov;
-	int	flags;
-} cameraWayPoint_t;
-
 #define	 MAX_OVERVIEW_ENTITIES		128
-#define	 MAX_CAM_WAYPOINTS		32
 
 class CHudSpectator : public CHudBase
 {
@@ -87,21 +79,20 @@ public:
 	void HandleButtonsDown( int ButtonPressed );
 	void HandleButtonsUp( int ButtonPressed );
 	void FindNextPlayer( bool bReverse );
-	void FindPlayer( const char *name );
 	void DirectorMessage( int iSize, void *pbuf );
 	void SetSpectatorStartPosition();
 	int Init();
 	int VidInit();
+	bool AddOverviewEntityToMap( HSPRITE sprite, cl_entity_t *ent, double killTime, Vector origin );
+	void FindPlayer( const char *name );
+	void AddVoiceIconToPlayerEnt( int index );
 
 	int Draw( float flTime );
+	HSPRITE GetMarkerSPR( int marker );
+	void ClearVoiceIconFlags( void );
+	bool ShouldSetVoiceIcon( int index );
 
-	void	AddWaypoint( float time, vec3_t pos, vec3_t angle, float fov, int flags );
-	void	SetCameraView( vec3_t pos, vec3_t angle, float fov );
-	float	GetFOV();
-	bool	GetDirectorCamera( vec3_t &position, vec3_t &angle );
-	void	SetWayInterpolation( cameraWayPoint_t *prev, cameraWayPoint_t *start, cameraWayPoint_t *end, cameraWayPoint_t *next );
-
-
+	int m_hsprMapMarkers[15];
 	int m_iDrawCycle;
 	client_textmessage_t	m_HUDMessages[MAX_SPEC_HUD_MESSAGES];
 	char			m_HUDMessageText[MAX_SPEC_HUD_MESSAGES][128];
@@ -118,38 +109,48 @@ public:
 	cvar_t			*m_drawstatus;
 	cvar_t			*m_autoDirector;
 	cvar_t			*m_pip;
+	cvar_t			*m_scoreboard;
+	cvar_t			*default_fov;
+
+	HSPRITE			m_hsprAllieZone;
+	HSPRITE			m_hsprAxisZone;
+	HSPRITE			m_hsprCapZone;
+	HSPRITE			m_hsprTnT;
+	HSPRITE			m_hsprBanglr;
+	HSPRITE			m_hsprGrenade;
+	HSPRITE			m_hsprStick;
+	HSPRITE			m_hsprCustom;
+	HSPRITE			m_hsprVoiceIcon;
+	HSPRITE			m_hsprSpeakerIcon;
+	HSPRITE			m_hsprAllieLight;
+	HSPRITE			m_hsprAxisLight;
+	HSPRITE			m_hsprBritLight;
 
 	qboolean			m_chatEnabled;
 
-	qboolean			m_IsInterpolating;
-	int				m_ChaseEntity;	// if != 0, follow this entity with viewangles
-	int				m_WayPoint;	// current waypoint 1
-	int				m_NumWayPoints;	// current number of waypoints
 	vec3_t				m_cameraOrigin;	// a help camera
 	vec3_t				m_cameraAngles;	// and it's angles
-	CInterpolation			m_WayInterpolation;
-
-private:
-	vec3_t		m_vPlayerPos[MAX_PLAYERS];
-	HSPRITE		m_hsprPlayerBlue;
-	HSPRITE		m_hsprPlayerRed;
-	HSPRITE		m_hsprPlayer;
-	HSPRITE		m_hsprCamera;
-	HSPRITE		m_hsprPlayerDead;
-	HSPRITE		m_hsprViewcone;
-	HSPRITE		m_hsprUnkownMap;
-	HSPRITE		m_hsprBeam;
-	HSPRITE		m_hCrosshair;
-
-	wrect_t		m_crosshairRect;
 
 	struct model_s	*m_MapSprite;	// each layer image is saved in one sprite, where each tile is a sprite frame
+	vec3_t		m_vPlayerPos[MAX_PLAYERS];
+	HSPRITE		m_hsprUnkownMap;
+	HSPRITE		m_hsprBeam;
+	HSPRITE		m_hsprCamera;
+	HSPRITE		m_hsprPlayer;
+	HSPRITE		m_hsprCameraAllies;
+	HSPRITE		m_hsprCameraAxis;
+	HSPRITE		m_hsprCameraBrit;
+	HSPRITE		m_hsprCameraSpec;
+	bool		m_bAddDrawIconNextFrame[MAX_PLAYERS];
+
+private:
+	HSPRITE		m_hsprPlayerDead;
+	HSPRITE		m_hsprViewcone;
+
 	float		m_flNextObserverInput;
-	float		m_FOV;
 	float		m_zoomDelta;
 	float		m_moveDelta;
 	int		m_lastPrimaryObject;
 	int		m_lastSecondaryObject;
-	cameraWayPoint_t	m_CamPath[MAX_CAM_WAYPOINTS];
 };
 #endif // SPECTATOR_H

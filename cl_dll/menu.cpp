@@ -17,6 +17,9 @@
 //
 // generic menu handler
 //
+// The original localizes the menu string with vgui2::localize() and draws it as wide characters. Xash3D FWGS has
+// no VGUI2, so only the single-byte path of the original is kept, the text is drawn by CHudVGUI2Print.
+//
 
 #include "hud.h"
 #include "cl_util.h"
@@ -24,7 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "vgui_TeamFortressViewport.h"
+#include "vgui/vgui_TeamFortressViewport.h"
 
 #define MAX_MENU_STRING	512
 char g_szMenuString[MAX_MENU_STRING];
@@ -47,9 +50,9 @@ int CHudMenu::Init( void )
 
 void CHudMenu::InitHUDData( void )
 {
+	m_iFlags &= ~HUD_ACTIVE;
 	m_fMenuDisplayed = 0;
 	m_bitsValidSlots = 0;
-	m_iFlags &= ~HUD_ACTIVE;
 	Reset();
 }
 
@@ -129,48 +132,48 @@ static inline const char* ParseEscapeToken( const char* token )
 
 int CHudMenu::Draw( float flTime )
 {
-	int i;
-
 	// check for if menu is set to disappear
-	if( m_flShutoffTime > 0 )
+	if( m_flShutoffTime > 0 && m_flShutoffTime <= gHUD.m_flTime )
 	{
-		if( m_flShutoffTime <= gHUD.m_flTime )
-		{
-			// times up, shutoff
-			m_fMenuDisplayed = 0;
-			m_iFlags &= ~HUD_ACTIVE;
-			return 1;
-		}
+		// times up, shutoff
+		m_fMenuDisplayed = 0;
+		m_iFlags &= ~HUD_ACTIVE;
+		return 1;
 	}
 
 	// don't draw the menu if the scoreboard is being shown
 	if( gViewPort && gViewPort->IsScoreBoardVisible() )
 		return 1;
 
-	SCREENINFO screenInfo;
+	char s[MAX_MENU_STRING];
+	const char *sptr = g_szMenuString;
+	int len = strlen( g_szMenuString );
 
-	screenInfo.iSize = sizeof( SCREENINFO );
-	gEngfuncs.pfnGetScreenInfo( &screenInfo );
+	// remove the trailing carriage return
+	if( len > 0 && g_szMenuString[len - 1] == '\r' )
+	{
+		strcpy( s, g_szMenuString );
+		s[len - 1] = '\0';
+		sptr = s;
+	}
 
 	// draw the menu, along the left-hand side of the screen
 	// count the number of newlines
 	int nlc = 0;
-	for( i = 0; i < MAX_MENU_STRING && g_szMenuString[i] != '\0'; i++ )
+	for( int i = 0; i < MAX_MENU_STRING && g_szMenuString[i] != '\0'; i++ )
+	{
 		if( g_szMenuString[i] == '\n' )
 			nlc++;
-
-	int nFontHeight = Q_max( 12, screenInfo.iCharHeight );
+	}
 
 	// center it
-	int y = ( ScreenHeight / 2 ) - (( nlc / 2 )* nFontHeight ) - ( 3 * nFontHeight + nFontHeight / 3 ); // make sure it is above the say text
+	int y = ( ScreenHeight / 2 ) + 12 * ( nlc / -2 ) - 40;
 
 	menu_r		= 255;
 	menu_g		= 255;
 	menu_b		= 255;
 	menu_x		= 20;
 	menu_ralign	= FALSE;
-
-	const char* sptr = g_szMenuString;
 
 	while( *sptr != '\0' )
 	{
@@ -180,20 +183,24 @@ int CHudMenu::Draw( float flTime )
 		{
 			menu_ralign	= FALSE;
 			menu_x 		= 20;
-			y += nFontHeight;
+			y += gHUD.m_VGUI2Print.GetHudFontHeight();
 			sptr++;
 		}
 		else
 		{
-			char menubuf[80] = "";
+			char menubuf[80];
 			const char *ptr = sptr;
+
 			while( *sptr != '\0' && *sptr != '\n' && *sptr != '\\' )
 				sptr++;
-			strlcpy( menubuf, ptr, Q_min(( sptr - ptr + 1 ), (int)sizeof( menubuf )));
+
+			strlcpy( menubuf, ptr, Q_min( (int)( sptr - ptr + 1 ), (int)sizeof( menubuf ) ) );
+
 			if( menu_ralign )
 				// IMPORTANT: Right-to-left rendered text does not parse escape tokens!
-				menu_x = gHUD.DrawHudStringReverse( menu_x, y, 0, menubuf, menu_r, menu_g, menu_b );
-			else menu_x = gHUD.DrawHudString( menu_x, y, 320, menubuf, menu_r, menu_g, menu_b );
+				menu_x = gHUD.m_VGUI2Print.DrawVGUI2StringReverse( menubuf, menu_x, y, menu_r / 255.0f, menu_g / 255.0f, menu_b / 255.0f );
+			else
+				menu_x = gHUD.m_VGUI2Print.DrawVGUI2String( menubuf, menu_x, y, menu_r / 255.0f, menu_g / 255.0f, menu_b / 255.0f );
 		}
 	}
 

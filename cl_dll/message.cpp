@@ -23,6 +23,8 @@
 #include <string.h>
 #include <stdio.h>
 #include "parsemsg.h"
+#include "vgui/dod_localize.h"
+#include "vgui/idodviewport.h"
 
 DECLARE_MESSAGE( m_Message, HudText )
 DECLARE_MESSAGE( m_Message, GameTitle )
@@ -39,6 +41,10 @@ int CHudMessage::Init( void )
 
 	gHUD.AddHudElem( this );
 
+	m_Fonts[0] = 0;
+	m_Fonts[1] = 0;
+	m_Fonts[2] = 0;
+
 	Reset();
 
 	return 1;
@@ -49,7 +55,15 @@ int CHudMessage::VidInit( void )
 	m_HUD_title_half = gHUD.GetSpriteIndex( "title_half" );
 	m_HUD_title_life = gHUD.GetSpriteIndex( "title_life" );
 
+	// the original gets the fonts CreditsFont, Legacy_CreditsFont and EngineFont from the scheme of the
+	// VGUI2 here, the text is drawn with the font of the engine
+
 	return 1;
+}
+
+unsigned long CHudMessage::GetFont( void )
+{
+	return m_Fonts[0];
 }
 
 void CHudMessage::Reset( void )
@@ -134,7 +148,7 @@ int CHudMessage::YPosition( float y, int height )
 	return yPos;
 }
 
-void CHudMessage::MessageScanNextChar( void )
+void CHudMessage::MessageScanNextChar( unsigned int font )
 {
 	int srcRed, srcGreen, srcBlue, destRed = 0, destGreen = 0, destBlue = 0;
 	int blend;
@@ -193,7 +207,7 @@ void CHudMessage::MessageScanNextChar( void )
 
 	if( m_parms.pMessage->effect == 1 && m_parms.charTime != 0 )
 	{
-		if( m_parms.x >= 0 && m_parms.y >= 0 && ( m_parms.x + gHUD.m_scrinfo.charWidths[m_parms.text] ) <= ScreenWidth )
+		if( m_parms.x >= 0 && m_parms.y >= 0 )
 			TextMessageDrawChar( m_parms.x, m_parms.y, m_parms.text, m_parms.pMessage->r2, m_parms.pMessage->g2, m_parms.pMessage->b2 );
 	}
 }
@@ -238,39 +252,69 @@ void CHudMessage::MessageScanStart( void )
 }
 
 
-void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
+void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time, unsigned int font )
 {
 	int i, j, length, width;
 	const char *pText;
 	const char *pLineStart;
+	char buf[80];
 
-	pText = pMessage->pMessage;
-	// Count lines
 	m_parms.lines = 1;
-	m_parms.time = time;
 	m_parms.pMessage = pMessage;
+	m_parms.time = time;
+	m_parms.totalWidth = 0;
+
+	if( *pMessage->pMessage == '#' )
+	{
+		// the text is a token of the localization
+		snprintf( buf, sizeof( buf ), "%s", pMessage->pMessage );
+
+		int len = strlen( buf ) - 1;
+
+		if( buf[len] == '\r' )
+			buf[len] = 0;
+
+		pText = DoD_FindLocalized( buf );
+
+		if( !pText )
+		{
+			gEngfuncs.Con_DPrintf( "ERROR: Missing %s from the dod_english.txt file!\n", pMessage->pMessage );
+			return;
+		}
+	}
+	else
+	{
+		pText = pMessage->pMessage;
+	}
+
+	// Count lines
+	const char *pCount = pText;
+
 	length = 0;
 	width = 0;
-	m_parms.totalWidth = 0;
-	while( *pText )
+
+	while( *pCount )
 	{
-		if( *pText == '\n' )
+		if( *pCount == '\n' )
 		{
 			m_parms.lines++;
+
 			if( width > m_parms.totalWidth )
 				m_parms.totalWidth = width;
+
 			width = 0;
 		}
 		else
-			width += gHUD.m_scrinfo.charWidths[(unsigned char)*pText];
-		pText++;
+			width += gHUD.m_scrinfo.charWidths[(unsigned char)*pCount];
+
+		pCount++;
 		length++;
 	}
+
 	m_parms.length = length;
 	m_parms.totalHeight = ( m_parms.lines * gHUD.m_scrinfo.iCharHeight );
 
 	m_parms.y = YPosition( pMessage->y, m_parms.totalHeight );
-	pText = pMessage->pMessage;
 
 	m_parms.charTime = 0;
 
@@ -281,6 +325,7 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 		m_parms.lineLength = 0;
 		m_parms.width = 0;
 		pLineStart = pText;
+
 		while( *pText && *pText != '\n' )
 		{
 			unsigned char c = *pText;
@@ -288,6 +333,7 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 			m_parms.lineLength++;
 			pText++;
 		}
+
 		pText++;		// Skip LF
 
 		m_parms.x = XPosition( pMessage->x, m_parms.width, m_parms.totalWidth );
@@ -295,11 +341,14 @@ void CHudMessage::MessageDrawScan( client_textmessage_t *pMessage, float time )
 		for( j = 0; j < m_parms.lineLength; j++ )
 		{
 			m_parms.text = (unsigned char)pLineStart[j];
+
 			int next = m_parms.x + gHUD.m_scrinfo.charWidths[m_parms.text];
-			MessageScanNextChar();
+
+			MessageScanNextChar( font );
 
 			if( m_parms.x >= 0 && m_parms.y >= 0 && next <= ScreenWidth )
 				TextMessageDrawChar( m_parms.x, m_parms.y, m_parms.text, m_parms.r, m_parms.g, m_parms.b );
+
 			m_parms.x = next;
 		}
 
@@ -350,19 +399,18 @@ int CHudMessage::Draw( float fTime )
 	for( i = 0; i < maxHUDMessages; i++ )
 	{
 		// Assume m_parms.time contains last time
-		if( m_pMessages[i] )
+		if( m_pMessages[i].pMessage )
 		{
-			// pMessage = m_pMessages[i];
-			if( m_startTime[i] > gHUD.m_flTime )
+			if( m_startTime[i] > gHUD.m_flTime || m_startTime[i] == 1.0f )
 				m_startTime[i] = gHUD.m_flTime + m_parms.time - m_startTime[i] + 0.2f;	// Server takes 0.2 seconds to spawn, adjust for this
 		}
 	}
 
 	for( i = 0; i < maxHUDMessages; i++ )
 	{
-		if( m_pMessages[i] )
+		if( m_pMessages[i].pMessage )
 		{
-			pMessage = m_pMessages[i];
+			pMessage = m_pMessages[i].pMessage;
 
 			// This is when the message is over
 			switch( pMessage->effect )
@@ -386,14 +434,15 @@ int CHudMessage::Draw( float fTime )
 				// effect 0 is fade in/fade out
 				// effect 1 is flickery credits
 				// effect 2 is write out (training room)
-				MessageDrawScan( pMessage, messageTime );
+				MessageDrawScan( pMessage, messageTime, m_pMessages[i].font );
 
 				drawn++;
 			}
 			else
 			{
 				// The message is over
-				m_pMessages[i] = NULL;
+				m_pMessages[i].pMessage = NULL;
+				m_pMessages[i].font = 0;
 			}
 		}
 	}
@@ -407,68 +456,57 @@ int CHudMessage::Draw( float fTime )
 	return 1;
 }
 
-void CHudMessage::MessageAdd( const char *pName, float time )
+void CHudMessage::MessageAdd( const char *pName, float time, int hintMessage, unsigned int font )
 {
-	int i, j;
+	int i;
 	client_textmessage_t *tempMessage;
 
+	// the first free slot
 	for( i = 0; i < maxHUDMessages; i++ )
 	{
-		if( !m_pMessages[i] )
+		if( !m_pMessages[i].pMessage )
+			break;
+	}
+
+	if( i == maxHUDMessages )
+		return;
+
+	if( pName[0] == '#' )
+	{
+		// Trim off a leading # if it's there
+		tempMessage = gEngfuncs.pfnTextMessageGet( pName + 1 );
+
+		if( tempMessage && hintMessage )
 		{
-			// Trim off a leading # if it's there
-			if( pName[0] == '#' ) 
-				tempMessage = TextMessageGet( pName + 1 );
-			else
-				tempMessage = TextMessageGet( pName );
-			// If we couldnt find it in the titles.txt, just create it
-			if( !tempMessage )
-			{
-				g_pCustomMessage.effect = 2;
-				g_pCustomMessage.r1 = g_pCustomMessage.g1 = g_pCustomMessage.b1 = g_pCustomMessage.a1 = 100;
-				g_pCustomMessage.r2 = 240;
-				g_pCustomMessage.g2 = 110;
-				g_pCustomMessage.b2 = 0;
-				g_pCustomMessage.a2 = 0;
-				g_pCustomMessage.x = -1.0f;		// Centered
-				g_pCustomMessage.y = 0.7f;
-				g_pCustomMessage.fadein = 0.01f;
-				g_pCustomMessage.fadeout = 1.5f;
-				g_pCustomMessage.fxtime = 0.25f;
-				g_pCustomMessage.holdtime = 5;
-				g_pCustomMessage.pName = g_pCustomName;
-				strcpy( g_pCustomText, pName );
-				g_pCustomMessage.pMessage = g_pCustomText;
+			// the hints are green, they are written out and they stay longer when they are long
+			tempMessage->effect = 2;
+			tempMessage->r1 = 40;
+			tempMessage->g1 = 255;
+			tempMessage->b1 = 40;
+			tempMessage->a1 = 200;
+			tempMessage->r2 = 0;
+			tempMessage->g2 = 255;
+			tempMessage->b2 = 0;
+			tempMessage->a2 = 200;
+			tempMessage->x = -1.0f;
+			tempMessage->y = 0.7f;
+			tempMessage->fadein = 0.01f;
+			tempMessage->fadeout = 0.7f;
+			tempMessage->fxtime = 0.07f;
+			tempMessage->holdtime = 5.0f;
 
-				tempMessage = &g_pCustomMessage;
-			}
+			tempMessage->holdtime = (float)( strlen( tempMessage->pMessage ) / 25 );
 
-			for( j = 0; j < maxHUDMessages; j++ )
-			{
-				if( m_pMessages[j] )
-				{
-					// is this message already in the list
-					if( !strcmp( tempMessage->pMessage, m_pMessages[j]->pMessage ) )
-					{
-						return;
-					}
-
-					// get rid of any other messages in same location (only one displays at a time)
-					if( fabs( tempMessage->y - m_pMessages[j]->y ) < 0.0001f )
-					{
-						if( fabs( tempMessage->x - m_pMessages[j]->x ) < 0.0001f )
-						{
-							m_pMessages[j] = NULL;
-						}
-					}
-				}
-			}
-
-			m_pMessages[i] = tempMessage;
-			m_startTime[i] = time;
-			return;
+			if( tempMessage->holdtime < 1.0f )
+				tempMessage->holdtime = 1.0f;
 		}
 	}
+	else
+		tempMessage = gEngfuncs.pfnTextMessageGet( pName );
+
+	m_pMessages[i].pMessage = tempMessage;
+	m_pMessages[i].font = font;
+	m_startTime[i] = time;
 }
 
 int CHudMessage::MsgFunc_HudText( const char *pszName,  int iSize, void *pbuf )
@@ -476,8 +514,12 @@ int CHudMessage::MsgFunc_HudText( const char *pszName,  int iSize, void *pbuf )
 	BEGIN_READ( pbuf, iSize );
 
 	char *pString = READ_STRING();
+	int hintMessage = READ_BYTE();
 
-	MessageAdd( pString, gHUD.m_flTime );
+	if( hintMessage > 0 && gDoDViewPortInterface )
+		gDoDViewPortInterface->ShowHintMessage( pString );
+	else
+		MessageAdd( pString, gHUD.m_flTime, hintMessage, GetFont() );
 
 	// Remember the time -- to fix up level transitions
 	m_parms.time = gHUD.m_flTime;
@@ -491,7 +533,8 @@ int CHudMessage::MsgFunc_HudText( const char *pszName,  int iSize, void *pbuf )
 
 int CHudMessage::MsgFunc_GameTitle( const char *pszName,  int iSize, void *pbuf )
 {
-	m_pGameTitle = TextMessageGet( "GAMETITLE" );
+	m_pGameTitle = gEngfuncs.pfnTextMessageGet( "GAMETITLE" );
+
 	if( m_pGameTitle != NULL )
 	{
 		m_gameTitleTime = gHUD.m_flTime;
@@ -514,11 +557,23 @@ void CHudMessage::MessageAdd( client_textmessage_t * newMessage )
 
 	for( int i = 0; i < maxHUDMessages; i++ )
 	{
-		if( !m_pMessages[i] )
+		if( !m_pMessages[i].pMessage )
 		{
-			m_pMessages[i] = newMessage;
+			m_pMessages[i].pMessage = newMessage;
+			m_pMessages[i].font = GetFont();
 			m_startTime[i] = gHUD.m_flTime;
 			return;
 		}
 	}
+}
+
+void CHudMessage::HintMessageAdd( const char *pText )
+{
+	if( gDoDViewPortInterface )
+		gDoDViewPortInterface->ShowHintMessage( pText );
+
+	m_parms.time = gHUD.m_flTime;
+
+	if( !( m_iFlags & HUD_ACTIVE ) )
+		m_iFlags |= HUD_ACTIVE;
 }

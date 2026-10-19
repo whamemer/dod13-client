@@ -23,16 +23,19 @@
 #include "hud.h"
 #include "cl_util.h"
 #include <string.h>
-#include <stdio.h>
 #include "parsemsg.h"
 
-#include "vgui_TeamFortressViewport.h"
+#include "vgui/vgui_TeamFortressViewport.h"
+
+extern cvar_t *cl_hud_msgs;
 
 DECLARE_MESSAGE( m_TextMessage, TextMsg )
+DECLARE_MESSAGE( m_TextMessage, CapMsg )
 
 int CHudTextMessage::Init( void )
 {
 	HOOK_MESSAGE( TextMsg );
+	HOOK_MESSAGE( CapMsg );
 
 	gHUD.AddHudElem( this );
 
@@ -132,7 +135,7 @@ const char *CHudTextMessage::LookupString( const char *msg, int *msg_dest )
 void StripEndNewlineFromString( char *str )
 {
 	int s = strlen( str ) - 1;
-	if( str[s] == '\n' || str[s] == '\r' )
+	if( s >= 0 && ( str[s] == '\n' || str[s] == '\r' ) )
 		str[s] = 0;
 }
 
@@ -158,49 +161,156 @@ char* ConvertCRtoNL( char *str )
 //   string: message parameter 4
 // any string that starts with the character '#' is a message name, and is used to look up the real message in titles.txt
 // the next (optional) one to four strings are parameters for that string (which can also be message names if they begin with '#')
+// the talk messages are localized later by SayTextPrint, it also puts the parameters in (%s1..%s4)
 int CHudTextMessage::MsgFunc_TextMsg( const char *pszName, int iSize, void *pbuf )
 {
-	BEGIN_READ( pbuf, iSize );
-
-	int msg_dest = READ_BYTE();
+	int msg_dest;
+	char *msg_text;
+	char *sstr1;
+	char *sstr2;
+	char *sstr3;
+	char *sstr4;
+	char *psz;
 
 #define MSG_BUF_SIZE 128
-	char szBuf[6][MSG_BUF_SIZE];
+	static char szBuf[6][MSG_BUF_SIZE];
 
-	strlcpy( szBuf[0], LookupString( READ_STRING(), &msg_dest ), MSG_BUF_SIZE );
+	BEGIN_READ( pbuf, iSize );
 
-	for( int i = 1; i <= 4; i++ )
-	{
-		// keep reading strings and using C format strings for subsituting the strings into the localised text string
-		strlcpy( szBuf[i], LookupString( READ_STRING() ), MSG_BUF_SIZE );
-		StripEndNewlineFromString( szBuf[i] ); // these strings are meant for subsitution into the main strings, so cull the automatic end newlines
-	}
+	msg_dest = READ_BYTE();
 
-	char *psz = szBuf[5];
+	msg_text = szBuf[0];
+	strlcpy( msg_text, LookupString( READ_STRING(), &msg_dest ), MSG_BUF_SIZE );
+
+	// the parameters are for the substitution into the main string, so the automatic end newlines are cut off
+	sstr1 = szBuf[1];
+	strlcpy( sstr1, LookupString( READ_STRING() ), MSG_BUF_SIZE );
+	StripEndNewlineFromString( sstr1 );
+
+	sstr2 = szBuf[2];
+	strlcpy( sstr2, LookupString( READ_STRING() ), MSG_BUF_SIZE );
+	StripEndNewlineFromString( sstr2 );
+
+	sstr3 = szBuf[3];
+	strlcpy( sstr3, LookupString( READ_STRING() ), MSG_BUF_SIZE );
+	StripEndNewlineFromString( sstr3 );
+
+	sstr4 = szBuf[4];
+	strlcpy( sstr4, LookupString( READ_STRING() ), MSG_BUF_SIZE );
+	StripEndNewlineFromString( sstr4 );
+
+	psz = szBuf[5];
 
 	if( gViewPort && gViewPort->AllowedToPrintText() == FALSE )
 		return 1;
 
 	switch( msg_dest )
 	{
-	case HUD_PRINTCENTER:
-		safe_snprintf( psz, MSG_BUF_SIZE, szBuf[0], szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
-		CenterPrint( ConvertCRtoNL( psz ) );
-		break;
 	case HUD_PRINTNOTIFY:
 		psz[0] = 1;  // mark this message to go into the notify buffer
-		safe_snprintf( psz + 1, MSG_BUF_SIZE - 1, szBuf[0], szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
+		safe_snprintf( psz + 1, MSG_BUF_SIZE - 1, msg_text, sstr1, sstr2, sstr3, sstr4 );
+		ConsolePrint( ConvertCRtoNL( psz ) );
+		break;
+	case HUD_PRINTCONSOLE:
+		safe_snprintf( psz, MSG_BUF_SIZE, msg_text, sstr1, sstr2, sstr3, sstr4 );
 		ConsolePrint( ConvertCRtoNL( psz ) );
 		break;
 	case HUD_PRINTTALK:
-		safe_snprintf( psz, MSG_BUF_SIZE, szBuf[0], szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
-		gHUD.m_SayText.SayTextPrint( ConvertCRtoNL( psz ), MSG_BUF_SIZE );
+		if( cl_hud_msgs->value == 1.0f )
+		{
+			// only the messages about the players that joined and left are shown
+			// (the original checks the buffer of the previous message, here it is the one of this)
+			safe_snprintf( psz, MSG_BUF_SIZE, msg_text, sstr1, sstr2, sstr3, sstr4 );
+			ConvertCRtoNL( psz );
+
+			if( strstr( psz, "has joined the game" ) || strstr( psz, "has left the game" ) )
+				gHUD.m_SayText.SayTextPrint( psz, MSG_BUF_SIZE, -1, NULL, NULL, NULL, NULL );
+		}
+		else if( cl_hud_msgs->value == 2.0f )
+		{
+			gHUD.m_SayText.SayTextPrint( msg_text, MSG_BUF_SIZE, -1, sstr1, sstr2, sstr3, sstr4 );
+		}
 		break;
-	case HUD_PRINTCONSOLE:
-		safe_snprintf( psz, MSG_BUF_SIZE, szBuf[0], szBuf[1], szBuf[2], szBuf[3], szBuf[4] );
-		ConsolePrint( ConvertCRtoNL( psz ) );
+	case HUD_PRINTCENTER:
+		StripEndNewlineFromString( msg_text );
+		gHUD.m_VGUI2Print.VGUI2HudPrintArgs( msg_text, sstr1, sstr2, sstr3, sstr4, -1, ScreenWidth / 2 - (int)( (float)ScreenHeight / 480.0f * 20.0f + 0.5f ), 1.0f, 1.0f, 1.0f );
 		break;
 	}
+
+	return 1;
+}
+
+// replaces every CR of the string with the end of it
+char *StripCRFromEnd( char *str )
+{
+	char *ch;
+
+	for( ch = str; *ch; ch++ )
+	{
+		if( *ch == '\r' )
+			*ch = 0;
+	}
+
+	return str;
+}
+
+// the capture of a point: the team, the point and the player
+int CHudTextMessage::MsgFunc_CapMsg( const char *pszName, int iSize, void *pbuf )
+{
+	const char *basemsg;
+	int playerindex;
+	char *playername;
+	char pointname[128];
+	char temp[256];
+	char *localized;
+	char *team;
+
+	BEGIN_READ( pbuf, iSize );
+
+	playerindex = READ_BYTE();
+
+	if( playerindex >= 1 && playerindex <= 32 )
+	{
+		gEngfuncs.pfnGetPlayerInfo( playerindex, &g_PlayerInfoList[playerindex] );
+		playername = g_PlayerInfoList[playerindex].name;
+		basemsg = "#MAP_PLAYER_CAP";
+	}
+	else
+	{
+		playername = (char *)"";
+
+		if( playerindex == 0 )
+			basemsg = "#MAP_GROUP_CAP";
+		else
+			basemsg = "#MAP_PLAYER_CAP";
+	}
+
+	safe_snprintf( pointname, sizeof( pointname ), "%s", READ_STRING() );
+
+	if( pointname[0] == '#' )
+	{
+		strlcpy( pointname, BufferedLocaliseTextString( pointname ), sizeof( pointname ) );
+	}
+	else
+	{
+		safe_snprintf( temp, sizeof( temp ), "#%s", pointname );
+
+		localized = BufferedLocaliseTextString( temp );
+
+		// the name is a token only if it is found
+		if( strcmp( localized, temp ) )
+			strlcpy( pointname, localized, sizeof( pointname ) );
+	}
+
+	if( READ_BYTE() == 1 )
+		team = (char *)"#THE_ALLIES";
+	else
+		team = (char *)"#THE_AXIS";
+
+	StripCRFromEnd( playername );
+	StripCRFromEnd( pointname );
+
+	gHUD.m_SayText.SayTextPrint( basemsg, 256, -1, team, pointname, playername, NULL );
 
 	return 1;
 }

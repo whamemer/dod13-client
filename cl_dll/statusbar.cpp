@@ -22,242 +22,345 @@
 #include "hud.h"
 #include "cl_util.h"
 #include "parsemsg.h"
+#include "event_api.h"
+#include "entity_types.h"
+#include "pmtrace.h"
+#include "pm_defs.h"
+#include "hltv.h"
+#include "pm_shared.h"
+#include "vgui/vgui_TeamFortressViewport.h"
 
 #include <string.h>
 #include <stdio.h>
 
-DECLARE_MESSAGE( m_StatusBar, StatusText )
 DECLARE_MESSAGE( m_StatusBar, StatusValue )
 
-#define STATUSBAR_ID_LINE		1
-
 float *GetClientColor( int clientIndex );
-extern float g_ColorYellow[3];
+
+extern cvar_t *cl_identiconmode;
+extern float g_lastFOV;
+extern vec3_t v_angles;
 
 int CHudStatusBar::Init( void )
 {
 	gHUD.AddHudElem( this );
 
-	HOOK_MESSAGE( StatusText );
+	m_iFlags |= HUD_ACTIVE;
+
 	HOOK_MESSAGE( StatusValue );
 
 	Reset();
 
-	CVAR_CREATE( "hud_centerid", "0", FCVAR_ARCHIVE );
+	m_flNextUpdateTime = 0.0f;
+
+	hud_centerid = gEngfuncs.pfnRegisterVariable( "hud_centerid", "1", FCVAR_ARCHIVE );
+
+	for( int i = 0; i < MAX_PLAYERS + 1; i++ )
+		m_TargetTalking[i] = 0;
 
 	return 1;
 }
 
 int CHudStatusBar::VidInit( void )
 {
-	// Load sprites here
+	m_flNextUpdateTime = 0.0f;
+
+	Reset();
+
+	m_StatusBarAllieModel = SPR_Load( "sprites/american.spr" );
+	m_StatusBarBritishModel = SPR_Load( "sprites/british.spr" );
+	m_StatusBarGermanModel = SPR_Load( "sprites/german.spr" );
+
 	return 1;
 }
 
 void CHudStatusBar::Reset( void )
 {
-	int i = 0;
-
-	m_iFlags &= ~HUD_ACTIVE;  // start out inactive
-	for( i = 0; i < MAX_STATUSBAR_LINES; i++ )
-		m_szStatusText[i][0] = 0;
-	memset( m_iStatusValues, 0, sizeof m_iStatusValues );
-
-	m_iStatusValues[0] = 1;  // 0 is the special index, which always returns true
-
-	// reset our colors for the status bar lines (yellow is default)
-	for ( i = 0; i < MAX_STATUSBAR_LINES; i++ )
-		m_pflNameColors[i] = g_ColorYellow;
+	m_iHealth = 100;
+	m_iTargetIndex = -1;
+	m_iTargetTeam = 0;
 }
 
-void CHudStatusBar::ParseStatusString( int line_num )
+bool CHudStatusBar::InDeathCamMode( void )
 {
-	// localise string first
-	char szBuffer[MAX_STATUSTEXT_LENGTH] = {0};
-	gHUD.m_TextMessage.LocaliseTextString( m_szStatusText[line_num], szBuffer, MAX_STATUSTEXT_LENGTH );
+	cl_entity_t *pEnt = gEngfuncs.GetEntityByIndex( g_iUser2 );
 
-	// parse m_szStatusText & m_iStatusValues into m_szStatusBar
-	memset( m_szStatusBar[line_num], 0, MAX_STATUSTEXT_LENGTH );
-	char *src = szBuffer;
-	char *dst = m_szStatusBar[line_num];
-
-	char *src_start = src, *dst_start = dst;
-
-	while( *src != 0 )
+	if( (unsigned int)( g_iDeadFlag - 1 ) <= 2 && g_iUser3 > 0 && gEngfuncs.GetMaxClients() >= g_iUser3 )
 	{
-		while( *src == '\n' )
-			src++;  // skip over any newlines
+		if( pEnt && g_iUser1 == OBS_CHASE_FREE )
+			return pEnt->index == gEngfuncs.GetLocalPlayer()->index;
+	}
 
-		if( ( ( src - src_start ) >= MAX_STATUSTEXT_LENGTH ) || ( ( dst - dst_start ) >= MAX_STATUSTEXT_LENGTH ) )
-			break;
+	return false;
+}
 
-		int index = atoi( src );
-		// should we draw this line?
-		if( ( index >= 0 && index < MAX_STATUSBAR_VALUES ) && ( m_iStatusValues[index] != 0 ) )
+void CHudStatusBar::Think( void )
+{
+	if( m_flNextUpdateTime > gEngfuncs.GetClientTime() )
+		return;
+
+	if( gViewPort )
+		gViewPort->UpdateSpectatorPanel();
+
+	cl_entity_t *pEnt = gEngfuncs.GetEntityByIndex( g_iUser2 );
+	bool bFound = false;
+
+	if( (unsigned int)( g_iDeadFlag - 1 ) <= 2 && g_iUser3 > 0 && gEngfuncs.GetMaxClients() >= g_iUser3 &&
+		pEnt && g_iUser1 == OBS_CHASE_FREE && pEnt->index == gEngfuncs.GetLocalPlayer()->index )
+	{
+		// the death cam looks at the killer
+		cl_entity_t *pKiller = gEngfuncs.GetEntityByIndex( g_iUser3 );
+
+		if( pKiller && pKiller->index != gEngfuncs.GetLocalPlayer()->index && (unsigned int)( pKiller->index - 1 ) < MAX_PLAYERS )
 		{
-			// parse this line and append result to the status bar
-			while ( *src >= '0' && *src <= '9' )
-				src++;
-
-			if( *src == '\n' || *src == 0 )
-				continue; // no more left in this text line
-
-			// copy the text, char by char, until we hit a % or a \n
-			while( *src != '\n' && *src != 0 )
-			{
-				if( *src != '%' )
-				{
-					// just copy the character
-					*dst = *src;
-					dst++, src++;
-				}
-				else
-				{
-					// get the descriptor
-					char valtype = *(++src); // move over %
-
-					// if it's a %, draw a % sign
-					if ( valtype == '%' )
-					{
-						*dst = valtype;
-						dst++, src++;
-						continue;
-					}
-
-					// move over descriptor, then get and move over the index
-					index = atoi( ++src ); 
-					while( *src >= '0' && *src <= '9' )
-						src++;
-
-					if( index >= 0 && index < MAX_STATUSBAR_VALUES )
-					{
-						int indexval = m_iStatusValues[index];
-
-						// get the string to substitute in place of the %XX
-						char szRepString[MAX_PLAYER_NAME_LENGTH];
-						switch( valtype )
-						{
-						case 'p':  // player name
-							GetPlayerInfo( indexval, &g_PlayerInfoList[indexval] );
-							if( g_PlayerInfoList[indexval].name != NULL )
-							{
-								strlcpy( szRepString, g_PlayerInfoList[indexval].name, MAX_PLAYER_NAME_LENGTH );
-								m_pflNameColors[line_num] = GetClientColor( indexval );
-							}
-							else
-							{
-								strcpy( szRepString, "******" );
-							}
-							break;
-						case 'i':  // number
-							sprintf( szRepString, "%d", indexval );
-							break;
-						default:
-							szRepString[0] = 0;
-						}
-
-						for( char *cp = szRepString; *cp != 0 && ( ( dst - dst_start ) < MAX_STATUSTEXT_LENGTH ); cp++, dst++ )
-							*dst = *cp;
-					}
-				}
-			}
-		}
-		else
-		{
-			// skip to next line of text
-			while( *src != 0 && *src != '\n' )
-				src++;
+			m_iTargetIndex = pKiller->index;
+			m_iTargetTeam = g_PlayerExtraInfo[pKiller->index].teamnumber;
+			bFound = true;
 		}
 	}
+	else
+	{
+		cl_entity_t *pLocal = gEngfuncs.GetLocalPlayer();
+		vec3_t viewheight, forward, right, up, vecStart, vecEnd;
+		pmtrace_t tr;
+
+		gEngfuncs.pEventAPI->EV_LocalPlayerViewheight( viewheight );
+
+		vecStart = Vector( pLocal->curstate.origin ) + viewheight;
+
+		AngleVectors( v_angles, forward, right, up );
+
+		vecEnd = vecStart + forward * 2048.0f;
+
+		gEngfuncs.pEventAPI->EV_SetSolidPlayers( pLocal->index - 1 );
+		gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
+		gEngfuncs.pEventAPI->EV_PlayerTrace( vecStart, vecEnd, PM_STUDIO_BOX, -1, &tr );
+
+		int iHit = gEngfuncs.pEventAPI->EV_IndexFromTrace( &tr );
+
+		if( iHit > 0 && iHit <= gEngfuncs.GetMaxClients() )
+		{
+			cl_entity_t *pTarget = gEngfuncs.GetEntityByIndex( iHit );
+
+			pLocal = gEngfuncs.GetLocalPlayer();
+
+			gEngfuncs.pfnGetPlayerInfo( pTarget->index, &g_PlayerInfoList[pTarget->index] );
+			gEngfuncs.pfnGetPlayerInfo( pLocal->index, &g_PlayerInfoList[pLocal->index] );
+
+			int iLocalTeam = g_PlayerExtraInfo[pLocal->index].teamnumber;
+
+			// the team mates only, the spectators and the dead see everyone
+			if( g_PlayerExtraInfo[pTarget->index].teamnumber == iLocalTeam || iLocalTeam == 3 || g_iDeadFlag > 1 )
+			{
+				m_iTargetIndex = pTarget->index;
+				m_iTargetTeam = g_PlayerExtraInfo[pTarget->index].teamnumber;
+				bFound = true;
+			}
+		}
+	}
+
+	if( !bFound )
+	{
+		m_iTargetIndex = -1;
+		m_iTargetTeam = 0;
+	}
+
+	m_flNextUpdateTime = gEngfuncs.GetClientTime() + 0.1f;
 }
 
 int CHudStatusBar::Draw( float fTime )
 {
-	if( m_bReparseString )
+	if( !g_iUser1 && g_iAlive && (unsigned int)( m_iTargetIndex - 1 ) < MAX_PLAYERS )
 	{
-		for( int i = 0; i < MAX_STATUSBAR_LINES; i++ )
+		hud_player_info_t info;
+		char s[128];
+		int width, height;
+		int x, y;
+
+		gEngfuncs.pfnGetPlayerInfo( m_iTargetIndex, &info );
+
+		int iHealth = m_iHealth;
+		float *color = GetClientColor( m_iTargetIndex );
+
+		if( iHealth > 0 )
 		{
-			m_pflNameColors[i] = g_ColorYellow;
-			ParseStatusString( i );
+			sprintf( s, "%s (%d)", info.name, iHealth );
+
+			gEngfuncs.pfnDrawConsoleStringLen( s, &width, &height );
+
+			// let user set status ID bar centering
+			if( hud_centerid && hud_centerid->value > 0.0f )
+			{
+				x = Q_max( 2, ScreenWidth - width ) / 2;
+				y = (int)( hud_centerid->value * height + ( height + ScreenHeight / 2 ) );
+			}
+			else
+			{
+				x = ScreenWidth / 2 - width / 2;
+				y = ScreenHeight - 2 * height;
+			}
+
+			gEngfuncs.pfnDrawSetTextColor( color[0], color[1], color[2] );
+			gEngfuncs.pfnDrawConsoleString( x, y, s );
 		}
-		m_bReparseString = FALSE;
-	}
-
-	int Y_START = ScreenHeight - YRES( 32 + 4 );
-
-	// Draw the status bar lines
-	for( int i = 0; i < MAX_STATUSBAR_LINES; i++ )
-	{
-		int TextHeight, TextWidth;
-		GetConsoleStringSize( m_szStatusBar[i], &TextWidth, &TextHeight );
-
-		int x = 4;
-		int y = Y_START - ( 4 + TextHeight * i ); // draw along bottom of screen
-
-		// let user set status ID bar centering
-		if( ( i == STATUSBAR_ID_LINE ) && CVAR_GET_FLOAT( "hud_centerid" ) )
-		{
-			x = Q_max( 0, Q_max( 2, ( ScreenWidth - TextWidth ) ) / 2 );
-			y = ( ScreenHeight / 2 ) + ( TextHeight * CVAR_GET_FLOAT( "hud_centerid" ) );
-		}
-
-		if( m_pflNameColors[i] )
-			DrawSetTextColor( m_pflNameColors[i][0], m_pflNameColors[i][1], m_pflNameColors[i][2] );
-
-		DrawConsoleString( x, y, m_szStatusBar[i] );
 	}
 
 	return 1;
 }
 
-// Message handler for StatusText message
-// accepts two values:
-//		byte: line number of status bar text 
-//		string: status bar text
-// this string describes how the status bar should be drawn
-// a semi-regular expression:
-// ( slotnum ([a..z] [%pX] [%iX])*)*
-// where slotnum is an index into the Value table (see below)
-// if slotnum is 0, the string is always drawn
-// if StatusValue[slotnum] != 0, the following string is drawn, upto the next newline - otherwise the text is skipped upto next newline
-// %pX, where X is an integer, will substitute a player name here, getting the player index from StatusValue[X]
-// %iX, where X is an integer, will substitute a number here, getting the number from StatusValue[X]
-int CHudStatusBar::MsgFunc_StatusText( const char *pszName, int iSize, void *pbuf )
-{
-	BEGIN_READ( pbuf, iSize );
-
-	int line = READ_BYTE();
-
-	if( line < 0 || line >= MAX_STATUSBAR_LINES )
-		return 1;
-
-	strlcpy( m_szStatusText[line], READ_STRING(), MAX_STATUSTEXT_LENGTH );
-
-	if( m_szStatusText[0] == 0 )
-		m_iFlags &= ~HUD_ACTIVE;
-	else
-		m_iFlags |= HUD_ACTIVE;  // we have status text, so turn on the status bar
-
-	m_bReparseString = TRUE;
-
-	return 1;
-}
-
-// Message handler for StatusText message
-// accepts two values:
-//		byte: index into the status value array
-//		short: value to store
+// Message handler for StatusValue message
+// accepts one value:
+//		byte: the health of the target
 int CHudStatusBar::MsgFunc_StatusValue( const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
 
-	int index = READ_BYTE();
-	if( index < 1 || index >= MAX_STATUSBAR_VALUES )
-		return 1; // index out of range
+	m_iHealth = READ_BYTE();
 
-	m_iStatusValues[index] = READ_SHORT();
-
-	m_bReparseString = TRUE;
+	if( g_iUser1 && gViewPort )
+		gViewPort->UpdateSpectatorPanel();
 
 	return 1;
+}
+
+char *CHudStatusBar::GetTargetName( void )
+{
+	static hud_player_info_t info;
+
+	if( (unsigned int)( m_iTargetIndex - 1 ) < MAX_PLAYERS )
+	{
+		gEngfuncs.pfnGetPlayerInfo( m_iTargetIndex, &info );
+		return info.name;
+	}
+
+	return "";
+}
+
+void CHudStatusBar::UpdateWhosTalking( int entindex, qboolean bTalking )
+{
+	if( (unsigned int)entindex <= MAX_PLAYERS )
+		m_TargetTalking[entindex] = bTalking;
+}
+
+void CHudStatusBar::CreateEntities( void )
+{
+	if( m_StatusBarAllieModel && m_StatusBarBritishModel && m_StatusBarGermanModel && !g_iUser1 && !( g_iEffects & EF_NODRAW ) && !g_iDeadFlag )
+	{
+		if( cl_identiconmode->value >= 2.0f )
+			DrawEntitiesOverTeam();
+		else if( cl_identiconmode->value >= 1.0f )
+			DrawEntitiesOverTarget();
+	}
+}
+
+// the icon of the team over the heads of all the team mates
+void CHudStatusBar::DrawEntitiesOverTeam( void )
+{
+	cl_entity_t *pLocal = gEngfuncs.GetLocalPlayer();
+
+	for( int i = 1; i <= MAX_PLAYERS; i++ )
+	{
+		cl_entity_t *pEnt = gEngfuncs.GetEntityByIndex( i );
+
+		if( !pEnt )
+			continue;
+
+		if( pEnt->curstate.messagenum < pLocal->curstate.messagenum || ( pEnt->curstate.effects & EF_NODRAW ) || pEnt == pLocal || m_TargetTalking[i] )
+			continue;
+
+		int team = pEnt->curstate.team;
+
+		if( team != pLocal->curstate.team || !pEnt->curstate.solid || g_PlayerExtraInfo[i].dead )
+			continue;
+
+		if( team == 1 )
+			m_StatusBarHeadModel = gHUD.m_bBritish ? m_StatusBarBritishModel : m_StatusBarAllieModel;
+		else
+			m_StatusBarHeadModel = m_StatusBarGermanModel;
+
+		memset( &m_TargetHeadModel[i], 0, sizeof( m_TargetHeadModel[i] ) );
+
+		m_TargetHeadModel[i].curstate.rendermode = kRenderTransAdd;
+		m_TargetHeadModel[i].curstate.renderamt = 127;
+		m_TargetHeadModel[i].curstate.frame = 0.0f;
+		m_TargetHeadModel[i].baseline.renderamt = 127;
+		m_TargetHeadModel[i].curstate.renderfx = kRenderFxNoDissipation;
+		m_TargetHeadModel[i].curstate.framerate = 1.0f;
+		m_TargetHeadModel[i].model = (model_s *)gEngfuncs.GetSpritePointer( m_StatusBarHeadModel );
+		m_TargetHeadModel[i].angles = Vector( 0.0f, 0.0f, 0.0f );
+		m_TargetHeadModel[i].origin = Vector( 0.0f, 0.0f, 45.0f );
+		m_TargetHeadModel[i].origin = Vector( pEnt->origin ) + m_TargetHeadModel[i].origin;
+
+		float flDistance = ( m_TargetHeadModel[i].origin - Vector( pLocal->origin ) ).Length();
+
+		// the icon grows with the distance, it stays small when zoomed
+		if( flDistance >= 378.0f && g_lastFOV == 0.0f )
+		{
+			float flScale = flDistance / 175.0f / 10.0f;
+
+			if( flScale > 2.0f )
+				flScale = 2.0f;
+
+			m_TargetHeadModel[i].curstate.scale = flScale;
+		}
+		else
+			m_TargetHeadModel[i].curstate.scale = 0.2f;
+
+		gEngfuncs.CL_CreateVisibleEntity( ET_NORMAL, &m_TargetHeadModel[i] );
+	}
+}
+
+// the icon of the team over the head of the target
+void CHudStatusBar::DrawEntitiesOverTarget( void )
+{
+	if( m_iTargetIndex < 0 )
+		return;
+
+	cl_entity_t *pLocal = gEngfuncs.GetLocalPlayer();
+	cl_entity_t *pEnt = gEngfuncs.GetEntityByIndex( m_iTargetIndex );
+
+	if( !pEnt )
+		return;
+
+	if( pEnt->curstate.messagenum < pLocal->curstate.messagenum || ( pEnt->curstate.effects & EF_NODRAW ) || pEnt == pLocal )
+		return;
+
+	int team = pEnt->curstate.team;
+
+	if( team != pLocal->curstate.team || m_TargetTalking[m_iTargetIndex] == 1 )
+		return;
+
+	if( team == 1 )
+		m_StatusBarHeadModel = gHUD.m_bBritish ? m_StatusBarBritishModel : m_StatusBarAllieModel;
+	else
+		m_StatusBarHeadModel = m_StatusBarGermanModel;
+
+	memset( &m_TargetHeadModel[0], 0, sizeof( m_TargetHeadModel[0] ) );
+
+	m_TargetHeadModel[0].curstate.rendermode = kRenderTransAdd;
+	m_TargetHeadModel[0].curstate.renderamt = 127;
+	m_TargetHeadModel[0].curstate.renderfx = kRenderFxNoDissipation;
+	m_TargetHeadModel[0].baseline.renderamt = 127;
+	m_TargetHeadModel[0].curstate.frame = 0.0f;
+	m_TargetHeadModel[0].curstate.framerate = 1.0f;
+	m_TargetHeadModel[0].model = (model_s *)gEngfuncs.GetSpritePointer( m_StatusBarHeadModel );
+	m_TargetHeadModel[0].angles = Vector( 0.0f, 0.0f, 0.0f );
+	m_TargetHeadModel[0].origin = Vector( 0.0f, 0.0f, 45.0f );
+	m_TargetHeadModel[0].origin = Vector( pEnt->origin ) + m_TargetHeadModel[0].origin;
+
+	float flDistance = ( m_TargetHeadModel[0].origin - Vector( pLocal->origin ) ).Length();
+
+	if( flDistance >= 378.0f && g_lastFOV == 0.0f )
+	{
+		float flScale = flDistance / 175.0f / 10.0f;
+
+		if( flScale > 2.0f )
+			flScale = 2.0f;
+
+		m_TargetHeadModel[0].curstate.scale = flScale;
+	}
+	else
+		m_TargetHeadModel[0].curstate.scale = 0.2f;
+
+	gEngfuncs.CL_CreateVisibleEntity( ET_NORMAL, &m_TargetHeadModel[0] );
 }

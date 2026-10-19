@@ -23,8 +23,8 @@
 #include "netadr.h"
 #include "parsemsg.h"
 
-#include "vgui_int.h"
-#include "vgui_TeamFortressViewport.h"
+#include "vgui/vgui_int.h"
+#include "vgui/vgui_TeamFortressViewport.h"
 
 extern "C"
 {
@@ -34,10 +34,15 @@ extern "C"
 #include <string.h>
 #include "vcs_info.h"
 
+#include "particleman.h"
+#include "pman_main.h"
+#include "tri.h"
+
 cl_enginefunc_t gEngfuncs;
 CHud gHUD;
 TeamFortressViewport *gViewPort = NULL;
 mobile_engfuncs_t *gMobileEngfuncs = NULL;
+IParticleMan *g_pParticleMan = NULL;
 
 #if defined( INTERNAL_VGUI_SUPPORT )
 // declare InitVGUISupportAPI so that linker doesn't remove it because nothing references it
@@ -46,8 +51,11 @@ void *g_pKeepVGUISupport = (void *)InitVGUISupportAPI;
 #endif
 
 void InitInput( void );
+void ShutdownInput( void );
 void EV_HookEvents( void );
 void IN_Commands( void );
+void CL_LoadParticleMan( void );
+void CL_UnloadParticleMan( void );
 
 /*
 ========================== 
@@ -61,6 +69,7 @@ extern "C"
 int		DLLEXPORT Initialize( cl_enginefunc_t *pEnginefuncs, int iVersion );
 int		DLLEXPORT HUD_VidInit( void );
 void	DLLEXPORT HUD_Init( void );
+void	DLLEXPORT HUD_Shutdown( void );
 int		DLLEXPORT HUD_Redraw( float flTime, int intermission );
 int		DLLEXPORT HUD_UpdateClientData( client_data_t *cdata, float flTime );
 void	DLLEXPORT HUD_Reset ( void );
@@ -72,6 +81,7 @@ int		DLLEXPORT HUD_GetHullBounds( int hullnumber, float *mins, float *maxs );
 void	DLLEXPORT HUD_Frame( double time );
 void	DLLEXPORT HUD_VoiceStatus(int entindex, qboolean bTalking);
 void	DLLEXPORT HUD_DirectorMessage( int iSize, void *pbuf );
+int		DLLEXPORT HUD_GetPlayerTeam( int iplayer );
 int DLLEXPORT HUD_MobilityInterface( mobile_engfuncs_t *gpMobileEngfuncs );
 }
 
@@ -145,6 +155,31 @@ void DLLEXPORT HUD_PlayerMove( struct playermove_s *ppmove, int server )
 	PM_Move( ppmove, server );
 }
 
+void CL_UnloadParticleMan( void )
+{
+	if( g_pParticleMan )
+	{
+		ParticleMan_Shutdown();
+		delete static_cast<IParticleMan_Active *>( g_pParticleMan );
+		g_pParticleMan = NULL;
+	}
+}
+
+void CL_LoadParticleMan( void )
+{
+	g_pParticleMan = CreateActiveMan();
+
+	if( g_pParticleMan )
+	{
+		g_pParticleMan->SetUp( &gEngfuncs );
+
+		// the sizes of the particle classes: CBaseParticle (276), CDoDParticle (300), CDoDSnowFlake (312)
+		g_pParticleMan->AddCustomParticleClassSize( sizeof( CBaseParticle ) );
+		g_pParticleMan->AddCustomParticleClassSize( sizeof( CDoDParticle ) );
+		g_pParticleMan->AddCustomParticleClassSize( sizeof( CDoDSnowFlake ) );
+	}
+}
+
 int DLLEXPORT Initialize( cl_enginefunc_t *pEnginefuncs, int iVersion )
 {
 	gEngfuncs = *pEnginefuncs;
@@ -165,6 +200,7 @@ int DLLEXPORT Initialize( cl_enginefunc_t *pEnginefuncs, int iVersion )
 	}
 
 	EV_HookEvents();
+	CL_LoadParticleMan();
 
 	gEngfuncs.pfnRegisterVariable( "cl_game_build_commit", g_VCSInfo_Commit, 0 );
 	gEngfuncs.pfnRegisterVariable( "cl_game_build_branch", g_VCSInfo_Branch, 0 );
@@ -229,6 +265,19 @@ void DLLEXPORT HUD_Init( void )
 
 /*
 ==========================
+	HUD_Shutdown
+
+===========================
+*/
+
+void DLLEXPORT HUD_Shutdown( void )
+{
+	ShutdownInput();
+	CL_UnloadParticleMan();
+}
+
+/*
+==========================
 	HUD_Redraw
 
 called every screen frame to
@@ -271,9 +320,13 @@ Called at start and end of demos to restore to "non"HUD state.
 ==========================
 */
 
+bool b_StopDemo;
+
 void DLLEXPORT HUD_Reset( void )
 {
 	gHUD.VidInit();
+
+	b_StopDemo = false;
 }
 
 /*
@@ -300,6 +353,7 @@ Called when a player starts or stops talking.
 void DLLEXPORT HUD_VoiceStatus( int entindex, qboolean bTalking )
 {
 	GetClientVoiceMgr()->UpdateSpeakerStatus(entindex, bTalking);
+	gHUD.m_StatusBar.UpdateWhosTalking( entindex, bTalking );
 }
 
 /*
@@ -314,6 +368,25 @@ void DLLEXPORT HUD_DirectorMessage( int iSize, void *pbuf )
 {
 	 gHUD.m_Spectator.DirectorMessage( iSize, pbuf );
 }
+
+/*
+==========================
+HUD_GetPlayerTeam
+
+Returns the team of the player
+==========================
+*/
+
+int DLLEXPORT HUD_GetPlayerTeam( int iplayer )
+{
+	if( (unsigned int)iplayer <= MAX_PLAYERS )
+		return g_PlayerExtraInfo[iplayer].teamId;
+
+	return 0;
+}
+
+// ClientFactory, F and CClientExports (IGameClientExports of the VGUI2 GameUI) of the original are not restored:
+// Xash3D takes the exports by name and has no VGUI2 GameUI
 
 int DLLEXPORT HUD_MobilityInterface( mobile_engfuncs_t *gpMobileEngfuncs )
 {
