@@ -32,7 +32,7 @@ The client targets **Xash3D FWGS**. GoldSrc support is kept behind `GOLDSOURCE_S
 | `cl_dll/view.cpp`, `input.cpp`, `input_xash3d.cpp`, `in_camera.cpp` | View calculation, input and the third person camera. |
 | `dlls/` | Headers shared with the server (`cbase.h`, `player.h`, `weapons.h`, ...), `dod_shared.cpp` (data tables) and `wpn_shared/` (one class per weapon). There is no server code. |
 | `pm_shared/` | Player movement, in C, shared with the server. |
-| `particleman/`, `public/` | The particle manager of the original game, compiled into the client. |
+| `particleman/` | The particle manager of the original game, compiled into the client. |
 | `game_shared/` | Voice and a few helpers shared with the server. |
 
 ## Build options
