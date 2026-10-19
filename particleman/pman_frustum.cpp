@@ -23,11 +23,11 @@
 
 CFrustum g_cFrustum;
 
-void CFrustum::NormalizeFrustumPlane( float* frustum, int side )
+void CFrustum::NormalizeFrustumPlane( float *frustum, int side )
 {
 	float magnitude;
 
-	magnitude = sqrt(frustum[side * 4 + A] * frustum[side * 4 + A] + frustum[side * 4 + B] * frustum[side * 4 + B] + frustum[side * 4 + C] * frustum[side * 4 + C]);
+	magnitude = sqrt( frustum[side * 4 + A] * frustum[side * 4 + A] + frustum[side * 4 + B] * frustum[side * 4 + B] + frustum[side * 4 + C] * frustum[side * 4 + C] );
 
 	frustum[side * 4 + A] *= 1.0 / magnitude;
 	frustum[side * 4 + B] *= 1.0 / magnitude;
@@ -35,14 +35,14 @@ void CFrustum::NormalizeFrustumPlane( float* frustum, int side )
 	frustum[side * 4 + D] *= 1.0 / magnitude;
 }
 
-void CFrustum::CalculateFrustum()
+void CFrustum::CalculateFrustum( void )
 {
 	float proj[16];
 	float modl[16];
 	float clip[16];
 
-	gEngfuncs.pTriAPI->GetMatrix(GL_PROJECTION_MATRIX, proj);
-	gEngfuncs.pTriAPI->GetMatrix(GL_MODELVIEW_MATRIX, modl);
+	gEngfuncs.pTriAPI->GetMatrix( GL_PROJECTION_MATRIX, proj );
+	gEngfuncs.pTriAPI->GetMatrix( GL_MODELVIEW_MATRIX, modl );
 
 	clip[0] = proj[12] * modl[3] + proj[8] * modl[2] + proj[4] * modl[1] + proj[0] * modl[0];
 	clip[1] = proj[13] * modl[3] + proj[9] * modl[2] + proj[5] * modl[1] + proj[1] * modl[0];
@@ -68,44 +68,44 @@ void CFrustum::CalculateFrustum()
 	g_flFrustum[0][1] = clip[7] - clip[4];
 	g_flFrustum[0][2] = clip[11] - clip[8];
 	g_flFrustum[0][3] = clip[15] - clip[12];
-	NormalizeFrustumPlane((float*)g_flFrustum, RIGHT);
+	NormalizeFrustumPlane( ( float * ) g_flFrustum, RIGHT );
 
 	g_flFrustum[1][0] = clip[3] + clip[0];
 	g_flFrustum[1][1] = clip[7] + clip[4];
 	g_flFrustum[1][2] = clip[11] + clip[8];
 	g_flFrustum[1][3] = clip[15] + clip[12];
-	NormalizeFrustumPlane((float*)g_flFrustum, LEFT);
+	NormalizeFrustumPlane( ( float * ) g_flFrustum, LEFT );
 
 	g_flFrustum[2][0] = clip[3] + clip[1];
 	g_flFrustum[2][1] = clip[7] + clip[5];
 	g_flFrustum[2][2] = clip[11] + clip[9];
 	g_flFrustum[2][3] = clip[15] + clip[13];
-	NormalizeFrustumPlane((float*)g_flFrustum, BOTTOM);
+	NormalizeFrustumPlane( ( float * ) g_flFrustum, BOTTOM );
 
 	g_flFrustum[3][0] = clip[3] - clip[1];
 	g_flFrustum[3][1] = clip[7] - clip[5];
 	g_flFrustum[3][2] = clip[11] - clip[9];
 	g_flFrustum[3][3] = clip[15] - clip[13];
-	NormalizeFrustumPlane((float*)g_flFrustum, TOP);
+	NormalizeFrustumPlane( ( float * ) g_flFrustum, TOP );
 
 	g_flFrustum[4][0] = clip[3] - clip[2];
 	g_flFrustum[4][1] = clip[7] - clip[6];
 	g_flFrustum[4][2] = clip[11] - clip[10];
 	g_flFrustum[4][3] = clip[15] - clip[14];
-	NormalizeFrustumPlane((float*)g_flFrustum, BACK);
+	NormalizeFrustumPlane( ( float * ) g_flFrustum, BACK );
 
 	g_flFrustum[5][0] = clip[3] + clip[2];
 	g_flFrustum[5][1] = clip[7] + clip[6];
 	g_flFrustum[5][2] = clip[11] + clip[10];
 	g_flFrustum[5][3] = clip[15] + clip[14];
-	NormalizeFrustumPlane((float*)g_flFrustum, FRONT);
+	NormalizeFrustumPlane( ( float * ) g_flFrustum, FRONT );
 }
 
 bool CFrustum::PointInsideFrustum( float x, float y, float z )
 {
-	for (int i = 0; i < 6; i++)
+	for( int i = 0; i < 6; i++ )
 	{
-		if (((g_flFrustum[i][A] * x) + (g_flFrustum[i][B] * y) + (g_flFrustum[i][C] * z) + g_flFrustum[i][D]) <= 0)
+		if( ( ( g_flFrustum[i][A] * x ) + ( g_flFrustum[i][B] * y ) + ( g_flFrustum[i][C] * z ) + g_flFrustum[i][D] ) <= 0 )
 		{
 			return false;
 		}
@@ -116,9 +116,9 @@ bool CFrustum::PointInsideFrustum( float x, float y, float z )
 
 bool CFrustum::SphereInsideFrustum( float x, float y, float z, float radius )
 {
-	for (int i = 0; i < 6; i++)
+	for( int i = 0; i < 6; i++ )
 	{
-		if (((g_flFrustum[i][A] * x) + (g_flFrustum[i][B] * y) + (g_flFrustum[i][C] * z) + g_flFrustum[i][D]) <= -radius)
+		if( ( ( g_flFrustum[i][A] * x ) + ( g_flFrustum[i][B] * y ) + ( g_flFrustum[i][C] * z ) + g_flFrustum[i][D] ) <= -radius )
 		{
 			return false;
 		}
@@ -129,48 +129,48 @@ bool CFrustum::SphereInsideFrustum( float x, float y, float z, float radius )
 
 bool CFrustum::PlaneInsideFrustum( float x, float y, float z, float size )
 {
-	for (int i = 0; i < 6; i++)
+	for( int i = 0; i < 6; i++ )
 	{
 		// Test every permutation of plane sizes.
 
-		if (((x - size) * g_flFrustum[i][A]) +
-			((y - size) * g_flFrustum[i][B]) +
-			((z - size) * g_flFrustum[i][C]) + g_flFrustum[i][D] > 0)
+		if( ( ( x - size ) * g_flFrustum[i][A] ) +
+			( ( y - size ) * g_flFrustum[i][B] ) +
+			( ( z - size ) * g_flFrustum[i][C] ) + g_flFrustum[i][D] > 0 )
 			continue;
 
-		if (((x + size) * g_flFrustum[i][A]) +
-			((y - size) * g_flFrustum[i][B]) +
-			((z - size) * g_flFrustum[i][C]) + g_flFrustum[i][3] > 0)
+		if( ( ( x + size ) * g_flFrustum[i][A] ) +
+			( ( y - size ) * g_flFrustum[i][B] ) +
+			( ( z - size ) * g_flFrustum[i][C] ) + g_flFrustum[i][3] > 0 )
 			continue;
 
-		if (((x - size) * g_flFrustum[i][A]) +
-			((y + size) * g_flFrustum[i][B]) +
-			((z - size) * g_flFrustum[i][C]) + g_flFrustum[i][D] > 0)
+		if( ( ( x - size ) * g_flFrustum[i][A] ) +
+			( ( y + size ) * g_flFrustum[i][B] ) +
+			( ( z - size ) * g_flFrustum[i][C] ) + g_flFrustum[i][D] > 0 )
 			continue;
 
-		if (((x + size) * g_flFrustum[i][A]) +
-			((y + size) * g_flFrustum[i][B]) +
-			((z - size) * g_flFrustum[i][C]) + g_flFrustum[i][D] > 0)
+		if( ( ( x + size ) * g_flFrustum[i][A] ) +
+			( ( y + size ) * g_flFrustum[i][B] ) +
+			( ( z - size ) * g_flFrustum[i][C] ) + g_flFrustum[i][D] > 0 )
 			continue;
 
-		if (((x - size) * g_flFrustum[i][A]) +
-			((y - size) * g_flFrustum[i][B]) +
-			((z + size) * g_flFrustum[i][C]) + g_flFrustum[i][D] > 0)
+		if( ( ( x - size ) * g_flFrustum[i][A] ) +
+			( ( y - size ) * g_flFrustum[i][B] ) +
+			( ( z + size ) * g_flFrustum[i][C] ) + g_flFrustum[i][D] > 0 )
 			continue;
 
-		if (((x + size) * g_flFrustum[i][A]) +
-			((y - size) * g_flFrustum[i][B]) +
-			((z + size) * g_flFrustum[i][C]) + g_flFrustum[i][D] > 0)
+		if( ( ( x + size ) * g_flFrustum[i][A] ) +
+			( ( y - size ) * g_flFrustum[i][B] ) +
+			( ( z + size ) * g_flFrustum[i][C] ) + g_flFrustum[i][D] > 0 )
 			continue;
 
-		if (((x - size) * g_flFrustum[i][A]) +
-			((y + size) * g_flFrustum[i][B]) +
-			((z + size) * g_flFrustum[i][C]) + g_flFrustum[i][D] > 0)
+		if( ( ( x - size ) * g_flFrustum[i][A] ) +
+			( ( y + size ) * g_flFrustum[i][B] ) +
+			( ( z + size ) * g_flFrustum[i][C] ) + g_flFrustum[i][D] > 0 )
 			continue;
 
-		if (((x + size) * g_flFrustum[i][A]) +
-			((y + size) * g_flFrustum[i][B]) +
-			((z + size) * g_flFrustum[i][C]) + g_flFrustum[i][D] > 0)
+		if( ( ( x + size ) * g_flFrustum[i][A] ) +
+			( ( y + size ) * g_flFrustum[i][B] ) +
+			( ( z + size ) * g_flFrustum[i][C] ) + g_flFrustum[i][D] > 0 )
 			continue;
 
 		return false;

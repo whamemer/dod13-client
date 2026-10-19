@@ -40,8 +40,8 @@ private:
 	float g_flFrustum[6][4];
 
 public:
-	void NormalizeFrustumPlane( float* frustum, int side );
-	void CalculateFrustum();
+	void NormalizeFrustumPlane( float *frustum, int side );
+	void CalculateFrustum( void );
 	bool PointInsideFrustum( float x, float y, float z );
 	bool SphereInsideFrustum( float x, float y, float z, float radius );
 	bool PlaneInsideFrustum( float x, float y, float z, float size );

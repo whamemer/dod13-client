@@ -20,10 +20,10 @@ void UpdateParticles( void );
 bool IsGamePaused( void );
 long MaxParticleClassSize( unsigned long lSize );
 
-void VectorScale( const float* in, float scale, float* out );
-void VectorAngles( const float* forward, float* angles );
-float VectorNormalize( float* v );
-void VectorMA( const float* veca, float scale, const float* vecb, float* vecc );
+void VectorScale( const float *in, float scale, float *out );
+void VectorAngles( const float *forward, float *angles );
+float VectorNormalize( float *v );
+void VectorMA( const float *veca, float scale, const float *vecb, float *vecc );
 
 extern float g_flOldTime;
 extern Vector g_vViewAngles;

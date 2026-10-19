@@ -22,8 +22,8 @@ class ForceMember
 {
 public:
 	int m_iIndex;			// index into the main list
-	ForceMember* m_pNext;	// a linked list entry
-	ForceMember* m_pPrevious;
+	ForceMember *m_pNext;	// a linked list entry
+	ForceMember *m_pPrevious;
 	Vector m_vOrigin;		// position
 	Vector m_vDirection;
 	float m_flRadius;		// force radius, i.e. impact scale
@@ -46,9 +46,9 @@ class ForceList
 {
 public:
 	int m_iElements;
-	ForceMember* pFirst;	// Front
-	ForceMember* pCurrent;	// Middle
-	ForceMember* pLast;		// Back
+	ForceMember *pFirst;	// Front
+	ForceMember *pCurrent;	// Middle
+	ForceMember *pLast;		// Back
 
 	ForceList()
 	{
@@ -58,14 +58,14 @@ public:
 		pLast = NULL;
 	}
 	// Iterate over the whole list and free all forces.
-	ForceMember* AddForceMember()
+	ForceMember *AddForceMember( void )
 	{
-		if (m_iElements >= MAX_FORCE_MEMBERS)
+		if( m_iElements >= MAX_FORCE_MEMBERS )
 			return NULL;
 
 		m_iElements++;
-		ForceMember* p = new ForceMember;
-		if (p)
+		ForceMember *p = new ForceMember;
+		if( p )
 		{
 			p->m_pNext = NULL;
 			p->m_pPrevious = NULL;
@@ -74,8 +74,8 @@ public:
 			p->m_flDieTime = 0;
 			p->m_iIndex = m_iElements;
 		}
-		
-		if (pFirst)
+
+		if( pFirst )
 		{
 			p->m_pPrevious = pCurrent;
 			pCurrent->m_pNext = p;
@@ -88,18 +88,18 @@ public:
 		return p;
 	}
 
-	void ClearForceMembers()
+	void ClearForceMembers( void )
 	{
-		ForceMember* pNext;
+		ForceMember *pNext;
 
-		if (!pFirst)
+		if( !pFirst )
 			return;
 
-		ForceMember* pTemp = pFirst->m_pNext;
-		while (pTemp)
+		ForceMember *pTemp = pFirst->m_pNext;
+		while( pTemp )
 		{
 			pNext = pTemp->m_pNext;
-			if (pCurrent == pTemp)
+			if( pCurrent == pTemp )
 				pCurrent = NULL;
 
 			delete pTemp;
@@ -107,7 +107,7 @@ public:
 			m_iElements--;
 		}
 
-		if (pFirst)
+		if( pFirst )
 		{
 			delete pFirst;
 			pFirst = NULL;
@@ -117,13 +117,13 @@ public:
 
 	void UpdateForce( float m_flTime )
 	{
-		ForceMember* pTemp;
-		ForceMember* pTemp2;
+		ForceMember *pTemp;
+		ForceMember *pTemp2;
 
 		pTemp = pFirst;
-		while (pTemp)
+		while( pTemp )
 		{
-			if (pTemp->m_flDieTime == 0.0 || pTemp->m_flDieTime >= m_flTime)
+			if( pTemp->m_flDieTime == 0.0 || pTemp->m_flDieTime >= m_flTime )
 			{
 				pTemp = pTemp->m_pNext;
 			}
@@ -132,10 +132,10 @@ public:
 				// the original sets this to NULL, so the removed member was never freed
 				pTemp2 = pTemp;
 				// If the element is a head of the list, relink it to the next one
-				if (pTemp == pFirst)
+				if( pTemp == pFirst )
 				{
 					// The last one, relink to the previous one
-					if (pTemp == pLast)
+					if( pTemp == pLast )
 					{
 						pLast = NULL;
 						pCurrent = NULL;
@@ -151,7 +151,7 @@ public:
 						pFirst = pTemp;
 						delete pTemp2;
 
-						if (pTemp == pLast)
+						if( pTemp == pLast )
 						{
 							pLast = pTemp;
 							pTemp->m_pNext = NULL;
@@ -163,7 +163,7 @@ public:
 				else
 				{
 					// The last one, relink to the previous one
-					if (pTemp == pLast)
+					if( pTemp == pLast )
 					{
 						pTemp = pLast->m_pPrevious;
 						pTemp->m_pNext = NULL;
@@ -173,7 +173,7 @@ public:
 					}
 					else
 					{
-						ForceMember* pNext = pTemp->m_pNext;
+						ForceMember *pNext = pTemp->m_pNext;
 
 						pNext->m_pPrevious = pTemp->m_pPrevious;
 						pTemp->m_pPrevious->m_pNext = pTemp->m_pNext;
@@ -185,9 +185,9 @@ public:
 			}
 		}
 
-		for (pTemp = pFirst; pTemp; pTemp = pTemp->m_pNext)
+		for( pTemp = pFirst; pTemp; pTemp = pTemp->m_pNext )
 		{
-			CMiniMem::ApplyForce(pTemp->m_vOrigin, pTemp->m_vDirection, pTemp->m_flRadius, pTemp->m_flStrength);
+			CMiniMem::ApplyForce( pTemp->m_vOrigin, pTemp->m_vDirection, pTemp->m_flRadius, pTemp->m_flStrength );
 		}
 	}
 
