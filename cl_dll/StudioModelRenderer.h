@@ -15,6 +15,15 @@ CStudioModelRenderer
 
 ====================
 */
+#define BONE_CACHE_HASH_SIZE 128
+
+struct bonecache_hash_item_t
+{
+	char szCachedBoneName[32];
+	float rgCachedBoneTransform[3][4];
+	float rgCachedLightTransform[3][4];
+};
+
 class CStudioModelRenderer
 {
 public:
@@ -29,6 +38,9 @@ public:
 	// Public Interfaces
 	virtual int StudioDrawModel( int flags );
 	virtual int StudioDrawPlayer( int flags, struct entity_state_s *pplayer );
+
+	// Draws the current entity as it is (the old StudioDrawModel)
+	int StudioDrawCurrentEntity( int flags );
 
 public:
 	// Local interfaces
@@ -96,6 +108,12 @@ public:
 	// Process movement of player
 	virtual void StudioProcessGait( entity_state_t *pplayer );
 
+	// Bone cache
+	void EmptyBoneCacheHashTable( void );
+	bool FindBoneInCache( char *name, float ( *boneTransformOut )[4], float ( *lightTransformOut )[4] );
+	void AddBoneToCache( char *name, float ( *boneTransform )[4], float ( *lightTransform )[4] );
+	void PrintCache( void );
+
 public:
 
 	// Client clock
@@ -119,6 +137,9 @@ public:
 	cvar_t			*m_pCvarDeveloper;
 	// Draw entities bone hit boxes, etc?
 	cvar_t			*m_pCvarDrawEntities;
+	// cl_drawmodels and cl_drawplayermodels
+	cvar_t			*m_pDrawModels;
+	cvar_t			*m_pDrawPlayerModels;
 
 	// The entity which we are currently rendering.
 	cl_entity_t		*m_pCurrentEntity;		
@@ -158,6 +179,9 @@ public:
 	// Cached bone & light transformation matrices
 	float			m_rgCachedBoneTransform[MAXSTUDIOBONES][3][4];
 	float			m_rgCachedLightTransform[MAXSTUDIOBONES][3][4];
+
+	// Hash table of the cached bones (the bones are looked up by name)
+	bonecache_hash_item_t boneCacheHashTable[BONE_CACHE_HASH_SIZE];
 
 	// Software renderer scale factors
 	float			m_fSoftwareXScale, m_fSoftwareYScale;

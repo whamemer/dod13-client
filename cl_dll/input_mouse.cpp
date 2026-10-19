@@ -4,7 +4,7 @@
 #include "cl_util.h"
 
 // shared between backends
-Vector dead_viewangles(0, 0, 0);
+vec3_t dead_viewangles(0, 0, 0);
 cvar_t      *sensitivity;
 cvar_t  *in_joystick;
 

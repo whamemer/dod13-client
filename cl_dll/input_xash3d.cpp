@@ -1,4 +1,6 @@
 #include "hud.h"
+#include "dod_shared.h"
+#include "view.h"
 #include "usercmd.h"
 #include "cvardef.h"
 #include "kbutton.h"
@@ -44,7 +46,7 @@ cvar_t	*cl_laddermode;
 #define IMPULSE_UP		4
 
 int CL_IsDead( void );
-extern Vector dead_viewangles;
+extern vec3_t dead_viewangles;
 
 /*
 ===========
@@ -159,10 +161,105 @@ void FWGSInput::IN_ClientLookEvent( float relyaw, float relpitch )
 	rel_pitch += relpitch;
 }
 
+/*
+===========
+IN_DoDLimitView
+
+The view of the deployed machine gun (and of the deployed prone) is limited
+to a window around the angles it was deployed at: 20 degrees up and down,
+45 degrees to the sides. The original does it in IN_MouseMove.
+===========
+*/
+static void IN_DoDLimitView( Vector &viewangles )
+{
+	cl_entity_t *pplayer = gEngfuncs.GetLocalPlayer();
+	CHudDoDCrossHair &crosshair = gHUD.m_DoDCrossHair;
+	float yaw, left, right, tempL, tempR;
+
+	if( !pplayer || g_iUser1 || ( pplayer->curstate.iuser3 != STANCE_PRONE_DEPLOYED && pplayer->curstate.vuser1[0] != SANDBAG_DEPLOYED ) )
+	{
+		crosshair.i_xSet = 0;
+		return;
+	}
+
+	// the window is computed for the yaw in 0..360
+	while( viewangles[YAW] < 0.0f )
+		viewangles[YAW] += 360.0f;
+
+	while( viewangles[YAW] >= 360.0f )
+		viewangles[YAW] -= 360.0f;
+
+	if( !crosshair.i_xSet )
+	{
+		float pitch = viewangles[PITCH];
+		float y = viewangles[YAW];
+
+		if( pitch < -10.0f )
+		{
+			pitch = -10.0f;
+			viewangles[PITCH] = pitch;
+		}
+
+		crosshair.i_xSet = 1;
+		crosshair.f_xPos = y;
+		crosshair.f_yPos = pitch;
+
+		if( y <= 314.0f )
+			crosshair.f_xLPos = y + 45.0f;
+		else
+			crosshair.f_xLPos = y - 314.0f;
+
+		if( y >= 45.0f || y == 0.0f )
+		{
+			if( y == 0.0f )
+				crosshair.f_xRPos = 314.0f;
+			else
+				crosshair.f_xRPos = y - 45.0f;
+		}
+		else
+		{
+			crosshair.f_xRPos = (float)( 359 - (int)( 45.0f - y ) );
+		}
+	}
+
+	if( viewangles[PITCH] > crosshair.f_yPos + 20.0f )
+		viewangles[PITCH] = crosshair.f_yPos + 20.0f;
+
+	if( viewangles[PITCH] < crosshair.f_yPos - 20.0f )
+		viewangles[PITCH] = crosshair.f_yPos - 20.0f;
+
+	yaw = viewangles[YAW];
+	left = crosshair.f_xLPos;
+	right = crosshair.f_xRPos;
+	tempL = fabsf( yaw - left );
+	tempR = fabsf( yaw - right );
+
+	// the window wraps around the zero when the right limit is greater than the left one
+	if( yaw <= left )
+	{
+		if( yaw < right && yaw < left && tempL > tempR )
+			yaw = right;
+	}
+	else if( yaw > right )
+	{
+		if( tempR > tempL )
+			yaw = left;
+	}
+	else if( yaw < right )
+	{
+		if( tempR > tempL )
+			yaw = left;
+		else if( tempL > tempR )
+			yaw = right;
+	}
+
+	viewangles[YAW] = yaw;
+}
+
 // Rotate camera and add move values to usercmd
 void FWGSInput::IN_Move( float frametime, usercmd_t *cmd )
 {
-	Vector viewangles;
+	vec3_t viewangles;
 	bool fLadder = false;
 
 	if( gHUD.m_iIntermission )
@@ -176,12 +273,9 @@ void FWGSInput::IN_Move( float frametime, usercmd_t *cmd )
 	}
 	//if(ac_forwardmove || ac_sidemove)
 	//gEngfuncs.Con_Printf("Move: %f %f %f %f\n", ac_forwardmove, ac_sidemove, rel_pitch, rel_yaw);
-#if 0
-	if( in_mlook.state & 1 )
-	{
-		V_StopPitchDrift();
-	}
-#endif
+	// the original stops the pitch drift while the mouse look is held;
+	// here the mouse look is always on, so the view never drifts to the horizon
+	V_StopPitchDrift();
 	if( CL_IsDead() )
 	{
 		viewangles = dead_viewangles; // HACKHACK: see below
@@ -204,6 +298,9 @@ void FWGSInput::IN_Move( float frametime, usercmd_t *cmd )
 		gHUD.m_MOTD.scroll += rel_pitch;
 	else
 		viewangles[PITCH] += rel_pitch;
+
+	if( !CL_IsDead() )
+		IN_DoDLimitView( viewangles );
 
 	if( viewangles[PITCH] > cl_pitchdown->value )
 		viewangles[PITCH] = cl_pitchdown->value;
@@ -243,18 +340,29 @@ void FWGSInput::IN_MouseEvent( int mstate )
 	// perform button actions
 	for( int i = 0; i < 5; i++ )
 	{
-		if( ( mstate & ( 1 << i ) ) && !( mouse_oldbuttonstate & ( 1 << i ) ) )
+		int iButton = 1 << i;
+
+		if( ( mstate & iButton ) && !( mouse_oldbuttonstate & iButton ) )
 		{
+			// a click on a window with the cursor is not a command of the game, the engine hands it to VGUI as well
+			if( m_bVisibleMouse )
+				continue;
+
+			mouse_oldbuttonstate |= iButton;
 			gEngfuncs.Key_Event( K_MOUSE1 + i, 1 );
 		}
-
-		if( !( mstate & ( 1 << i ) ) && ( mouse_oldbuttonstate & ( 1 << i ) ) )
+		else if( !( mstate & iButton ) && ( mouse_oldbuttonstate & iButton ) )
 		{
+			// the release of a sent button always gets through, or the command stays pressed
+			mouse_oldbuttonstate &= ~iButton;
 			gEngfuncs.Key_Event( K_MOUSE1 + i, 0 );
 		}
-	}	
+	}
+}
 
-	mouse_oldbuttonstate = mstate;
+void FWGSInput::IN_SetVisibleMouse( bool visible )
+{
+	m_bVisibleMouse = visible;
 }
 
 // Stubs
@@ -286,6 +394,7 @@ void FWGSInput::IN_Commands( void )
 
 void FWGSInput::IN_Shutdown( void )
 {
+	/* Nothing. */
 }
 
 // Register cvars and reset data
@@ -295,4 +404,5 @@ void FWGSInput::IN_Init( void )
 	in_joystick = gEngfuncs.pfnRegisterVariable( "joystick", "0", FCVAR_ARCHIVE );
 	cl_laddermode = gEngfuncs.pfnRegisterVariable( "cl_laddermode", "2", FCVAR_ARCHIVE );
 	ac_forwardmove = ac_sidemove = rel_yaw = rel_pitch = 0;
+	m_bVisibleMouse = false;
 }

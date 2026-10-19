@@ -42,7 +42,7 @@ public:
 	virtual void IN_ResetMouse( void ) {}
 	virtual void Joy_AdvancedUpdate( void ) {}
 	virtual void IgnoreNextMouseDelta() {}
-	virtual void IN_SetVisibleMouse( bool visible ) {}
+	virtual void IN_SetVisibleMouse( bool visible );
 
 protected:
 	float ac_forwardmove;
@@ -50,6 +50,7 @@ protected:
 	int ac_movecount;
 	float rel_yaw;
 	float rel_pitch;
+	bool m_bVisibleMouse;
 };
 
 // No need for goldsource input support on the platforms that are not supported by GoldSource.

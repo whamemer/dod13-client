@@ -168,12 +168,7 @@ static void IN_SetMouseRelative(bool enable)
 #endif
 
 int CL_IsDead( void );
-extern Vector dead_viewangles;
-
-void V_StopPitchDrift( void )
-{
-
-}
+extern vec3_t dead_viewangles;
 
 // mouse variables
 cvar_t *m_filter;
