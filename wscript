@@ -7,7 +7,7 @@ import sys
 import os
 import re
 
-VERSION = '1.3'
+VERSION = '1.0.0'
 APPNAME = 'dod13-client'
 top = '.'
 default_prefix = '/'

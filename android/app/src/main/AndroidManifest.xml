@@ -14,7 +14,7 @@
             android:value="dod" />
 
         <activity
-            android:name="su.xash.dod13client.MainActivity"
+            android:name="io.github.whamemer.dod13client.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

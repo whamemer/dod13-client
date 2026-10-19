@@ -1,4 +1,4 @@
-package su.xash.dod13client;
+package io.github.whamemer.dod13client;
 
 import android.app.Activity;
 import android.content.ComponentName;
