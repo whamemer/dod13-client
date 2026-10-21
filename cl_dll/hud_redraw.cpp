@@ -207,8 +207,6 @@ int CHud::Redraw( float flTime, int intermission )
 		}
 	}
 
-	// disabled for now (cl_lw 0 is used for testing): the original forces cl_lw 1 and quits the game
-	/*
 	if( cl_lw && cl_lw->value != 1.0f )
 	{
 		char things[18];
@@ -218,7 +216,6 @@ int CHud::Redraw( float flTime, int intermission )
 		ConsolePrint( "cl_lw 0 is not a valid command. Do not use it.\n" );
 		ClientCmd( things );
 	}
-	*/
 
 	if( r_drawentities && r_drawentities->value != 1.0f )
 	{
