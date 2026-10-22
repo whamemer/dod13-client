@@ -155,6 +155,12 @@ set (CLDLL_SOURCES
 	../particleman/pman_main.cpp
 	../particleman/pman_particlemem.cpp
 	../particleman/pman_triangleeffect.cpp
+	../3rdparty/MiniUTL/bitstring.cpp
+	../3rdparty/MiniUTL/generichash.cpp
+	../3rdparty/MiniUTL/strtools.cpp
+	../3rdparty/MiniUTL/utlbuffer.cpp
+	../3rdparty/MiniUTL/utlmemory.cpp
+	../3rdparty/MiniUTL/utlstring.cpp
 )
 
 list(APPEND CLDLL_SOURCES
@@ -201,7 +207,7 @@ else()
 		../external/openbsd/strlcat.c)
 endif()
 
-include_directories (. dod/ ../dlls ../dlls/wpn_shared ../common ../engine ../pm_shared ../game_shared ../public ../particleman)
+include_directories (. dod/ ../dlls ../dlls/wpn_shared ../common ../engine ../pm_shared ../game_shared ../public ../particleman ../3rdparty/MiniUTL)
 
 if (GOLDSOURCE_SUPPORT)
 	include_directories (../external/)

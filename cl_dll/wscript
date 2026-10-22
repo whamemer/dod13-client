@@ -35,6 +35,7 @@ def build(bld):
 		'../game_shared',
 		'../public',
 		'../particleman',
+		'../3rdparty/MiniUTL',
 		'../utils/vgui/include']
 	excluded_files = ['game_shared/voice_vgui_tweakdlg.cpp',
 		'game_shared/voice_gamemgr.cpp',
@@ -48,6 +49,7 @@ def build(bld):
 		'public/safe_snprintf.c',
 		'pm_shared/*.c',
 		'particleman/*.cpp',
+		'3rdparty/MiniUTL/*.cpp',
 		'dlls/dod_shared.cpp',
 		'dlls/wpn_shared/*.cpp'
 	])
