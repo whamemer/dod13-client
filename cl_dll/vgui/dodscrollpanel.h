@@ -28,8 +28,8 @@
 #include <VGUI_TextPanel.h>
 #include <VGUI_Font.h>
 
-#include <string>
-#include <vector>
+#include "utlstring.h"
+#include "utlvector.h"
 
 class CDoDScrollButton : public vgui::Button
 {
@@ -72,7 +72,7 @@ private:
 // A text that is drawn line by line with the pitch of the lines that is set: the lines of the original are farther apart than
 // the height of the font of VGUI1 (12 units for the font of 13)
 // The lines of a text: it is broken at the new lines and every line is wrapped to the width (in pixels) with the font
-void DoD_WrapText( vgui::Font *pFont, const char *pszText, int iWide, std::vector<std::string> &lines );
+void DoD_WrapText( vgui::Font *pFont, const char *pszText, int iWide, CUtlVector<CUtlString> &lines );
 
 class CDoDLinesPanel : public vgui::Panel
 {
@@ -89,7 +89,7 @@ public:
 	virtual void paint( void );
 
 private:
-	std::vector<std::string> m_Lines;
+	CUtlVector<CUtlString> m_Lines;
 	vgui::Font *m_pFont;
 	int m_iPitch;
 	int m_r, m_g, m_b;

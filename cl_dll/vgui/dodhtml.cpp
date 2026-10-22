@@ -23,13 +23,12 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include <string>
-#include <vector>
-
 #include <VGUI_Font.h>
 
 #include "hud.h"
 #include "cl_util.h"
+
+#include "utlvector.h"
 
 #include "vgui/dodmenu.h"
 #include "vgui/dodhtml.h"
@@ -46,7 +45,7 @@ struct HtmlRun
 	int x;
 	int y;
 	int iWide;
-	std::string text;
+	CUtlString text;
 	vgui::Font *pFont;
 	int r;
 	int g;
@@ -66,8 +65,8 @@ struct HtmlRect
 
 struct HtmlResult
 {
-	std::vector<HtmlRun> runs;
-	std::vector<HtmlRect> rects;
+	CUtlVector<HtmlRun> runs;
+	CUtlVector<HtmlRect> rects;
 
 	int iHeight;
 	int iBackground[3];
@@ -86,7 +85,7 @@ struct Style
 	bool bPre;
 	int iAlign;	// 0 left, 1 center, 2 right
 	float flLineHeight;	// the multiplier of the font size, 0 is normal
-	std::string family;
+	CUtlString family;
 	bool bHidden;
 
 	float flMargin[4];	// top, right, bottom, left
@@ -97,49 +96,105 @@ struct Style
 
 struct CssRule
 {
-	std::string tag;
-	std::string cls;
-	std::string id;
-	std::string props;
+	CUtlString tag;
+	CUtlString cls;
+	CUtlString id;
+	CUtlString props;
 	int iSpecificity;
 	int iOrder;
 };
 
 struct Attr
 {
-	std::string name;
-	std::string value;
+	CUtlString name;
+	CUtlString value;
 };
 
 float s_flZoom = 1.0f;
 
-std::string Trim( const std::string &str )
+// CUtlString of MiniUTL has no search and no cut as std::string has: the positions are ints, -1 is nothing found
+int Len( const char *psz )
 {
-	size_t start = 0;
-	size_t end = str.length();
-
-	while( start < end && isspace( (unsigned char)str[start] ) )
-		start++;
-
-	while( end > start && isspace( (unsigned char)str[end - 1] ) )
-		end--;
-
-	return str.substr( start, end - start );
+	return (int)strlen( psz );
 }
 
-std::string ToLower( const std::string &str )
+// The count that is out of the string or is negative takes the rest of it
+CUtlString Substr( const char *psz, int pos, int count = -1 )
 {
-	std::string result = str;
+	int size = Len( psz );
+	CUtlString result;
 
-	for( size_t i = 0; i < result.length(); i++ )
-		result[i] = (char)tolower( (unsigned char)result[i] );
+	if( pos < 0 )
+		pos = 0;
+
+	if( pos > size )
+		pos = size;
+
+	if( count < 0 || count > size - pos )
+		count = size - pos;
+
+	result.SetDirect( psz + pos, count );
 
 	return result;
 }
 
-bool StartsWith( const std::string &str, const char *pszPrefix )
+int Find( const char *psz, char ch, int pos = 0 )
 {
-	return str.compare( 0, strlen( pszPrefix ), pszPrefix ) == 0;
+	if( pos > Len( psz ) )
+		return -1;
+
+	const char *pszFound = strchr( psz + pos, ch );
+
+	return pszFound ? (int)( pszFound - psz ) : -1;
+}
+
+int Find( const char *psz, const char *pszText, int pos = 0 )
+{
+	if( pos > Len( psz ) )
+		return -1;
+
+	const char *pszFound = strstr( psz + pos, pszText );
+
+	return pszFound ? (int)( pszFound - psz ) : -1;
+}
+
+int FindLastOf( const char *psz, const char *pszChars )
+{
+	for( int i = Len( psz ) - 1; i >= 0; i-- )
+	{
+		if( strchr( pszChars, psz[i] ) )
+			return i;
+	}
+
+	return -1;
+}
+
+CUtlString Trim( const char *psz )
+{
+	int start = 0;
+	int end = Len( psz );
+
+	while( start < end && isspace( (unsigned char)psz[start] ) )
+		start++;
+
+	while( end > start && isspace( (unsigned char)psz[end - 1] ) )
+		end--;
+
+	return Substr( psz, start, end - start );
+}
+
+CUtlString ToLower( const char *psz )
+{
+	CUtlString result( psz );
+
+	result.ToLower();
+
+	return result;
+}
+
+bool StartsWith( const char *psz, const char *pszPrefix )
+{
+	return strncmp( psz, pszPrefix, strlen( pszPrefix ) ) == 0;
 }
 
 struct NamedColor
@@ -188,22 +243,22 @@ int HexDigit( char ch )
 }
 
 // #rgb, #rrggbb, rgb( r, g, b ) and the names of the colors
-bool ParseColor( const std::string &text, int &r, int &g, int &b )
+bool ParseColor( const CUtlString &text, int &r, int &g, int &b )
 {
-	std::string value = ToLower( Trim( text ) );
+	CUtlString value = ToLower( Trim( text ) );
 
-	if( value.empty() )
+	if( value.IsEmpty() )
 		return false;
 
 	if( value[0] == '#' )
 	{
 		int d[6];
-		size_t digits = value.length() - 1;
+		int digits = Len( value ) - 1;
 
 		if( digits != 3 && digits != 6 )
 			return false;
 
-		for( size_t i = 0; i < digits; i++ )
+		for( int i = 0; i < digits; i++ )
 		{
 			d[i] = HexDigit( value[i + 1] );
 
@@ -231,7 +286,7 @@ bool ParseColor( const std::string &text, int &r, int &g, int &b )
 	{
 		int ir, ig, ib;
 
-		if( sscanf( value.c_str() + 4, " %d , %d , %d", &ir, &ig, &ib ) == 3 )
+		if( sscanf( value.Get() + 4, " %d , %d , %d", &ir, &ig, &ib ) == 3 )
 		{
 			r = ir;
 			g = ig;
@@ -257,18 +312,18 @@ bool ParseColor( const std::string &text, int &r, int &g, int &b )
 }
 
 // A length in pixels; em is relative to the font size, % to the base
-bool ParseLength( const std::string &text, float flFontSize, float flBase, float &flResult )
+bool ParseLength( const CUtlString &text, float flFontSize, float flBase, float &flResult )
 {
-	std::string value = ToLower( Trim( text ) );
+	CUtlString value = ToLower( Trim( text ) );
 	char *pszEnd = NULL;
-	float flNumber = (float)strtod( value.c_str(), &pszEnd );
+	float flNumber = (float)strtod( value.Get(), &pszEnd );
 
-	if( pszEnd == value.c_str() )
+	if( pszEnd == value.Get() )
 		return false;
 
-	std::string unit = Trim( pszEnd );
+	CUtlString unit = Trim( pszEnd );
 
-	if( unit.empty() || unit == "px" )
+	if( unit.IsEmpty() || unit == "px" )
 		flResult = flNumber * s_flZoom;
 	else if( unit == "pt" )
 		flResult = flNumber * 4.0f / 3.0f * s_flZoom;
@@ -294,9 +349,9 @@ bool ParseLength( const std::string &text, float flFontSize, float flBase, float
 	return true;
 }
 
-bool ParseFontSize( const std::string &text, float flParentSize, float &flResult )
+bool ParseFontSize( const CUtlString &text, float flParentSize, float &flResult )
 {
-	std::string value = ToLower( Trim( text ) );
+	CUtlString value = ToLower( Trim( text ) );
 
 	if( value == "xx-small" )
 		flResult = 9.0f * s_flZoom;
@@ -323,20 +378,20 @@ bool ParseFontSize( const std::string &text, float flParentSize, float &flResult
 }
 
 // The first family of a list, the generic ones are the fonts of the menus
-std::string ParseFamily( const std::string &text )
+CUtlString ParseFamily( const CUtlString &text )
 {
-	std::string family = text;
-	size_t comma = family.find( ',' );
+	CUtlString family = text;
+	int comma = Find( family, ',' );
 
-	if( comma != std::string::npos )
-		family = family.substr( 0, comma );
+	if( comma != -1 )
+		family = Substr( family, 0, comma );
 
 	family = Trim( family );
 
-	if( family.length() >= 2 && ( family[0] == '"' || family[0] == '\'' ) )
-		family = family.substr( 1, family.length() - 2 );
+	if( Len( family ) >= 2 && ( family[0] == '"' || family[0] == '\'' ) )
+		family = Substr( family, 1, Len( family ) - 2 );
 
-	std::string lower = ToLower( family );
+	CUtlString lower = ToLower( family );
 
 	if( lower == "sans-serif" )
 		return "Arial";
@@ -352,33 +407,33 @@ std::string ParseFamily( const std::string &text )
 
 // The margins of the shorthand: 1 value is all of them, 2 are top and bottom / right and left, 3 are top / right and
 // left / bottom, 4 are top, right, bottom and left
-void ParseMargin( const std::string &text, Style &style )
+void ParseMargin( const CUtlString &text, Style &style )
 {
-	std::vector<std::string> values;
-	std::string value = Trim( text );
-	size_t pos = 0;
+	CUtlVector<CUtlString> values;
+	CUtlString value = Trim( text );
+	int pos = 0;
 
-	while( pos < value.length() )
+	while( pos < Len( value ) )
 	{
-		size_t end = pos;
+		int end = pos;
 
-		while( end < value.length() && !isspace( (unsigned char)value[end] ) )
+		while( end < Len( value ) && !isspace( (unsigned char)value[end] ) )
 			end++;
 
-		values.push_back( value.substr( pos, end - pos ) );
+		values.AddToTail( Substr( value, pos, end - pos ) );
 
 		pos = end;
 
-		while( pos < value.length() && isspace( (unsigned char)value[pos] ) )
+		while( pos < Len( value ) && isspace( (unsigned char)value[pos] ) )
 			pos++;
 	}
 
-	if( values.empty() || values.size() > 4 )
+	if( values.IsEmpty() || values.Count() > 4 )
 		return;
 
 	float flLength[4];
 
-	for( size_t i = 0; i < values.size(); i++ )
+	for( int i = 0; i < values.Count(); i++ )
 	{
 		if( values[i] == "auto" )
 			flLength[i] = 0.0f;
@@ -386,7 +441,7 @@ void ParseMargin( const std::string &text, Style &style )
 			return;
 	}
 
-	switch( values.size() )
+	switch( values.Count() )
 	{
 	case 1:
 		style.flMargin[0] = style.flMargin[1] = style.flMargin[2] = style.flMargin[3] = flLength[0];
@@ -408,20 +463,20 @@ void ParseMargin( const std::string &text, Style &style )
 }
 
 // font: [style] [weight] size[/line-height] family
-void ParseFontShorthand( const std::string &text, Style &style, float flParentSize )
+void ParseFontShorthand( const CUtlString &text, Style &style, float flParentSize )
 {
-	std::string value = Trim( text );
-	size_t pos = 0;
+	CUtlString value = Trim( text );
+	int pos = 0;
 	bool bSize = false;
 
-	while( pos < value.length() && !bSize )
+	while( pos < Len( value ) && !bSize )
 	{
-		size_t end = pos;
+		int end = pos;
 
-		while( end < value.length() && !isspace( (unsigned char)value[end] ) )
+		while( end < Len( value ) && !isspace( (unsigned char)value[end] ) )
 			end++;
 
-		std::string token = ToLower( value.substr( pos, end - pos ) );
+		CUtlString token = ToLower( Substr( value, pos, end - pos ) );
 		float flSize;
 
 		if( token == "italic" || token == "oblique" )
@@ -436,25 +491,25 @@ void ParseFontShorthand( const std::string &text, Style &style, float flParentSi
 		{
 			// the style, the weight or the variant
 		}
-		else if( token.length() == 3 && isdigit( (unsigned char)token[0] ) && token[1] == '0' && token[2] == '0' )
+		else if( Len( token ) == 3 && isdigit( (unsigned char)token[0] ) && token[1] == '0' && token[2] == '0' )
 		{
 			style.iWeight = ( token[0] - '0' ) * 100;
 		}
 		else
 		{
 			// the size, maybe with the line height
-			size_t slash = token.find( '/' );
+			int slash = Find( token, '/' );
 
-			if( ParseFontSize( slash == std::string::npos ? token : token.substr( 0, slash ), flParentSize, flSize ) )
+			if( ParseFontSize( slash == -1 ? token : Substr( token, 0, slash ), flParentSize, flSize ) )
 			{
 				style.flFontSize = flSize;
 				bSize = true;
 
-				if( slash != std::string::npos )
+				if( slash != -1 )
 				{
 					float flLine;
 
-					if( ParseLength( token.substr( slash + 1 ), style.flFontSize, style.flFontSize, flLine ) )
+					if( ParseLength( Substr( token, slash + 1 ), style.flFontSize, style.flFontSize, flLine ) )
 						style.flLineHeight = flLine / style.flFontSize;
 				}
 			}
@@ -462,54 +517,54 @@ void ParseFontShorthand( const std::string &text, Style &style, float flParentSi
 
 		pos = end;
 
-		while( pos < value.length() && isspace( (unsigned char)value[pos] ) )
+		while( pos < Len( value ) && isspace( (unsigned char)value[pos] ) )
 			pos++;
 	}
 
-	if( bSize && pos < value.length() )
-		style.family = ParseFamily( value.substr( pos ) );
+	if( bSize && pos < Len( value ) )
+		style.family = ParseFamily( Substr( value, pos ) );
 }
 
 // The declarations of a rule or of an attribute style: name: value; the font size is made first, the lengths in em
 // are relative to it
-void ApplyDeclarations( Style &style, const std::string &props, float flParentSize )
+void ApplyDeclarations( Style &style, const CUtlString &props, float flParentSize )
 {
-	std::vector<Attr> declarations;
-	size_t pos = 0;
+	CUtlVector<Attr> declarations;
+	int pos = 0;
 
-	while( pos < props.length() )
+	while( pos < Len( props ) )
 	{
-		size_t end = props.find( ';', pos );
+		int end = Find( props, ';', pos );
 
-		if( end == std::string::npos )
-			end = props.length();
+		if( end == -1 )
+			end = Len( props );
 
-		std::string declaration = props.substr( pos, end - pos );
-		size_t colon = declaration.find( ':' );
+		CUtlString declaration = Substr( props, pos, end - pos );
+		int colon = Find( declaration, ':' );
 
-		if( colon != std::string::npos )
+		if( colon != -1 )
 		{
 			Attr attr;
 
-			attr.name = ToLower( Trim( declaration.substr( 0, colon ) ) );
-			attr.value = Trim( declaration.substr( colon + 1 ) );
+			attr.name = ToLower( Trim( Substr( declaration, 0, colon ) ) );
+			attr.value = Trim( Substr( declaration, colon + 1 ) );
 
 			// !important is not told from the other declarations
-			size_t important = attr.value.find( '!' );
+			int important = Find( attr.value, '!' );
 
-			if( important != std::string::npos )
-				attr.value = Trim( attr.value.substr( 0, important ) );
+			if( important != -1 )
+				attr.value = Trim( Substr( attr.value, 0, important ) );
 
-			declarations.push_back( attr );
+			declarations.AddToTail( attr );
 		}
 
 		pos = end + 1;
 	}
 
-	for( size_t i = 0; i < declarations.size(); i++ )
+	for( int i = 0; i < declarations.Count(); i++ )
 	{
-		const std::string &name = declarations[i].name;
-		const std::string &value = declarations[i].value;
+		const CUtlString &name = declarations[i].name;
+		const CUtlString &value = declarations[i].value;
 		float flSize;
 
 		if( name == "font" )
@@ -518,10 +573,10 @@ void ApplyDeclarations( Style &style, const std::string &props, float flParentSi
 			style.flFontSize = flSize;
 	}
 
-	for( size_t i = 0; i < declarations.size(); i++ )
+	for( int i = 0; i < declarations.Count(); i++ )
 	{
-		const std::string &name = declarations[i].name;
-		std::string value = ToLower( declarations[i].value );
+		const CUtlString &name = declarations[i].name;
+		CUtlString value = ToLower( declarations[i].value );
 		int r, g, b;
 		float flLength;
 
@@ -537,16 +592,16 @@ void ApplyDeclarations( Style &style, const std::string &props, float flParentSi
 		else if( name == "background" || name == "background-color" )
 		{
 			// the color is a part of the shorthand
-			size_t pos = 0;
+			int pos = 0;
 
-			while( pos < value.length() )
+			while( pos < Len( value ) )
 			{
-				size_t end = pos;
+				int end = pos;
 
-				while( end < value.length() && !isspace( (unsigned char)value[end] ) )
+				while( end < Len( value ) && !isspace( (unsigned char)value[end] ) )
 					end++;
 
-				if( ParseColor( value.substr( pos, end - pos ), r, g, b ) )
+				if( ParseColor( Substr( value, pos, end - pos ), r, g, b ) )
 				{
 					style.bBackground = true;
 					style.iBackground[0] = r;
@@ -556,7 +611,7 @@ void ApplyDeclarations( Style &style, const std::string &props, float flParentSi
 
 				pos = end;
 
-				while( pos < value.length() && isspace( (unsigned char)value[pos] ) )
+				while( pos < Len( value ) && isspace( (unsigned char)value[pos] ) )
 					pos++;
 			}
 		}
@@ -567,7 +622,7 @@ void ApplyDeclarations( Style &style, const std::string &props, float flParentSi
 			else if( value == "normal" || value == "lighter" )
 				style.iWeight = 400;
 			else
-				style.iWeight = atoi( value.c_str() );
+				style.iWeight = atoi( value.Get() );
 		}
 		else if( name == "font-style" )
 		{
@@ -579,7 +634,7 @@ void ApplyDeclarations( Style &style, const std::string &props, float flParentSi
 		}
 		else if( name == "text-decoration" )
 		{
-			style.bUnderline = ( value.find( "underline" ) != std::string::npos );
+			style.bUnderline = ( Find( value, "underline" ) != -1 );
 		}
 		else if( name == "text-align" )
 		{
@@ -619,10 +674,10 @@ void ApplyDeclarations( Style &style, const std::string &props, float flParentSi
 			else
 			{
 				char *pszEnd = NULL;
-				float flNumber = (float)strtod( value.c_str(), &pszEnd );
+				float flNumber = (float)strtod( value.Get(), &pszEnd );
 
 				// a number is the multiplier, a length is divided by the font size
-				if( pszEnd != value.c_str() && *pszEnd == '\0' )
+				if( pszEnd != value.Get() && *pszEnd == '\0' )
 					style.flLineHeight = flNumber;
 				else if( ParseLength( value, style.flFontSize, style.flFontSize, flLength ) && style.flFontSize > 0.0f )
 					style.flLineHeight = flLength / style.flFontSize;
@@ -635,7 +690,7 @@ void ApplyDeclarations( Style &style, const std::string &props, float flParentSi
 	}
 }
 
-bool IsBlockTag( const std::string &tag )
+bool IsBlockTag( const CUtlString &tag )
 {
 	static const char *s_pszBlocks[] =
 	{
@@ -652,7 +707,7 @@ bool IsBlockTag( const std::string &tag )
 	return false;
 }
 
-bool IsVoidTag( const std::string &tag )
+bool IsVoidTag( const CUtlString &tag )
 {
 	static const char *s_pszVoids[] =
 	{
@@ -670,7 +725,7 @@ bool IsVoidTag( const std::string &tag )
 
 struct CachedFont
 {
-	std::string family;
+	CUtlString family;
 	int iTall;
 	int iWeight;
 	bool bItalic;
@@ -678,11 +733,11 @@ struct CachedFont
 };
 
 // The fonts of the page: one for a family, a size, a weight and the italic
-vgui::Font *GetFont( const std::string &family, int iTall, int iWeight, bool bItalic )
+vgui::Font *GetFont( const CUtlString &family, int iTall, int iWeight, bool bItalic )
 {
-	static std::vector<CachedFont> s_Fonts;
+	static CUtlVector<CachedFont> s_Fonts;
 
-	for( size_t i = 0; i < s_Fonts.size(); i++ )
+	for( int i = 0; i < s_Fonts.Count(); i++ )
 	{
 		if( s_Fonts[i].iTall == iTall && s_Fonts[i].iWeight == iWeight && s_Fonts[i].bItalic == bItalic && s_Fonts[i].family == family )
 			return s_Fonts[i].pFont;
@@ -698,19 +753,19 @@ vgui::Font *GetFont( const std::string &family, int iTall, int iWeight, bool bIt
 	// font-size of CSS is the size of the em; a positive height of GDI is the height of the cell (the em with the
 	// internal leading, 1.2 em for Verdana), the negative one is the em: the text of the page has the size that it asks for
 #ifdef _WIN32
-	font.pFont = new vgui::Font( family.c_str(), NULL, 0, -iTall, 0, 0, iWeight, bItalic, false, false, false );
+	font.pFont = new vgui::Font( family.Get(), NULL, 0, -iTall, 0, 0, iWeight, bItalic, false, false, false );
 #else
-	font.pFont = new vgui::Font( family.c_str(), NULL, 0, iTall, 0, 0, iWeight, bItalic, false, false, false );
+	font.pFont = new vgui::Font( family.Get(), NULL, 0, iTall, 0, 0, iWeight, bItalic, false, false, false );
 #endif
 
-	s_Fonts.push_back( font );
+	s_Fonts.AddToTail( font );
 
 	return font.pFont;
 }
 
 struct Word
 {
-	std::string text;
+	CUtlString text;
 	vgui::Font *pFont;
 	int r;
 	int g;
@@ -724,7 +779,7 @@ struct Word
 
 struct Element
 {
-	std::string tag;
+	CUtlString tag;
 	Style style;
 	bool bBlock;
 	bool bHiddenCounted;
@@ -736,20 +791,20 @@ struct Element
 class CHtmlLayout
 {
 public:
-	void Run( const std::string &html, int iWidth, HtmlResult &result );
+	void Run( const CUtlString &html, int iWidth, HtmlResult &result );
 
 private:
-	void ParseCss( const std::string &css );
-	void ParseTag( const std::string &tag, std::string &name, std::vector<Attr> &attrs, bool &bClosing );
-	void OpenElement( const std::string &name, const std::vector<Attr> &attrs );
-	void CloseElement( const std::string &name );
+	void ParseCss( const CUtlString &css );
+	void ParseTag( const CUtlString &tag, CUtlString &name, CUtlVector<Attr> &attrs, bool &bClosing );
+	void OpenElement( const CUtlString &name, const CUtlVector<Attr> &attrs );
+	void CloseElement( const CUtlString &name );
 	void CloseTop( void );
-	void ImplicitClose( const std::string &name );
+	void ImplicitClose( const CUtlString &name );
 
-	void ApplyElementStyle( Element &element, const std::vector<Attr> &attrs );
+	void ApplyElementStyle( Element &element, const CUtlVector<Attr> &attrs );
 
-	void AddText( const std::string &raw );
-	void AddWord( const std::string &text, bool bNoWrap );
+	void AddText( const CUtlString &raw );
+	void AddWord( const CUtlString &text, bool bNoWrap );
 	void FlushLine( void );
 	void LineBreak( void );
 	void OpenBlock( const Style &style );
@@ -759,10 +814,10 @@ private:
 	float AvailableWidth( void );
 	float SpaceWidth( vgui::Font *pFont );
 
-	Style &TopStyle( void ) { return m_Elements.back().style; }
+	Style &TopStyle( void ) { return m_Elements.Tail().style; }
 
-	std::vector<Element> m_Elements;
-	std::vector<CssRule> m_Rules;
+	CUtlVector<Element> m_Elements;
+	CUtlVector<CssRule> m_Rules;
 	HtmlResult *m_pResult;
 
 	int m_iWidth;
@@ -772,7 +827,7 @@ private:
 	float m_flPendingMargin;
 	float m_flPendingGap;
 
-	std::vector<Word> m_Words;
+	CUtlVector<Word> m_Words;
 	float m_flLineX;
 	bool m_bPendingSpace;
 
@@ -781,35 +836,36 @@ private:
 	bool m_bBodySeen;
 };
 
-std::string DecodeEntities( const std::string &text )
+CUtlString DecodeEntities( const CUtlString &text )
 {
-	std::string result;
+	CUtlVector<char> result;
+	int size = Len( text );
 
-	for( size_t i = 0; i < text.length(); i++ )
+	for( int i = 0; i < size; i++ )
 	{
 		if( text[i] != '&' )
 		{
-			result += text[i];
+			result.AddToTail( text[i] );
 			continue;
 		}
 
-		size_t end = text.find( ';', i );
+		int end = Find( text, ';', i );
 
-		if( end == std::string::npos || end - i > 10 )
+		if( end == -1 || end - i > 10 )
 		{
-			result += '&';
+			result.AddToTail( '&' );
 			continue;
 		}
 
-		std::string entity = text.substr( i + 1, end - i - 1 );
+		CUtlString entity = Substr( text, i + 1, end - i - 1 );
 		int iCodePoint = -1;
 
-		if( entity.length() > 1 && entity[0] == '#' )
+		if( Len( entity ) > 1 && entity[0] == '#' )
 		{
 			if( entity[1] == 'x' || entity[1] == 'X' )
-				iCodePoint = (int)strtol( entity.c_str() + 2, NULL, 16 );
+				iCodePoint = (int)strtol( entity.Get() + 2, NULL, 16 );
 			else
-				iCodePoint = atoi( entity.c_str() + 1 );
+				iCodePoint = atoi( entity.Get() + 1 );
 		}
 		else if( entity == "amp" )
 			iCodePoint = '&';
@@ -846,20 +902,25 @@ std::string DecodeEntities( const std::string &text )
 
 		if( iCodePoint < 0 )
 		{
-			result += '&';
+			result.AddToTail( '&' );
 			continue;
 		}
 
-		result += DoD_CodePointToLatin1( iCodePoint );
+		// &#0; does not end the text
+		if( iCodePoint > 0 )
+			result.AddToTail( DoD_CodePointToLatin1( iCodePoint ) );
+
 		i = end;
 	}
 
-	return result;
+	result.AddToTail( '\0' );
+
+	return CUtlString( result.Base() );
 }
 
-const Attr *FindAttr( const std::vector<Attr> &attrs, const char *pszName )
+const Attr *FindAttr( const CUtlVector<Attr> &attrs, const char *pszName )
 {
-	for( size_t i = 0; i < attrs.size(); i++ )
+	for( int i = 0; i < attrs.Count(); i++ )
 	{
 		if( attrs[i].name == pszName )
 			return &attrs[i];
@@ -886,43 +947,47 @@ float CHtmlLayout::SpaceWidth( vgui::Font *pFont )
 
 // A rule: the selectors before the braces, the declarations inside; only the last part of a selector counts and the
 // pseudo classes are not supported
-void CHtmlLayout::ParseCss( const std::string &css )
+void CHtmlLayout::ParseCss( const CUtlString &css )
 {
-	std::string text;
+	CUtlVector<char> stripped;
+	int size = Len( css );
 
 	// the comments
-	for( size_t i = 0; i < css.length(); i++ )
+	for( int i = 0; i < size; i++ )
 	{
-		if( css[i] == '/' && i + 1 < css.length() && css[i + 1] == '*' )
+		if( css[i] == '/' && i + 1 < size && css[i + 1] == '*' )
 		{
-			size_t end = css.find( "*/", i + 2 );
+			int end = Find( css, "*/", i + 2 );
 
-			if( end == std::string::npos )
+			if( end == -1 )
 				break;
 
 			i = end + 1;
 			continue;
 		}
 
-		text += css[i];
+		stripped.AddToTail( css[i] );
 	}
 
-	size_t pos = 0;
+	stripped.AddToTail( '\0' );
 
-	while( pos < text.length() )
+	CUtlString text( stripped.Base() );
+	int pos = 0;
+
+	while( pos < Len( text ) )
 	{
-		size_t open = text.find( '{', pos );
+		int open = Find( text, '{', pos );
 
-		if( open == std::string::npos )
+		if( open == -1 )
 			break;
 
-		std::string selectors = Trim( text.substr( pos, open - pos ) );
+		CUtlString selectors = Trim( Substr( text, pos, open - pos ) );
 
 		// the end of the block, the blocks inside (@media) are skipped
 		int iDepth = 1;
-		size_t close = open + 1;
+		int close = open + 1;
 
-		while( close < text.length() && iDepth > 0 )
+		while( close < Len( text ) && iDepth > 0 )
 		{
 			if( text[close] == '{' )
 				iDepth++;
@@ -932,170 +997,170 @@ void CHtmlLayout::ParseCss( const std::string &css )
 			close++;
 		}
 
-		std::string props = text.substr( open + 1, close - open - 2 );
+		CUtlString props = Substr( text, open + 1, close - open - 2 );
 
 		pos = close;
 
-		if( selectors.empty() || selectors[0] == '@' )
+		if( selectors.IsEmpty() || selectors[0] == '@' )
 			continue;
 
-		size_t start = 0;
+		int start = 0;
 
-		while( start <= selectors.length() )
+		while( start <= Len( selectors ) )
 		{
-			size_t comma = selectors.find( ',', start );
+			int comma = Find( selectors, ',', start );
 
-			if( comma == std::string::npos )
-				comma = selectors.length();
+			if( comma == -1 )
+				comma = Len( selectors );
 
-			std::string selector = Trim( selectors.substr( start, comma - start ) );
+			CUtlString selector = Trim( Substr( selectors, start, comma - start ) );
 
 			start = comma + 1;
 
-			if( selector.empty() || selector.find( ':' ) != std::string::npos )
+			if( selector.IsEmpty() || Find( selector, ':' ) != -1 )
 				continue;
 
 			// the last part: the one after the last space or '>'
-			size_t last = selector.find_last_of( " >+~" );
+			int last = FindLastOf( selector, " >+~" );
 
-			if( last != std::string::npos )
-				selector = selector.substr( last + 1 );
+			if( last != -1 )
+				selector = Substr( selector, last + 1 );
 
 			CssRule rule;
 
 			rule.props = props;
-			rule.iOrder = (int)m_Rules.size();
+			rule.iOrder = (int)m_Rules.Count();
 			rule.iSpecificity = 0;
 
 			// tag.class#id
-			size_t idPos = selector.find( '#' );
-			size_t classPos = selector.find( '.' );
+			int idPos = Find( selector, '#' );
+			int classPos = Find( selector, '.' );
 
-			size_t tagEnd = selector.length();
+			int tagEnd = Len( selector );
 
-			if( idPos != std::string::npos && idPos < tagEnd )
+			if( idPos != -1 && idPos < tagEnd )
 				tagEnd = idPos;
 
-			if( classPos != std::string::npos && classPos < tagEnd )
+			if( classPos != -1 && classPos < tagEnd )
 				tagEnd = classPos;
 
-			rule.tag = ToLower( selector.substr( 0, tagEnd ) );
+			rule.tag = ToLower( Substr( selector, 0, tagEnd ) );
 
 			if( rule.tag == "*" )
-				rule.tag.clear();
+				rule.tag.Clear();
 
-			if( !rule.tag.empty() )
+			if( !rule.tag.IsEmpty() )
 				rule.iSpecificity += 1;
 
-			if( classPos != std::string::npos )
+			if( classPos != -1 )
 			{
-				size_t classEnd = selector.length();
+				int classEnd = Len( selector );
 
-				if( idPos != std::string::npos && idPos > classPos )
+				if( idPos != -1 && idPos > classPos )
 					classEnd = idPos;
 
-				rule.cls = selector.substr( classPos + 1, classEnd - classPos - 1 );
+				rule.cls = Substr( selector, classPos + 1, classEnd - classPos - 1 );
 				rule.iSpecificity += 10;
 			}
 
-			if( idPos != std::string::npos )
+			if( idPos != -1 )
 			{
-				size_t idEnd = selector.length();
+				int idEnd = Len( selector );
 
-				if( classPos != std::string::npos && classPos > idPos )
+				if( classPos != -1 && classPos > idPos )
 					idEnd = classPos;
 
-				rule.id = selector.substr( idPos + 1, idEnd - idPos - 1 );
+				rule.id = Substr( selector, idPos + 1, idEnd - idPos - 1 );
 				rule.iSpecificity += 100;
 			}
 
-			m_Rules.push_back( rule );
+			m_Rules.AddToTail( rule );
 		}
 	}
 }
 
 // <tag attr=value ...>: the name, the attributes and whether it is a closing tag
-void CHtmlLayout::ParseTag( const std::string &tag, std::string &name, std::vector<Attr> &attrs, bool &bClosing )
+void CHtmlLayout::ParseTag( const CUtlString &tag, CUtlString &name, CUtlVector<Attr> &attrs, bool &bClosing )
 {
-	size_t pos = 0;
+	int pos = 0;
 
 	bClosing = false;
 
-	if( pos < tag.length() && tag[pos] == '/' )
+	if( pos < Len( tag ) && tag[pos] == '/' )
 	{
 		bClosing = true;
 		pos++;
 	}
 
-	size_t end = pos;
+	int end = pos;
 
-	while( end < tag.length() && !isspace( (unsigned char)tag[end] ) && tag[end] != '/' )
+	while( end < Len( tag ) && !isspace( (unsigned char)tag[end] ) && tag[end] != '/' )
 		end++;
 
-	name = ToLower( tag.substr( pos, end - pos ) );
+	name = ToLower( Substr( tag, pos, end - pos ) );
 	pos = end;
 
-	while( pos < tag.length() )
+	while( pos < Len( tag ) )
 	{
-		while( pos < tag.length() && ( isspace( (unsigned char)tag[pos] ) || tag[pos] == '/' ) )
+		while( pos < Len( tag ) && ( isspace( (unsigned char)tag[pos] ) || tag[pos] == '/' ) )
 			pos++;
 
-		if( pos >= tag.length() )
+		if( pos >= Len( tag ) )
 			break;
 
-		size_t nameEnd = pos;
+		int nameEnd = pos;
 
-		while( nameEnd < tag.length() && !isspace( (unsigned char)tag[nameEnd] ) && tag[nameEnd] != '=' )
+		while( nameEnd < Len( tag ) && !isspace( (unsigned char)tag[nameEnd] ) && tag[nameEnd] != '=' )
 			nameEnd++;
 
 		Attr attr;
 
-		attr.name = ToLower( tag.substr( pos, nameEnd - pos ) );
+		attr.name = ToLower( Substr( tag, pos, nameEnd - pos ) );
 		pos = nameEnd;
 
-		while( pos < tag.length() && isspace( (unsigned char)tag[pos] ) )
+		while( pos < Len( tag ) && isspace( (unsigned char)tag[pos] ) )
 			pos++;
 
-		if( pos < tag.length() && tag[pos] == '=' )
+		if( pos < Len( tag ) && tag[pos] == '=' )
 		{
 			pos++;
 
-			while( pos < tag.length() && isspace( (unsigned char)tag[pos] ) )
+			while( pos < Len( tag ) && isspace( (unsigned char)tag[pos] ) )
 				pos++;
 
-			if( pos < tag.length() && ( tag[pos] == '"' || tag[pos] == '\'' ) )
+			if( pos < Len( tag ) && ( tag[pos] == '"' || tag[pos] == '\'' ) )
 			{
 				char quote = tag[pos++];
-				size_t valueEnd = tag.find( quote, pos );
+				int valueEnd = Find( tag, quote, pos );
 
-				if( valueEnd == std::string::npos )
-					valueEnd = tag.length();
+				if( valueEnd == -1 )
+					valueEnd = Len( tag );
 
-				attr.value = tag.substr( pos, valueEnd - pos );
+				attr.value = Substr( tag, pos, valueEnd - pos );
 				pos = valueEnd + 1;
 			}
 			else
 			{
-				size_t valueEnd = pos;
+				int valueEnd = pos;
 
-				while( valueEnd < tag.length() && !isspace( (unsigned char)tag[valueEnd] ) )
+				while( valueEnd < Len( tag ) && !isspace( (unsigned char)tag[valueEnd] ) )
 					valueEnd++;
 
-				attr.value = tag.substr( pos, valueEnd - pos );
+				attr.value = Substr( tag, pos, valueEnd - pos );
 				pos = valueEnd;
 			}
 		}
 
-		if( !attr.name.empty() )
-			attrs.push_back( attr );
+		if( !attr.name.IsEmpty() )
+			attrs.AddToTail( attr );
 	}
 }
 
 // The style of an element: what it inherits, what its tag looks like, the rules of the page (by the specificity)
 // and the attributes
-void CHtmlLayout::ApplyElementStyle( Element &element, const std::vector<Attr> &attrs )
+void CHtmlLayout::ApplyElementStyle( Element &element, const CUtlVector<Attr> &attrs )
 {
-	const std::string &tag = element.tag;
+	const CUtlString &tag = element.tag;
 	Style &style = element.style;
 	float flParentSize = style.flFontSize;
 
@@ -1217,10 +1282,10 @@ void CHtmlLayout::ApplyElementStyle( Element &element, const std::vector<Attr> &
 
 		pAttr = FindAttr( attrs, "size" );
 
-		if( pAttr && !pAttr->value.empty() )
+		if( pAttr && !pAttr->value.IsEmpty() )
 		{
 			static const float s_flSizes[] = { 10.0f, 13.0f, 16.0f, 18.0f, 24.0f, 32.0f, 48.0f };
-			int iSize = atoi( pAttr->value.c_str() );
+			int iSize = atoi( pAttr->value.Get() );
 
 			// +n and -n are relative to the size 3
 			if( pAttr->value[0] == '+' || pAttr->value[0] == '-' )
@@ -1261,7 +1326,7 @@ void CHtmlLayout::ApplyElementStyle( Element &element, const std::vector<Attr> &
 
 	if( pAttr && IsBlockTag( tag ) )
 	{
-		std::string align = ToLower( pAttr->value );
+		CUtlString align = ToLower( pAttr->value );
 
 		if( align == "center" )
 			style.iAlign = 1;
@@ -1275,38 +1340,41 @@ void CHtmlLayout::ApplyElementStyle( Element &element, const std::vector<Attr> &
 	const Attr *pClass = FindAttr( attrs, "class" );
 	const Attr *pId = FindAttr( attrs, "id" );
 
-	std::vector<const CssRule *> matched;
+	CUtlVector<const CssRule *> matched;
 
-	for( size_t i = 0; i < m_Rules.size(); i++ )
+	for( int i = 0; i < m_Rules.Count(); i++ )
 	{
 		const CssRule &rule = m_Rules[i];
 
-		if( !rule.tag.empty() && rule.tag != tag )
+		if( !rule.tag.IsEmpty() && rule.tag != tag )
 			continue;
 
-		if( !rule.cls.empty() )
+		if( !rule.cls.IsEmpty() )
 		{
 			bool bFound = false;
 
 			if( pClass )
 			{
 				// the classes are separated with spaces
-				std::string classes = " " + pClass->value + " ";
+				CUtlString classes, needle;
 
-				bFound = classes.find( " " + rule.cls + " " ) != std::string::npos;
+				classes.Format( " %s ", pClass->value.Get() );
+				needle.Format( " %s ", rule.cls.Get() );
+
+				bFound = Find( classes, needle ) != -1;
 			}
 
 			if( !bFound )
 				continue;
 		}
 
-		if( !rule.id.empty() && ( !pId || pId->value != rule.id ) )
+		if( !rule.id.IsEmpty() && ( !pId || pId->value != rule.id ) )
 			continue;
 
 		// stable insertion by the specificity
-		size_t j = matched.size();
+		int j = matched.Count();
 
-		matched.push_back( &rule );
+		matched.AddToTail( &rule );
 
 		while( j > 0 && matched[j - 1]->iSpecificity > rule.iSpecificity )
 		{
@@ -1317,7 +1385,7 @@ void CHtmlLayout::ApplyElementStyle( Element &element, const std::vector<Attr> &
 		matched[j] = &rule;
 	}
 
-	for( size_t i = 0; i < matched.size(); i++ )
+	for( int i = 0; i < matched.Count(); i++ )
 		ApplyDeclarations( style, matched[i]->props, flParentSize );
 
 	pAttr = FindAttr( attrs, "style" );
@@ -1338,12 +1406,12 @@ void CHtmlLayout::StartLine( void )
 
 void CHtmlLayout::FlushLine( void )
 {
-	if( m_Words.empty() )
+	if( m_Words.IsEmpty() )
 		return;
 
 	float flLineHeight = 0.0f;
 
-	for( size_t i = 0; i < m_Words.size(); i++ )
+	for( int i = 0; i < m_Words.Count(); i++ )
 	{
 		if( m_Words[i].flLineHeight > flLineHeight )
 			flLineHeight = m_Words[i].flLineHeight;
@@ -1352,17 +1420,17 @@ void CHtmlLayout::FlushLine( void )
 	float flAvailable = AvailableWidth();
 	float flX = m_flLeft;
 
-	if( m_Elements.back().style.iAlign == 1 )
+	if( m_Elements.Tail().style.iAlign == 1 )
 		flX += ( flAvailable - m_flLineX ) / 2.0f;
-	else if( m_Elements.back().style.iAlign == 2 )
+	else if( m_Elements.Tail().style.iAlign == 2 )
 		flX += flAvailable - m_flLineX;
 
 	if( flX < m_flLeft )
 		flX = m_flLeft;
 
-	size_t iFirstRun = m_pResult->runs.size();
+	int iFirstRun = m_pResult->runs.Count();
 
-	for( size_t i = 0; i < m_Words.size(); i++ )
+	for( int i = 0; i < m_Words.Count(); i++ )
 	{
 		const Word &word = m_Words[i];
 
@@ -1371,9 +1439,9 @@ void CHtmlLayout::FlushLine( void )
 		float flY = m_y + ( flLineHeight - word.flTall ) / 2.0f;
 
 		// a word of the same style joins the one before it: one draw call for a piece of text
-		if( m_pResult->runs.size() > iFirstRun && word.flGap > 0.0f && !word.bUnderline )
+		if( m_pResult->runs.Count() > iFirstRun && word.flGap > 0.0f && !word.bUnderline )
 		{
-			HtmlRun &previous = m_pResult->runs.back();
+			HtmlRun &previous = m_pResult->runs.Tail();
 			int a, b, c;
 
 			// the gap is the space
@@ -1382,7 +1450,8 @@ void CHtmlLayout::FlushLine( void )
 			if( previous.pFont == word.pFont && previous.r == word.r && previous.g == word.g && previous.b == word.b &&
 				previous.y == (int)( flY + 0.5f ) && fabs( word.flGap - ( a + b + c ) ) < 0.5f )
 			{
-				previous.text += " " + word.text;
+				previous.text.Append( " " );
+				previous.text.Append( word.text );
 				flX += word.flWide;
 				continue;
 			}
@@ -1399,7 +1468,7 @@ void CHtmlLayout::FlushLine( void )
 		run.g = word.g;
 		run.b = word.b;
 
-		m_pResult->runs.push_back( run );
+		m_pResult->runs.AddToTail( run );
 
 		// the underline is under the baseline
 		if( word.bUnderline )
@@ -1414,7 +1483,7 @@ void CHtmlLayout::FlushLine( void )
 			rect.g = word.g;
 			rect.b = word.b;
 
-			m_pResult->rects.push_back( rect );
+			m_pResult->rects.AddToTail( rect );
 		}
 
 		flX += word.flWide;
@@ -1422,7 +1491,7 @@ void CHtmlLayout::FlushLine( void )
 
 	m_y += flLineHeight;
 
-	m_Words.clear();
+	m_Words.RemoveAll();
 	m_flLineX = 0.0f;
 	m_bPendingSpace = false;
 }
@@ -1430,7 +1499,7 @@ void CHtmlLayout::FlushLine( void )
 // <br>: ends the line; on an empty line it is a line of its own
 void CHtmlLayout::LineBreak( void )
 {
-	if( m_Words.empty() )
+	if( m_Words.IsEmpty() )
 	{
 		const Style &style = TopStyle();
 		vgui::Font *pFont = GetFont( style.family, (int)( style.flFontSize + 0.5f ), style.iWeight, style.bItalic );
@@ -1443,7 +1512,7 @@ void CHtmlLayout::LineBreak( void )
 	FlushLine();
 }
 
-void CHtmlLayout::AddWord( const std::string &text, bool bNoWrap )
+void CHtmlLayout::AddWord( const CUtlString &text, bool bNoWrap )
 {
 	const Style &style = TopStyle();
 	int iTall = (int)( style.flFontSize + 0.5f );
@@ -1454,11 +1523,11 @@ void CHtmlLayout::AddWord( const std::string &text, bool bNoWrap )
 	vgui::Font *pFont = GetFont( style.family, iTall, style.iWeight, style.bItalic );
 	int iWide, iHeight;
 
-	pFont->getTextSize( text.c_str(), iWide, iHeight );
+	pFont->getTextSize( text.Get(), iWide, iHeight );
 
 	float flGap = 0.0f;
 
-	if( m_Words.empty() )
+	if( m_Words.IsEmpty() )
 	{
 		StartLine();
 	}
@@ -1471,7 +1540,7 @@ void CHtmlLayout::AddWord( const std::string &text, bool bNoWrap )
 	m_flPendingGap = 0.0f;
 
 	// the word does not fit: the next line
-	if( !m_Words.empty() && !bNoWrap && m_flLineX + flGap + iWide > AvailableWidth() )
+	if( !m_Words.IsEmpty() && !bNoWrap && m_flLineX + flGap + iWide > AvailableWidth() )
 	{
 		FlushLine();
 		StartLine();
@@ -1479,7 +1548,7 @@ void CHtmlLayout::AddWord( const std::string &text, bool bNoWrap )
 	}
 
 	// the first word of a line has no gap
-	if( m_Words.empty() )
+	if( m_Words.IsEmpty() )
 		flGap = 0.0f;
 
 	Word word;
@@ -1497,25 +1566,25 @@ void CHtmlLayout::AddWord( const std::string &text, bool bNoWrap )
 	word.flLineHeight = ( style.flLineHeight > 0.0f ) ? style.flFontSize * style.flLineHeight : word.flTall;
 	word.flGap = flGap;
 
-	m_Words.push_back( word );
+	m_Words.AddToTail( word );
 
 	m_flLineX += flGap + iWide;
 	m_bPendingSpace = false;
 }
 
-void CHtmlLayout::AddText( const std::string &raw )
+void CHtmlLayout::AddText( const CUtlString &raw )
 {
 	if( m_iHidden > 0 )
 		return;
 
-	std::string text = DecodeEntities( raw );
+	CUtlString text = DecodeEntities( raw );
 
 	// the text before <body> is not shown
 	if( !m_bBodySeen )
 	{
 		bool bBlank = true;
 
-		for( size_t i = 0; i < text.length(); i++ )
+		for( int i = 0; i < Len( text ); i++ )
 		{
 			if( !isspace( (unsigned char)text[i] ) )
 				bBlank = false;
@@ -1530,24 +1599,25 @@ void CHtmlLayout::AddText( const std::string &raw )
 	if( style.bPre )
 	{
 		// the lines of the text are the lines of the page, nothing is collapsed or wrapped
-		size_t pos = 0;
+		int pos = 0;
 
-		while( pos <= text.length() )
+		while( pos <= Len( text ) )
 		{
-			size_t end = text.find( '\n', pos );
+			int end = Find( text, '\n', pos );
 
-			if( end == std::string::npos )
-				end = text.length();
+			if( end == -1 )
+				end = Len( text );
 
-			std::string line = text.substr( pos, end - pos );
+			CUtlString line = Substr( text, pos, end - pos );
+			int iLength = Len( line );
 
-			if( !line.empty() && line[line.length() - 1] == '\r' )
-				line.erase( line.length() - 1 );
+			if( iLength > 0 && line[iLength - 1] == '\r' )
+				line = Substr( line, 0, iLength - 1 );
 
-			if( !line.empty() )
+			if( !line.IsEmpty() )
 				AddWord( line, true );
 
-			if( end < text.length() )
+			if( end < Len( text ) )
 				LineBreak();
 
 			pos = end + 1;
@@ -1557,26 +1627,23 @@ void CHtmlLayout::AddText( const std::string &raw )
 	}
 
 	// the spaces are collapsed: the space between the words is one gap
-	std::string word;
+	int iLength = Len( text );
+	int iWord = 0;
 
-	for( size_t i = 0; i <= text.length(); i++ )
+	for( int i = 0; i <= iLength; i++ )
 	{
-		bool bSpace = ( i == text.length() ) || isspace( (unsigned char)text[i] ) || (unsigned char)text[i] == 0xA0;
+		bool bSpace = ( i == iLength ) || isspace( (unsigned char)text[i] ) || (unsigned char)text[i] == 0xA0;
 
 		if( !bSpace )
-		{
-			word += text[i];
 			continue;
-		}
 
-		if( !word.empty() )
-		{
-			AddWord( word, false );
-			word.clear();
-		}
+		if( i > iWord )
+			AddWord( Substr( text, iWord, i - iWord ), false );
 
-		if( i < text.length() )
-			m_bPendingSpace = !m_Words.empty();
+		iWord = i + 1;
+
+		if( i < iLength )
+			m_bPendingSpace = !m_Words.IsEmpty();
 	}
 }
 
@@ -1605,7 +1672,7 @@ void CHtmlLayout::CloseBlock( const Style &style )
 
 void CHtmlLayout::CloseTop( void )
 {
-	Element &element = m_Elements.back();
+	Element &element = m_Elements.Tail();
 
 	if( element.bBlock )
 		CloseBlock( element.style );
@@ -1613,17 +1680,17 @@ void CHtmlLayout::CloseTop( void )
 	if( element.bHiddenCounted )
 		m_iHidden--;
 
-	m_Elements.pop_back();
+	m_Elements.RemoveMultipleFromTail( 1 );
 }
 
-void CHtmlLayout::CloseElement( const std::string &name )
+void CHtmlLayout::CloseElement( const CUtlString &name )
 {
 	// the element that is closed is the last open one with the name, the ones above it are closed too
-	for( int i = (int)m_Elements.size() - 1; i > 0; i-- )
+	for( int i = (int)m_Elements.Count() - 1; i > 0; i-- )
 	{
 		if( m_Elements[i].tag == name )
 		{
-			while( (int)m_Elements.size() > i )
+			while( (int)m_Elements.Count() > i )
 				CloseTop();
 
 			return;
@@ -1632,9 +1699,9 @@ void CHtmlLayout::CloseElement( const std::string &name )
 }
 
 // The tags that close the element before them without a closing tag of their own
-void CHtmlLayout::ImplicitClose( const std::string &name )
+void CHtmlLayout::ImplicitClose( const CUtlString &name )
 {
-	const std::string &top = m_Elements.back().tag;
+	const CUtlString &top = m_Elements.Tail().tag;
 
 	if( top == "p" && IsBlockTag( name ) )
 		CloseTop();
@@ -1646,7 +1713,7 @@ void CHtmlLayout::ImplicitClose( const std::string &name )
 		CloseTop();
 }
 
-void CHtmlLayout::OpenElement( const std::string &name, const std::vector<Attr> &attrs )
+void CHtmlLayout::OpenElement( const CUtlString &name, const CUtlVector<Attr> &attrs )
 {
 	ImplicitClose( name );
 
@@ -1662,7 +1729,7 @@ void CHtmlLayout::OpenElement( const std::string &name, const std::vector<Attr> 
 	Element element;
 
 	element.tag = name;
-	element.style = m_Elements.back().style;
+	element.style = m_Elements.Tail().style;
 	element.bBlock = IsBlockTag( name );
 	element.bHiddenCounted = false;
 	element.bList = ( name == "ul" || name == "ol" );
@@ -1709,7 +1776,7 @@ void CHtmlLayout::OpenElement( const std::string &name, const std::vector<Attr> 
 			rect.y1 = rect.y0 + 2;
 			rect.r = rect.g = rect.b = 128;
 
-			m_pResult->rects.push_back( rect );
+			m_pResult->rects.AddToTail( rect );
 
 			m_y += 2.0f;
 			m_flPendingMargin = flMargin;
@@ -1750,7 +1817,7 @@ void CHtmlLayout::OpenElement( const std::string &name, const std::vector<Attr> 
 		char szMarker[16] = "\xB7";
 
 		// the number of the item is kept by the list
-		for( int i = (int)m_Elements.size() - 1; i >= 0; i-- )
+		for( int i = (int)m_Elements.Count() - 1; i >= 0; i-- )
 		{
 			if( m_Elements[i].bList )
 			{
@@ -1761,16 +1828,16 @@ void CHtmlLayout::OpenElement( const std::string &name, const std::vector<Attr> 
 			}
 		}
 
-		m_Elements.push_back( element );
+		m_Elements.AddToTail( element );
 		AddWord( szMarker, true );
 		m_bPendingSpace = true;
 		return;
 	}
 
-	m_Elements.push_back( element );
+	m_Elements.AddToTail( element );
 }
 
-void CHtmlLayout::Run( const std::string &html, int iWidth, HtmlResult &result )
+void CHtmlLayout::Run( const CUtlString &html, int iWidth, HtmlResult &result )
 {
 	m_pResult = &result;
 	m_iWidth = iWidth;
@@ -1785,12 +1852,12 @@ void CHtmlLayout::Run( const std::string &html, int iWidth, HtmlResult &result )
 	m_iCells = 0;
 	m_bBodySeen = false;
 
-	m_Words.clear();
-	m_Elements.clear();
-	m_Rules.clear();
+	m_Words.RemoveAll();
+	m_Elements.RemoveAll();
+	m_Rules.RemoveAll();
 
-	result.runs.clear();
-	result.rects.clear();
+	result.runs.RemoveAll();
+	result.rects.RemoveAll();
 	result.iHeight = 0;
 
 	// the page of the browser: black text on white, the serif font of 16 pixels
@@ -1817,48 +1884,48 @@ void CHtmlLayout::Run( const std::string &html, int iWidth, HtmlResult &result )
 	style.bBackground = false;
 	style.iBackground[0] = style.iBackground[1] = style.iBackground[2] = 255;
 
-	m_Elements.push_back( root );
+	m_Elements.AddToTail( root );
 
 	result.iBackground[0] = result.iBackground[1] = result.iBackground[2] = 255;
 
-	size_t pos = 0;
+	int pos = 0;
 
-	while( pos < html.length() )
+	while( pos < Len( html ) )
 	{
 		if( html[pos] != '<' )
 		{
-			size_t end = html.find( '<', pos );
+			int end = Find( html, '<', pos );
 
-			if( end == std::string::npos )
-				end = html.length();
+			if( end == -1 )
+				end = Len( html );
 
-			AddText( html.substr( pos, end - pos ) );
+			AddText( Substr( html, pos, end - pos ) );
 			pos = end;
 			continue;
 		}
 
 		// the comments and the declarations
-		if( html.compare( pos, 4, "<!--" ) == 0 )
+		if( StartsWith( html.Get() + pos, "<!--" ) )
 		{
-			size_t end = html.find( "-->", pos + 4 );
+			int end = Find( html, "-->", pos + 4 );
 
-			pos = ( end == std::string::npos ) ? html.length() : end + 3;
+			pos = ( end == -1 ) ? Len( html ) : end + 3;
 			continue;
 		}
 
-		if( pos + 1 < html.length() && ( html[pos + 1] == '!' || html[pos + 1] == '?' ) )
+		if( pos + 1 < Len( html ) && ( html[pos + 1] == '!' || html[pos + 1] == '?' ) )
 		{
-			size_t end = html.find( '>', pos );
+			int end = Find( html, '>', pos );
 
-			pos = ( end == std::string::npos ) ? html.length() : end + 1;
+			pos = ( end == -1 ) ? Len( html ) : end + 1;
 			continue;
 		}
 
 		// a quote in an attribute can hold the '>'
-		size_t end = pos + 1;
+		int end = pos + 1;
 		char quote = 0;
 
-		while( end < html.length() )
+		while( end < Len( html ) )
 		{
 			if( quote )
 			{
@@ -1877,33 +1944,36 @@ void CHtmlLayout::Run( const std::string &html, int iWidth, HtmlResult &result )
 			end++;
 		}
 
-		std::string name;
-		std::vector<Attr> attrs;
+		CUtlString name;
+		CUtlVector<Attr> attrs;
 		bool bClosing;
 
-		ParseTag( html.substr( pos + 1, end - pos - 1 ), name, attrs, bClosing );
+		ParseTag( Substr( html, pos + 1, end - pos - 1 ), name, attrs, bClosing );
 
-		pos = ( end < html.length() ) ? end + 1 : html.length();
+		pos = ( end < Len( html ) ) ? end + 1 : Len( html );
 
-		if( name.empty() )
+		if( name.IsEmpty() )
 			continue;
 
 		if( !bClosing && ( name == "style" || name == "script" ) )
 		{
 			// the content is the rules or the code
-			std::string lower = ToLower( html );
-			std::string closing = "</" + name;
-			size_t close = lower.find( closing, pos );
+			CUtlString lower = ToLower( html );
+			CUtlString closing;
 
-			if( close == std::string::npos )
-				close = html.length();
+			closing.Format( "</%s", name.Get() );
+
+			int close = Find( lower, closing, pos );
+
+			if( close == -1 )
+				close = Len( html );
 
 			if( name == "style" )
-				ParseCss( html.substr( pos, close - pos ) );
+				ParseCss( Substr( html, pos, close - pos ) );
 
-			size_t closeEnd = html.find( '>', close );
+			int closeEnd = Find( html, '>', close );
 
-			pos = ( closeEnd == std::string::npos ) ? html.length() : closeEnd + 1;
+			pos = ( closeEnd == -1 ) ? Len( html ) : closeEnd + 1;
 			continue;
 		}
 
@@ -1915,7 +1985,7 @@ void CHtmlLayout::Run( const std::string &html, int iWidth, HtmlResult &result )
 
 	FlushLine();
 
-	while( m_Elements.size() > 1 )
+	while( m_Elements.Count() > 1 )
 		CloseTop();
 
 	float flBottom = m_y + m_flPendingMargin;
@@ -1938,7 +2008,7 @@ public:
 
 	virtual void paint( void )
 	{
-		for( size_t i = 0; i < m_Result.rects.size(); i++ )
+		for( int i = 0; i < m_Result.rects.Count(); i++ )
 		{
 			const HtmlRect &rect = m_Result.rects[i];
 
@@ -1946,13 +2016,13 @@ public:
 			drawFilledRect( rect.x0, rect.y0, rect.x1, rect.y1 );
 		}
 
-		for( size_t i = 0; i < m_Result.runs.size(); i++ )
+		for( int i = 0; i < m_Result.runs.Count(); i++ )
 		{
 			const HtmlRun &run = m_Result.runs[i];
 
 			drawSetTextFont( run.pFont );
 			drawSetTextColor( run.r, run.g, run.b, 0 );
-			drawPrintText( run.x, run.y, run.text.c_str(), (int)run.text.length() );
+			drawPrintText( run.x, run.y, run.text.Get(), (int)Len( run.text ) );
 		}
 	}
 };
@@ -1983,11 +2053,13 @@ void CDoDHtmlView::SetHtmlBounds( int x, int y, int wide, int tall, int barWide 
 void CDoDHtmlView::SetHtml( const char *pszHtml )
 {
 	// the text of the page is UTF-8 or the one-byte charset
-	std::vector<char> converted( strlen( pszHtml ) + 1 );
+	CUtlVector<char> converted;
 
-	DoD_ConvertText( pszHtml, &converted[0], (int)converted.size() );
+	converted.SetCount( (int)strlen( pszHtml ) + 1 );
 
-	m_strHtml = &converted[0];
+	DoD_ConvertText( pszHtml, converted.Base(), converted.Count() );
+
+	m_strHtml = converted.Base();
 
 	Relayout();
 	setScrollValue( 0, 0 );

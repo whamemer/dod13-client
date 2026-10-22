@@ -23,10 +23,10 @@
 #ifndef HINTPANEL_H
 #define HINTPANEL_H
 
-#include <string>
-#include <vector>
-
 #include <VGUI_Panel.h>
+
+#include "utlstring.h"
+#include "utlvector.h"
 
 #include "vgui/dodrespage.h"
 
@@ -56,8 +56,8 @@ private:
 	ResControl_t *m_pLabel;
 
 	// the text is wrapped when it is shown and again when the size of the screen changes
-	std::string m_Text;
-	std::vector<std::string> m_Lines;
+	CUtlString m_Text;
+	CUtlVector<CUtlString> m_Lines;
 
 	float m_fShowTime;
 	int m_iLayoutHeight;

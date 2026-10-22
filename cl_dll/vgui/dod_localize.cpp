@@ -19,59 +19,57 @@
 // resource/dod_english.txt by hand
 //
 
-#include <map>
-#include <string>
-
 #include "hud.h"
 #include "cl_util.h"
 #include "dod_localize.h"
 
-static std::map<std::string, std::string> g_Tokens;
+#include "utlmap.h"
+#include "utlstring.h"
+#include "utlvector.h"
 
-static std::string LowerCase( const char *psz )
+static CUtlOrderedMap<CUtlString, CUtlString> g_Tokens;
+
+static CUtlString LowerCase( const char *psz )
 {
-	std::string s( psz );
+	CUtlString s( psz );
 
-	for( size_t i = 0; i < s.size(); i++ )
-	{
-		if( s[i] >= 'A' && s[i] <= 'Z' )
-			s[i] += 'a' - 'A';
-	}
+	s.ToLower();
 
 	return s;
 }
 
-static void AppendUTF8( std::string &dest, unsigned int ch )
+static void AppendUTF8( CUtlVector<char> &dest, unsigned int ch )
 {
 	if( ch < 0x80 )
 	{
-		dest += (char)ch;
+		dest.AddToTail( (char)ch );
 	}
 	else if( ch < 0x800 )
 	{
-		dest += (char)( 0xC0 | ( ch >> 6 ) );
-		dest += (char)( 0x80 | ( ch & 0x3F ) );
+		dest.AddToTail( (char)( 0xC0 | ( ch >> 6 ) ) );
+		dest.AddToTail( (char)( 0x80 | ( ch & 0x3F ) ) );
 	}
 	else if( ch < 0x10000 )
 	{
-		dest += (char)( 0xE0 | ( ch >> 12 ) );
-		dest += (char)( 0x80 | ( ( ch >> 6 ) & 0x3F ) );
-		dest += (char)( 0x80 | ( ch & 0x3F ) );
+		dest.AddToTail( (char)( 0xE0 | ( ch >> 12 ) ) );
+		dest.AddToTail( (char)( 0x80 | ( ( ch >> 6 ) & 0x3F ) ) );
+		dest.AddToTail( (char)( 0x80 | ( ch & 0x3F ) ) );
 	}
 	else
 	{
-		dest += (char)( 0xF0 | ( ch >> 18 ) );
-		dest += (char)( 0x80 | ( ( ch >> 12 ) & 0x3F ) );
-		dest += (char)( 0x80 | ( ( ch >> 6 ) & 0x3F ) );
-		dest += (char)( 0x80 | ( ch & 0x3F ) );
+		dest.AddToTail( (char)( 0xF0 | ( ch >> 18 ) ) );
+		dest.AddToTail( (char)( 0x80 | ( ( ch >> 12 ) & 0x3F ) ) );
+		dest.AddToTail( (char)( 0x80 | ( ( ch >> 6 ) & 0x3F ) ) );
+		dest.AddToTail( (char)( 0x80 | ( ch & 0x3F ) ) );
 	}
 }
 
 // the localization files are UTF-16LE with a byte order mark
-static std::string ToUTF8( const unsigned char *pData, int iLength )
+static void ToUTF8( const unsigned char *pData, int iLength, CUtlVector<char> &out )
 {
-	std::string out;
 	int i = 0;
+
+	out.RemoveAll();
 
 	if( iLength >= 2 && pData[0] == 0xFF && pData[1] == 0xFE )
 	{
@@ -100,19 +98,23 @@ static std::string ToUTF8( const unsigned char *pData, int iLength )
 		if( iLength >= 3 && pData[0] == 0xEF && pData[1] == 0xBB && pData[2] == 0xBF )
 			i = 3;
 
-		out.assign( (const char *)pData + i, iLength - i );
+		out.AddMultipleToTail( iLength - i, (const char *)pData + i );
 	}
+}
 
-	return out;
+static void AppendSpan( CUtlString &dest, const char *text, int start, int end )
+{
+	if( end > start )
+		dest.Append( text + start, end - start );
 }
 
 // reads the next quoted string; returns false at the end of the text, a brace is returned as a one-character token
-static bool NextToken( const std::string &text, size_t &pos, std::string &token, bool &bQuoted )
+static bool NextToken( const char *text, int length, int &pos, CUtlString &token, bool &bQuoted )
 {
-	token.clear();
+	token.Clear();
 	bQuoted = false;
 
-	while( pos < text.size() )
+	while( pos < length )
 	{
 		char c = text[pos];
 
@@ -120,9 +122,9 @@ static bool NextToken( const std::string &text, size_t &pos, std::string &token,
 		{
 			pos++;
 		}
-		else if( c == '/' && pos + 1 < text.size() && text[pos + 1] == '/' )
+		else if( c == '/' && pos + 1 < length && text[pos + 1] == '/' )
 		{
-			while( pos < text.size() && text[pos] != '\n' )
+			while( pos < length && text[pos] != '\n' )
 				pos++;
 		}
 		else
@@ -131,40 +133,44 @@ static bool NextToken( const std::string &text, size_t &pos, std::string &token,
 		}
 	}
 
-	if( pos >= text.size() )
+	if( pos >= length )
 		return false;
 
 	if( text[pos] == '"' )
 	{
+		int start;
+
 		bQuoted = true;
 		pos++;
+		start = pos;
 
-		while( pos < text.size() && text[pos] != '"' )
+		while( pos < length && text[pos] != '"' )
 		{
-			if( text[pos] == '\\' && pos + 1 < text.size() )
+			if( text[pos] == '\\' && pos + 1 < length )
 			{
+				AppendSpan( token, text, start, pos );
 				pos++;
 
 				switch( text[pos] )
 				{
 				case 'n':
-					token += '\n';
+					token.AppendChar( '\n' );
 					break;
 				case 't':
-					token += '\t';
+					token.AppendChar( '\t' );
 					break;
 				default:
-					token += text[pos];
+					token.AppendChar( text[pos] );
 					break;
 				}
-			}
-			else
-			{
-				token += text[pos];
+
+				start = pos + 1;
 			}
 
 			pos++;
 		}
+
+		AppendSpan( token, text, start, pos );
 
 		pos++;
 		return true;
@@ -172,12 +178,16 @@ static bool NextToken( const std::string &text, size_t &pos, std::string &token,
 
 	if( text[pos] == '{' || text[pos] == '}' )
 	{
-		token += text[pos++];
+		token.AppendChar( text[pos++] );
 		return true;
 	}
 
-	while( pos < text.size() && text[pos] != ' ' && text[pos] != '\t' && text[pos] != '\r' && text[pos] != '\n' )
-		token += text[pos++];
+	int start = pos;
+
+	while( pos < length && text[pos] != ' ' && text[pos] != '\t' && text[pos] != '\r' && text[pos] != '\n' )
+		pos++;
+
+	AppendSpan( token, text, start, pos );
 
 	return true;
 }
@@ -188,22 +198,24 @@ int DoD_LoadLocalization( const char *pszFileName, bool bAppend )
 	byte *pFile = gEngfuncs.COM_LoadFile( (char *)pszFileName, 5, &iLength );
 
 	if( !bAppend )
-		g_Tokens.clear();
+		g_Tokens.RemoveAll();
 
 	if( !pFile )
-		return (int)g_Tokens.size();
+		return (int)g_Tokens.Count();
 
-	std::string text = ToUTF8( pFile, iLength );
+	CUtlVector<char> text;
+
+	ToUTF8( pFile, iLength, text );
 	gEngfuncs.COM_FreeFile( pFile );
 
-	size_t pos = 0;
+	int pos = 0;
 	int iDepth = 0;
 	bool bInTokens = false;
-	std::string token, key;
+	CUtlString token;
 	bool bQuoted;
 
 	// "lang" { "Language" "English" "Tokens" { "key" "value" ... } }
-	while( NextToken( text, pos, token, bQuoted ) )
+	while( NextToken( text.Base(), text.Count(), pos, token, bQuoted ) )
 	{
 		if( !bQuoted && token == "{" )
 		{
@@ -218,20 +230,18 @@ int DoD_LoadLocalization( const char *pszFileName, bool bAppend )
 		}
 		else if( bInTokens )
 		{
-			std::string value;
+			CUtlString value;
 			bool bValueQuoted;
 
-			key = token;
-
-			if( !NextToken( text, pos, value, bValueQuoted ) )
+			if( !NextToken( text.Base(), text.Count(), pos, value, bValueQuoted ) )
 				break;
 
-			g_Tokens[LowerCase( key.c_str() )] = value;
+			g_Tokens.InsertOrReplace( LowerCase( token ), value );
 		}
-		else if( bQuoted && LowerCase( token.c_str() ) == "tokens" )
+		else if( bQuoted && LowerCase( token ) == "tokens" )
 		{
 			// the opening brace follows
-			if( NextToken( text, pos, token, bQuoted ) && token == "{" )
+			if( NextToken( text.Base(), text.Count(), pos, token, bQuoted ) && token == "{" )
 			{
 				iDepth++;
 				bInTokens = true;
@@ -239,7 +249,7 @@ int DoD_LoadLocalization( const char *pszFileName, bool bAppend )
 		}
 	}
 
-	return (int)g_Tokens.size();
+	return (int)g_Tokens.Count();
 }
 
 const char *DoD_FindLocalized( const char *pszToken )
@@ -250,10 +260,10 @@ const char *DoD_FindLocalized( const char *pszToken )
 	if( *pszToken == '#' )
 		pszToken++;
 
-	std::map<std::string, std::string>::const_iterator it = g_Tokens.find( LowerCase( pszToken ) );
+	int i = g_Tokens.Find( LowerCase( pszToken ) );
 
-	if( it != g_Tokens.end() )
-		return it->second.c_str();
+	if( g_Tokens.IsValidIndex( i ) )
+		return g_Tokens[i].Get();
 
 	client_textmessage_t *pMsg = gEngfuncs.pfnTextMessageGet( pszToken );
 

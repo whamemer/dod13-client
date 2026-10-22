@@ -19,10 +19,12 @@
 //
 
 #include <string.h>
-#include <string>
 
 #include "hud.h"
 #include "cl_util.h"
+
+#include "utlstring.h"
+#include "utlvector.h"
 
 #include "vgui/vgui_TeamFortressViewport.h"
 #include "vgui/dodmotd.h"
@@ -71,10 +73,16 @@ void CDoDMOTD::paintBackground( void )
 	CDoDMenuPanel::paintBackground();
 }
 
+static void AppendText( CUtlVector<char> &text, const char *pszAddition )
+{
+	text.AddMultipleToTail( (int)strlen( pszAddition ), pszAddition );
+}
+
 // A page that is not HTML: a URL cannot be opened without a browser, the address is shown; a text keeps its lines
-static void MakePage( const char *pszMessage, std::string &page )
+static void MakePage( const char *pszMessage, CUtlString &page )
 {
 	const char *pszText = pszMessage;
+	CUtlVector<char> text;
 
 	// the page of the server
 	if( strchr( pszMessage, '<' ) )
@@ -84,24 +92,27 @@ static void MakePage( const char *pszMessage, std::string &page )
 	}
 
 	// a plain text: the colors of the DoD menus, the lines and the special characters are kept
-	page = "<body bgcolor=\"#000000\" text=\"#FFB000\"><p>";
+	AppendText( text, "<body bgcolor=\"#000000\" text=\"#FFB000\"><p>" );
 
 	for( ; *pszText; pszText++ )
 	{
 		if( *pszText == '\n' )
-			page += "<br>";
+			AppendText( text, "<br>" );
 		else if( *pszText == '&' )
-			page += "&amp;";
+			AppendText( text, "&amp;" );
 		else if( *pszText != '\r' )
-			page += *pszText;
+			text.AddToTail( *pszText );
 	}
 
-	page += "</p></body>";
+	AppendText( text, "</p></body>" );
+	text.AddToTail( '\0' );
+
+	page = text.Base();
 }
 
 void CDoDMOTD::Activate( const char *pszTitle, const char *pszMessage )
 {
-	std::string page;
+	CUtlString page;
 
 	if( m_iLayoutHeight != ScreenHeight )
 		Layout();
@@ -112,5 +123,5 @@ void CDoDMOTD::Activate( const char *pszTitle, const char *pszMessage )
 	MakePage( pszMessage, page );
 
 	if( m_pMessage && m_pMessage->pPanel )
-		static_cast<CDoDHtmlView *>( m_pMessage->pPanel )->SetHtml( page.c_str() );
+		static_cast<CDoDHtmlView *>( m_pMessage->pPanel )->SetHtml( page.Get() );
 }

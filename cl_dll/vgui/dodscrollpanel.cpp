@@ -170,27 +170,37 @@ void CDoDLinesPanel::SetLinesColor( int r, int g, int b )
 
 // A line of the text is broken after the last space that lets it fit, a word that is longer than the width is broken
 // where it does not fit
-static void WrapLine( vgui::Font *pFont, const std::string &line, int iWide, std::vector<std::string> &lines )
+static void AddLine( CUtlVector<CUtlString> &lines, const char *pszText, int iLength )
 {
-	size_t pos = 0;
+	CUtlString line;
 
-	if( line.empty() )
+	line.SetDirect( pszText, iLength );
+	lines.AddToTail( line );
+}
+
+static void WrapLine( vgui::Font *pFont, const char *line, int size, int iWide, CUtlVector<CUtlString> &lines )
+{
+	int pos = 0;
+
+	if( size == 0 )
 	{
-		lines.push_back( line );
+		AddLine( lines, line, 0 );
 		return;
 	}
 
-	while( pos < line.size() )
+	while( pos < size )
 	{
-		size_t end = pos;
-		size_t lastSpace = std::string::npos;
+		int end = pos;
+		int lastSpace = -1;
 		int w, t;
 
-		while( end < line.size() )
+		while( end < size )
 		{
-			std::string piece = line.substr( pos, end - pos + 1 );
+			CUtlString piece;
 
-			pFont->getTextSize( piece.c_str(), w, t );
+			piece.SetDirect( line + pos, end - pos + 1 );
+
+			pFont->getTextSize( piece.Get(), w, t );
 
 			if( w > iWide && end > pos )
 				break;
@@ -201,20 +211,20 @@ static void WrapLine( vgui::Font *pFont, const std::string &line, int iWide, std
 			end++;
 		}
 
-		if( end >= line.size() )
+		if( end >= size )
 		{
-			lines.push_back( line.substr( pos ) );
+			AddLine( lines, line + pos, size - pos );
 			break;
 		}
 
-		if( lastSpace != std::string::npos )
+		if( lastSpace != -1 )
 		{
-			lines.push_back( line.substr( pos, lastSpace - pos ) );
+			AddLine( lines, line + pos, lastSpace - pos );
 			pos = lastSpace + 1;
 		}
 		else
 		{
-			lines.push_back( line.substr( pos, end - pos ) );
+			AddLine( lines, line + pos, end - pos );
 			pos = end;
 		}
 	}
@@ -222,28 +232,24 @@ static void WrapLine( vgui::Font *pFont, const std::string &line, int iWide, std
 
 // The lines of a text: it is broken at the new lines and every line is wrapped to the width, the new line at the end of the
 // text does not start a line
-void DoD_WrapText( vgui::Font *pFont, const char *pszText, int iWide, std::vector<std::string> &lines )
+void DoD_WrapText( vgui::Font *pFont, const char *pszText, int iWide, CUtlVector<CUtlString> &lines )
 {
-	std::string paragraph;
+	const char *pszParagraph = pszText;
 
-	lines.clear();
+	lines.RemoveAll();
 
 	for( const char *p = pszText; ; p++ )
 	{
 		if( *p == '\n' || *p == '\0' )
 		{
-			if( *p == '\0' && paragraph.empty() )
+			if( *p == '\0' && p == pszParagraph )
 				break;
 
-			WrapLine( pFont, paragraph, iWide, lines );
-			paragraph.clear();
+			WrapLine( pFont, pszParagraph, (int)( p - pszParagraph ), iWide, lines );
+			pszParagraph = p + 1;
 
 			if( *p == '\0' )
 				break;
-		}
-		else
-		{
-			paragraph += *p;
 		}
 	}
 }
@@ -254,16 +260,16 @@ int CDoDLinesPanel::SetLines( const char *pszText, int iWide, int iPitch )
 
 	if( !m_pFont )
 	{
-		m_Lines.clear();
+		m_Lines.RemoveAll();
 		return 0;
 	}
 
 	DoD_WrapText( m_pFont, pszText, iWide, m_Lines );
 
-	setSize( iWide, (int)m_Lines.size() * m_iPitch + 1 );
+	setSize( iWide, m_Lines.Count() * m_iPitch + 1 );
 	repaint();
 
-	return (int)m_Lines.size() * m_iPitch;
+	return m_Lines.Count() * m_iPitch;
 }
 
 void CDoDLinesPanel::paintBackground( void )
@@ -285,13 +291,13 @@ void CDoDLinesPanel::paint( void )
 	// top of a line and the empty space over the letters of the font
 	m_pFont->getTextSize( "A", textWide, textTall );
 
-	for( size_t i = 0; i < m_Lines.size(); i++ )
+	for( int i = 0; i < m_Lines.Count(); i++ )
 	{
-		if( m_Lines[i].empty() )
+		if( m_Lines[i].IsEmpty() )
 			continue;
 
 		drawSetTextPos( 0, (int)i * m_iPitch + ( m_iPitch - textTall ) / 4 );
-		drawPrintText( m_Lines[i].c_str(), (int)m_Lines[i].size() );
+		drawPrintText( m_Lines[i].Get(), (int)m_Lines[i].Length() );
 	}
 }
 

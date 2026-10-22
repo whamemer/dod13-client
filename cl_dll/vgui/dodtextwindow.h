@@ -23,10 +23,10 @@
 #ifndef DODTEXTWINDOW_H
 #define DODTEXTWINDOW_H
 
-#include <string>
-
 #include "vgui/dodmenu.h"
 #include "vgui/dodrespage.h"
+
+#include "utlstring.h"
 
 class CDoDTextWindow : public CMenuPanel
 {
@@ -54,7 +54,7 @@ private:
 	// the border of the box is drawn over the text, a text that is scrolled out at the edge does not touch it
 	vgui::Panel *m_pOutline;
 
-	std::string m_Message;
+	CUtlString m_Message;
 	int m_iLayoutHeight;
 	bool m_bSpectatorHelp;
 };

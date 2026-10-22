@@ -71,10 +71,10 @@ void CHintPanel::Layout( void )
 	if( m_pLabel && m_pLabel->pPanel )
 		m_pLabel->pPanel->setVisible( false );
 
-	m_Lines.clear();
+	m_Lines.RemoveAll();
 
-	if( m_pLabel && !m_Text.empty() )
-		DoD_WrapText( DoD_GetMenuFont( DODFONT_SCORE ), m_Text.c_str(), DODMENU_SIZE( m_pLabel->wide ), m_Lines );
+	if( m_pLabel && !m_Text.IsEmpty() )
+		DoD_WrapText( DoD_GetMenuFont( DODFONT_SCORE ), m_Text.Get(), DODMENU_SIZE( m_pLabel->wide ), m_Lines );
 }
 
 void CHintPanel::SetVisibleImagePanel( const char *pszName, bool bState )
@@ -119,10 +119,10 @@ void CHintPanel::ShowHintMessage( int team, const char *pszText )
 
 	m_Text = szText;
 
-	m_Lines.clear();
+	m_Lines.RemoveAll();
 
 	if( m_pLabel )
-		DoD_WrapText( DoD_GetMenuFont( DODFONT_SCORE ), m_Text.c_str(), DODMENU_SIZE( m_pLabel->wide ), m_Lines );
+		DoD_WrapText( DoD_GetMenuFont( DODFONT_SCORE ), m_Text.Get(), DODMENU_SIZE( m_pLabel->wide ), m_Lines );
 
 	// the characters of the text, not the bytes of the UTF-8
 	int iLength = 0;
@@ -168,7 +168,7 @@ void CHintPanel::paintBackground( void )
 // as in the rest of the text of the font Default (30 pixels at 2.5 pixels of a unit)
 void CHintPanel::paint( void )
 {
-	if( !m_pLabel || m_Lines.empty() )
+	if( !m_pLabel || m_Lines.IsEmpty() )
 		return;
 
 	vgui::Font *pFont = DoD_GetMenuFont( DODFONT_SCORE );
@@ -177,7 +177,7 @@ void CHintPanel::paint( void )
 	int iLabelY = DODMENU_SIZE( m_pLabel->y );
 	int iLabelWide = DODMENU_SIZE( m_pLabel->wide );
 	int iLabelTall = DODMENU_SIZE( m_pLabel->tall );
-	int iTop = iLabelY + ( iLabelTall - (int)m_Lines.size() * iPitch ) / 2;
+	int iTop = iLabelY + ( iLabelTall - m_Lines.Count() * iPitch ) / 2;
 	int textWide, textTall;
 
 	drawSetTextFont( pFont );
@@ -187,14 +187,14 @@ void CHintPanel::paint( void )
 
 	pFont->getTextSize( "A", textWide, textTall );
 
-	for( size_t i = 0; i < m_Lines.size(); i++ )
+	for( int i = 0; i < m_Lines.Count(); i++ )
 	{
-		if( m_Lines[i].empty() )
+		if( m_Lines[i].IsEmpty() )
 			continue;
 
-		pFont->getTextSize( m_Lines[i].c_str(), textWide, textTall );
+		pFont->getTextSize( m_Lines[i].Get(), textWide, textTall );
 
 		drawSetTextPos( iLabelX, iTop + (int)i * iPitch + ( iPitch - textTall ) / 4 );
-		drawPrintText( m_Lines[i].c_str(), (int)m_Lines[i].size() );
+		drawPrintText( m_Lines[i].Get(), (int)m_Lines[i].Length() );
 	}
 }

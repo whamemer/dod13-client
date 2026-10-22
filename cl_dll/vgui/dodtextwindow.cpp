@@ -130,7 +130,7 @@ void CDoDTextWindow::ApplyMessage( void )
 	{
 		char szText[2048];
 
-		DoD_ConvertText( m_Message.c_str(), szText, sizeof( szText ) );
+		DoD_ConvertText( m_Message.Get(), szText, sizeof( szText ) );
 
 		static_cast<CDoDRichText *>( m_pMessage->pPanel )->SetRichText( szText );
 	}
@@ -177,16 +177,9 @@ void CDoDTextWindow::Close( void )
 
 void CDoDTextWindow::Activate( const char *pszMessage )
 {
-	m_Message.clear();
-
 	// CR LF are two line breaks in the original, the text of the help is double spaced
-	for( ; *pszMessage; pszMessage++ )
-	{
-		if( *pszMessage == '\r' )
-			m_Message += '\n';
-		else
-			m_Message += *pszMessage;
-	}
+	m_Message = pszMessage;
+	m_Message.Replace( '\r', '\n' );
 
 	if( m_iLayoutHeight != ScreenHeight )
 		Layout();

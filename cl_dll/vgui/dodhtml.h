@@ -28,7 +28,7 @@
 #ifndef DODHTML_H
 #define DODHTML_H
 
-#include <string>
+#include "utlstring.h"
 
 #include "vgui/dodscrollpanel.h"
 
@@ -50,7 +50,7 @@ public:
 private:
 	void Relayout( void );
 
-	std::string m_strHtml;
+	CUtlString m_strHtml;
 	CDoDHtmlContent *m_pContent;
 
 	int m_iContentWide;
