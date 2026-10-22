@@ -31,9 +31,11 @@ The client targets **Xash3D FWGS**. GoldSrc support is kept behind `GOLDSOURCE_S
 | `cl_dll/StudioModelRenderer.cpp`, `GameStudioModelRenderer.cpp` | Model rendering: bone cache, player animation, bipod and sandbag poses, env_model drawing. |
 | `cl_dll/view.cpp`, `input.cpp`, `input_xash3d.cpp`, `in_camera.cpp` | View calculation, input and the third person camera. |
 | `dlls/` | Headers shared with the server (`cbase.h`, `player.h`, `weapons.h`, ...), `dod_shared.cpp` (data tables) and `wpn_shared/` (one class per weapon). There is no server code. |
-| `pm_shared/` | Player movement, in C++ (vec3_t is the Vector class), shared with the server. |
+| `pm_shared/` | Player movement, shared with the server: `pm_shared.cpp` (the movement), `pm_math.cpp`, `pm_math.h` (the vector math of the whole client, it takes pointers to floats and a `Vector` converts to them) and `pm_debug.cpp`. It is C++, `vec3_t` is the `Vector` class there as everywhere else. |
 | `particleman/` | The particle manager of the original game, compiled into the client. |
 | `game_shared/` | Voice and a few helpers shared with the server. |
+| `3rdparty/MiniUTL` | Submodule, strings, vectors and maps that the code uses instead of the STL (`CUtlString`, `CUtlVector`, `CUtlMap`); its sources are built into the client. |
+| `3rdparty/mainui_cpp` | Submodule, the main menu of the engine (it is not part of the client library). |
 
 ## Build options
 
@@ -515,13 +517,15 @@ HUD (`scoreboard.cpp`). Both are the hlsdk-portable classes, kept for this.
 * To change the look of a menu, edit its `.res` first.
 * A new panel: a class in `cl_dll/vgui/` that builds a `CDoDResPage` from its layout, a case in `DoDViewport::ShowVGUIMenu`, and, if the server opens it, a new id in the `VGUIMenu` enum of `dodviewport.h`.
 * `vgui/vgui_*.cpp` is the part of freevgui that has to stay inside the client (scheme manager, custom objects, `vgui_int.cpp` that creates the viewport).
+* Do not use the STL (`std::string`, `std::vector`, `std::map`) in the client: use `CUtlString`, `CUtlVector` and `CUtlMap` of MiniUTL. They have no substring or search with a position, `dodhtml.cpp` has small helpers for that. `CUtlString::Append` allocates on every call, a text that is built character by character goes to a `CUtlVector<char>` first.
 
 ## Differences from hlsdk-portable
 
 * The HL weapons, monsters and the VGUI1 TF menus are gone; there is no server code.
 * `CHudHealth` is removed; `CHudDodIcons` draws the health, and the `Damage` message goes to `CHud::MsgFunc_Damage` like in the original.
 * `CHudBattery`, `CHudFlashlight`, `CHudGeiger`, `CHudAmmoSecondary` and `HistoryResource` are removed.
-* `pm_shared` is the one of Day of Defeat: prone, bipod, mortar, stamina jump, DoD materials and step sounds.
+* `pm_shared` is the one of Day of Defeat: prone, bipod, mortar, stamina jump, DoD materials and step sounds. It is built as C++ (in hlsdk-portable it is C): `vec3_t` is the `Vector` class, the parameters that are changed by the function are `Vector &`, and `pm_math.cpp` is the only implementation of the vector math (`Length`, `VectorMA`, `VectorNormalize`, `AngleVectors` and the others), the copies of `util.cpp` are removed.
+* There is no STL in the client, MiniUTL is used instead, and CMake builds the project as C++11 (MiniUTL needs `static_assert`).
 * The view is the DoD one: lateral bob only, a second view for the map, the death camera, mortar pitch.
 * The input has the DoD button checks (`DoDHandleButtons`) and the speed from the stamina (`DoDGetSpeed`).
 * `input_xash3d.cpp` limits the view of a deployed weapon to +-45 degrees yaw and +-20 degrees pitch.

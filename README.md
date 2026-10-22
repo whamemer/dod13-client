@@ -60,7 +60,7 @@ Clone the source code with the submodules:
 git clone https://github.com/whamemer/dod13-client --recursive
 ```
 The build is 32-bit by default. The result is installed as `dod/cl_dlls/client.dll`. You need a
-C and C++ compiler (MSVC, GCC or Clang) and either Python 3 (waf) or CMake 3.15 or newer.
+C99 and C++11 compiler (MSVC, GCC or Clang) and either Python 3 (waf) or CMake 3.15 or newer.
 
 ### Options
 `mod_options.txt` holds the options of the build, both build systems read it. `GAMEDIR` and `CLIENT_INSTALL_DIR` say where the
