@@ -126,7 +126,7 @@ jobs:
 
   android:
     runs-on: ubuntu-latest
-    # The Android build has never been run on a device, so its failure does not fail the whole run
+    # The APK has the client, the menu and the extras inside. The Android build is the youngest one, so its failure does not fail the whole run
     continue-on-error: true
     steps:
     - name: Checkout
@@ -192,7 +192,8 @@ jobs:
 
         * `windows` is the 32-bit build, the one that is developed and tested.
         * `windows_x64` and `linux` are built by the CI and not tested yet.
-        * `android` is a debug APK that starts the game in the installed Xash3D FWGS app, not tested yet.
+        * `android` is a debug APK (arm64-v8a and armeabi-v7a) with the client, the menu and the extras inside. It starts the game
+          in the installed Xash3D FWGS app and is checked on a phone.
         NOTES
         shopt -s nullglob
         gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag \
