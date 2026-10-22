@@ -25,14 +25,17 @@ gen_touch_icons.py <extras> [sheet.png]
     drawn from discs, rings, strokes and polygons, nothing is taken from another project.
 
 gen_touch_cfg.py <extras>
-    touch.cfg: the layout of the buttons (a table in the script, the commands of Day of Defeat). It checks that the
+    touch_presets/touch_whamer.cfg: the layout of the buttons (a table in the script, the commands of Day of Defeat). It checks that the
     textures exist, that nothing leaves the screen and that the buttons do not overlap.
 
 To add a label: put the text into FILES or ATLAS_CELLS of gen_buttons.py (or into FILES of gen_heads.py) and run it.
 The texts of the existing labels are listed in glyphs.py (TEXTS, by atlas cell) and in headlib.py (HEAD_TEXTS).
 
-gen_conback.py <dod_addon/resource of Day of Defeat Beta 1.0 - 1.3b> <extras>/gfx/shell/conback.bmp [brightness]
+gen_conback.py <dod_addon/resource of Day of Defeat Beta 1.0 - 1.3b> <extras>/gfx/shell/conback.bmp [brightness] [aspect]
     The background of the console. The engine looks for gfx/shell/conback.(dds|bmp|tga) and, if there is none, shows the picture of
     Half-Life from the valve folder. The menu background of the beta is cut into tiles (resource/background/640_*_loading.tga,
     BackgroundLayout.txt says where every tile goes); the script puts them together to 640x480 and darkens it (0.5 by default)
-    so that the orange text of the console is readable. The engine draws it opaque and stretches it to 4:3.
+    so that the orange text of the console is readable. The engine draws it opaque, stretches it to the screen width in the 4:3
+    proportions and aligns its bottom edge with the bottom of the console, so on a 16:9 screen the upper quarter of the image is
+    above the screen. The script squeezes the picture to the lower part of the image that is visible on the aspect (16:9 by
+    default) and continues the upper edge with a dark fade. On a 4:3 screen the picture is a bit flat and has a dark band on top.

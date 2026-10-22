@@ -1,4 +1,6 @@
-"""Writes touch.cfg, the default layout of the touch buttons of Day of Defeat for Xash3D.
+"""Writes touch_presets/touch_whamer.cfg, a layout of the touch buttons of Day of Defeat for Xash3D. The touch options of the menu
+list the files of touch_presets; the preset that is applied is copied to touch_profiles/touch_whamer.cfg, the changes of the player
+are saved there.
 The buttons are squares for a 16:9 screen (the engine keeps them square with the aspect value of touch_addbutton).
 usage: gen_touch_cfg.py <extras dir>"""
 import sys, os
@@ -46,7 +48,7 @@ HEADER = '''//==================================================================
 //	made by scripts/extras/gen_touch_cfg.py, the textures are in touch/gfx
 //=======================================================================
 
-touch_config_file "touch.cfg"
+touch_config_file "touch_profiles/touch_whamer.cfg"
 
 // touch cvars
 
@@ -106,7 +108,8 @@ def main():
             assert x2 <= a[0] + 1e-6 or x >= a[2] - 1e-6 or y2 <= a[1] + 1e-6 or y >= a[3] - 1e-6, 'overlap %s %s' % (name, n2)
         rects.append((name, (x, y, x2, y2)))
         lines.append('touch_addbutton "%s" "touch/gfx/%s" "%s" %.6f %.6f %.6f %.6f 255 255 255 150 %d 1' % (name, tex, cmd, x, y, x2, y2, flags))
-    open(os.path.join(root, 'touch.cfg'), 'w', newline='\n').write('\n'.join(lines) + '\n')
+    os.makedirs(os.path.join(root, 'touch_presets'), exist_ok=True)
+    open(os.path.join(root, 'touch_presets', 'touch_whamer.cfg'), 'w', newline='\n').write('\n'.join(lines) + '\n')
     print('buttons:', len(BUTTONS))
 
 
