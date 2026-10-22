@@ -1270,6 +1270,9 @@ void CHud::PlaySoundOnChan( char *name, float fVol, int chan )
 
 void CHud::InitMapBounds( void )
 {
+	m_iMapBoundsWidth = ScreenWidth;
+	m_iMapBoundsHeight = ScreenHeight;
+
 	m_iMapWidth = (int)( ScreenWidth * 0.625 );
 	m_iMapHeight = (int)( ScreenHeight * 0.625 );
 	m_iMapX = ScreenWidth / 2 - m_iMapWidth / 2;
@@ -1283,6 +1286,11 @@ void CHud::InitMapBounds( void )
 
 void CHud::GetMapBounds( int &x, int &y, int &w, int &h )
 {
+	// the screen of the HUD changes without VidInit: hud_scale takes effect at once, and the bounds made for the old size would be in
+	// the wrong pixels (the map view is scaled by the ratio of the screen to the HUD)
+	if( m_iMapBoundsWidth != ScreenWidth || m_iMapBoundsHeight != ScreenHeight )
+		InitMapBounds();
+
 	int state = GetMinimapState();
 
 	if( state == 1 )

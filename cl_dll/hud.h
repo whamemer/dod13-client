@@ -1103,6 +1103,10 @@ public:
 	int		m_iSmallMapWidth;
 	int		m_iSmallMapHeight;
 
+	// the size of the screen of the HUD that the bounds were made for
+	int		m_iMapBoundsWidth;
+	int		m_iMapBoundsHeight;
+
 	CHudScope		m_Scope;
 	CHudDoDCommon	m_DoDCommon;
 	CHudDodIcons	m_Icons;
