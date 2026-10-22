@@ -534,7 +534,7 @@ The extras (`3rdparty/dod13client-extras`) are the files that the engine looks f
 
 | Path | What it is |
 |------|------------|
-| `gfx/shell/*.bmp` | The pictures of the main menu in the style of the original game: `btns_main.bmp` (the atlas of the buttons, 3 states of 156x26 for every button), `btn_*.bmp` (the buttons that Xash3D added: touch, gamepad, gyro, favorites), `head_*.bmp` (the banners of the menus), the small controls. Palette index 0 of `btns_main.bmp` has to be black: the menu fills the free space of the atlas with it. |
+| `gfx/shell/*.bmp` | The pictures of the main menu in the style of the original game: `btns_main.bmp` (the atlas of the buttons, 3 states of 156x26 for every button), `btn_*.bmp` (the buttons that Xash3D added: touch, gamepad, gyro, favorites), `head_*.bmp` (the banners of the menus), the small controls, `conback.bmp` (the background of the console, the menu picture of Day of Defeat Beta darkened). Palette index 0 of `btns_main.bmp` has to be black: the menu fills the free space of the atlas with it. |
 | `touch.cfg`, `touch/gfx/*.png` | The touch controls: the layout with the commands of Day of Defeat (`prone`, `+use`, `slot1..slot5`, `+map`, `+commandmenu`, ...) and the textures of the buttons. The engine saves the changes of the player to `touch.cfg` of the game directory. |
 | `userconfig.d/userconfig.cfg` | The settings that the client depends on. The engine runs `userconfig.d/*.cfg` after `config.cfg` on every start. |
 
