@@ -27,7 +27,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-extern "C" int VectorCompare( const float *v1, const float *v2 );
+extern int VectorCompare( const float *v1, const float *v2 );
 
 extern vec3_t v_angles;
 

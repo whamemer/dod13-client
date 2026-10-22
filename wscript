@@ -122,7 +122,7 @@ def configure(conf):
 	cflags, linkflags = conf.get_optimization_flags()
 	cxxflags = list(cflags) # optimization flags are common between C and C++ but we need a copy
 
-	# the C sources (pm_shared, game_shared/vcs_info.c, public/safe_snprintf.c) are written in C99
+	# the C sources (game_shared/vcs_info.c, public/safe_snprintf.c) are written in C99
 	if conf.env.COMPILER_CC != 'msvc':
 		cflags.append('-std=gnu99')
 

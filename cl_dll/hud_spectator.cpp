@@ -29,9 +29,9 @@
 
 #pragma warning(disable: 4244)
 
-extern "C" int		iJumpSpectator;
-extern "C" float	vJumpOrigin[3];
-extern "C" float	vJumpAngles[3]; 
+extern int		iJumpSpectator;
+extern Vector	vJumpOrigin;
+extern Vector	vJumpAngles;
 
 extern void V_GetInEyePos( int entity, float * origin, float * angles );
 extern void V_ResetChaseCam();

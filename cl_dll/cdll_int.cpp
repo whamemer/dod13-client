@@ -26,10 +26,7 @@
 #include "vgui/vgui_int.h"
 #include "vgui/vgui_TeamFortressViewport.h"
 
-extern "C"
-{
 #include "pm_shared.h"
-}
 
 #include <string.h>
 #include "vcs_info.h"

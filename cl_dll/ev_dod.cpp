@@ -34,10 +34,7 @@
 #include "dod_shared.h"
 #include "tri.h"
 
-extern "C"
-{
-	#include "pm_shared.h"
-}
+#include "pm_shared.h"
 
 #include <string.h>
 

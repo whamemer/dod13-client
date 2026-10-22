@@ -47,7 +47,7 @@ def build(bld):
 	source += bld.path.parent.ant_glob('game_shared/*.cpp', excl=excluded_files)
 	source += bld.path.parent.ant_glob([
 		'public/safe_snprintf.c',
-		'pm_shared/*.c',
+		'pm_shared/*.cpp',
 		'particleman/*.cpp',
 		'3rdparty/MiniUTL/*.cpp',
 		'dlls/dod_shared.cpp',

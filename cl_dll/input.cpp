@@ -51,8 +51,8 @@ void V_StopPitchDrift( void );
 extern int g_weaponselect;
 extern cl_enginefunc_t gEngfuncs;
 
-// Defined in pm_math.c
-extern "C" float anglemod( float a );
+// Defined in pm_math.cpp
+extern float anglemod( float a );
 
 void IN_Init( void );
 void IN_Move( float frametime, usercmd_t *cmd );

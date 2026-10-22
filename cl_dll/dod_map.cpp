@@ -107,17 +107,6 @@ int CHudDoDMap::Init( void )
 	return 1;
 }
 
-float PM_SplineFraction( float value, float scale )
-{
-	float valueSquared;
-
-	value = scale * value;
-	valueSquared = value * value;
-
-	// Nice little ease-in, ease-out spline-like curve
-	return 3 * valueSquared - 2 * valueSquared * value;
-}
-
 void CHudDoDMap::InitHUDData( void )
 {
 	/* Nothing. */

@@ -20,6 +20,9 @@ char *PM_memfgets( byte *pMemFile, int fileSize, int *pFilePos, char *pBuffer, i
 void PM_Init( struct playermove_s *ppmove );
 void PM_Move( struct playermove_s *ppmove, int server );
 char PM_FindTextureType( char *name );
+int PM_GetVisEntInfo( int ent );
+int PM_GetPhysEntInfo( int ent );
+float PM_SplineFraction( float value, float scale );
 
 // Spectator Movement modes (stored in pev->iuser1, so the physics code can get at them)
 #define OBS_NONE			0

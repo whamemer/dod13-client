@@ -131,9 +131,9 @@ set (CLDLL_SOURCES
 	message.cpp
 	MOTD.cpp
 	parsemsg.cpp
-	../pm_shared/pm_debug.c
-	../pm_shared/pm_math.c
-	../pm_shared/pm_shared.c
+	../pm_shared/pm_debug.cpp
+	../pm_shared/pm_math.cpp
+	../pm_shared/pm_shared.cpp
 	saytext.cpp
 	scope.cpp
 	scoreboard.cpp

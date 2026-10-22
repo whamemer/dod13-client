@@ -13,10 +13,7 @@
 *
 ****/
 #include <math.h>
-#include "mathlib.h"
-#if HAVE_TGMATH_H
-#include <tgmath.h>
-#endif
+#include "pm_math.h"
 
 #include "const.h"
 #include "usercmd.h"
@@ -102,7 +99,7 @@ PM_ParticleLine(vec3_t start, vec3_t end, int color, float life)
 
 ================
 */
-void PM_ParticleLine(vec3_t start, vec3_t end, int pcolor, float life, float vert)
+void PM_ParticleLine(const Vector &start, const Vector &end, int pcolor, float life, float vert)
 {
 	float linestep = 2.0f;
 	float curdist;
@@ -134,7 +131,7 @@ PM_DrawRectangle(vec3_t tl, vec3_t br)
 
 ================
 */
-void PM_DrawRectangle(vec3_t tl, vec3_t bl, vec3_t tr, vec3_t br, int pcolor, float life)
+void PM_DrawRectangle(const Vector &tl, const Vector &bl, const Vector &tr, const Vector &br, int pcolor, float life)
 {
 	PM_ParticleLine(tl, bl, pcolor, life, 0);
 	PM_ParticleLine(bl, br, pcolor, life, 0);
@@ -238,7 +235,7 @@ PM_DrawBBox(vec3_t mins, vec3_t maxs, vec3_t origin, int pcolor, float life)
 
 ================
 */
-void PM_DrawBBox(vec3_t mins, vec3_t maxs, vec3_t origin, int pcolor, float life)
+void PM_DrawBBox(const Vector &mins, const Vector &maxs, const Vector &origin, int pcolor, float life)
 {
 	int j;
 	
