@@ -23,11 +23,14 @@
 #include "cl_util.h"
 #include "dod_localize.h"
 
-#include "utlmap.h"
+// utlstring.h goes first: utlhashmap.h does not include miniutl.h, which defines Assert
 #include "utlstring.h"
 #include "utlvector.h"
+#include "utlhashmap.h"
 
-static CUtlOrderedMap<CUtlString, CUtlString> g_Tokens;
+// not CUtlMap: its comparison functor has no conversion to bool, so with asserts on Assert( m_LessFunc ) of MiniUTL does not
+// compile with the assert of glibc and Bionic; the order of the tokens does not matter here
+static CUtlHashMap<CUtlString, CUtlString> g_Tokens;
 
 static CUtlString LowerCase( const char *psz )
 {

@@ -35,7 +35,7 @@ The client targets **Xash3D FWGS**. GoldSrc support is kept behind `GOLDSOURCE_S
 | `pm_shared/` | Player movement, shared with the server: `pm_shared.cpp` (the movement), `pm_math.cpp`, `pm_math.h` (the vector math of the whole client, it takes pointers to floats and a `Vector` converts to them) and `pm_debug.cpp`. It is C++, `vec3_t` is the `Vector` class there as everywhere else. |
 | `particleman/` | The particle manager of the original game, compiled into the client. |
 | `game_shared/` | Voice and a few helpers shared with the server. |
-| `3rdparty/MiniUTL` | Submodule, strings, vectors and maps that the code uses instead of the STL (`CUtlString`, `CUtlVector`, `CUtlMap`); its sources are built into the client. |
+| `3rdparty/MiniUTL` | Submodule, strings, vectors and maps that the code uses instead of the STL (`CUtlString`, `CUtlVector`, `CUtlHashMap`); its sources are built into the client. |
 | `3rdparty/mainui_cpp` | Submodule, the main menu (`menu.dll`) of Xash3D FWGS; a multiplayer-only game does not get the buttons of a singleplayer game. Built by CMake next to the client. |
 | `3rdparty/dod13client-extras` | The extras of the game that are packed into `extras.pk3`: the pictures of the menu, the touch controls, `userconfig.d`. |
 
@@ -519,7 +519,7 @@ HUD (`scoreboard.cpp`). Both are the hlsdk-portable classes, kept for this.
 * To change the look of a menu, edit its `.res` first.
 * A new panel: a class in `cl_dll/vgui/` that builds a `CDoDResPage` from its layout, a case in `DoDViewport::ShowVGUIMenu`, and, if the server opens it, a new id in the `VGUIMenu` enum of `dodviewport.h`.
 * `vgui/vgui_*.cpp` is the part of freevgui that has to stay inside the client (scheme manager, custom objects, `vgui_int.cpp` that creates the viewport).
-* Do not use the STL (`std::string`, `std::vector`, `std::map`) in the client: use `CUtlString`, `CUtlVector` and `CUtlMap` of MiniUTL. They have no substring or search with a position, `dodhtml.cpp` has small helpers for that. `CUtlString::Append` allocates on every call, a text that is built character by character goes to a `CUtlVector<char>` first.
+* Do not use the STL (`std::string`, `std::vector`, `std::map`) in the client: use `CUtlString`, `CUtlVector` and `CUtlHashMap` of MiniUTL. Not `CUtlMap` and `CUtlOrderedMap`: the comparison functor of `CUtlMap` has only `operator!`, so `Assert( m_LessFunc )` of MiniUTL does not compile with the `assert` of the NDK and glibc while asserts are on (MSVC accepts it), which breaks the Debug builds for Android and Linux; MiniUTL is a foreign submodule and is not patched. `utlhashmap.h` does not include `miniutl.h`, include `utlstring.h` before it. They have no substring or search with a position, `dodhtml.cpp` has small helpers for that. `CUtlString::Append` allocates on every call, a text that is built character by character goes to a `CUtlVector<char>` first.
 
 ## Extras and the main menu
 
