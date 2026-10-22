@@ -27,10 +27,7 @@ extern cvar_t	*lookspring;
 extern cvar_t	*cl_pitchdown;
 extern cvar_t	*cl_pitchup;
 extern cvar_t	*cl_yawspeed;
-extern cvar_t	*cl_sidespeed;
-extern cvar_t	*cl_forwardspeed;
 extern cvar_t	*cl_pitchspeed;
-extern cvar_t	*cl_movespeedkey;
 cvar_t	*cl_laddermode;
 
 
@@ -46,6 +43,8 @@ cvar_t	*cl_laddermode;
 #define IMPULSE_UP		4
 
 int CL_IsDead( void );
+bool DoDAreWeAlive( void );
+float DoDGetSpeed( void );
 extern vec3_t dead_viewangles;
 
 /*
@@ -317,16 +316,45 @@ void FWGSInput::IN_Move( float frametime, usercmd_t *cmd )
 	dead_viewangles = viewangles; // keep them actual
 	if( ac_movecount )
 	{
-		IN_ToggleButtons( ac_forwardmove / ac_movecount, ac_sidemove / ac_movecount );
+		float flForward = ac_forwardmove / ac_movecount;
+		float flSide = ac_sidemove / ac_movecount;
 
-		if( ac_forwardmove )
-			cmd->forwardmove = ac_forwardmove * cl_forwardspeed->value / ac_movecount;
-		if( ac_sidemove )
-			cmd->sidemove  = ac_sidemove * cl_sidespeed->value / ac_movecount;
-		if( ( in_speed.state & 1 ) && ( ac_sidemove || ac_forwardmove ) )
+		IN_ToggleButtons( flForward, flSide );
+
+		// The keys of CL_CreateMove move with the speed of the game (DoDGetSpeed: 220 walking, 330 with the speed key, less
+		// with the stamina, the prone and the deployed guns), the stick moves with the same speed as much as it is pushed.
+		// The speed of Half-Life (cl_forwardspeed 400) is more than the server lets walk, so the player always ran, and the
+		// view of V_DriftPitch drifted to the horizon: it starts when forwardmove reaches cl_forwardspeed.
+		float spd = DoDGetSpeed();
+
+		if( !DoDAreWeAlive() )
 		{
-			cmd->forwardmove *= cl_movespeedkey->value;
-			cmd->sidemove *= cl_movespeedkey->value;
+			if( flForward )
+				cmd->forwardmove = 400.0f * flForward;
+			if( flSide )
+				cmd->sidemove = 400.0f * flSide;
+		}
+		else if( !g_iUser2 )
+		{
+			if( flForward )
+				cmd->forwardmove = spd * flForward;
+			if( flSide )
+				cmd->sidemove = ( ( in_speed.state & 1 ) ? spd - 45.0f : spd ) * flSide;
+		}
+
+		// clip to maxspeed, a stick pushed diagonally gives more than one of the speeds
+		if( spd != 0.0f )
+		{
+			float fmov = sqrt( ( cmd->forwardmove * cmd->forwardmove ) + ( cmd->sidemove * cmd->sidemove ) + ( cmd->upmove * cmd->upmove ) );
+
+			if( fmov > spd )
+			{
+				float fratio = spd / fmov;
+
+				cmd->forwardmove *= fratio;
+				cmd->sidemove *= fratio;
+				cmd->upmove *= fratio;
+			}
 		}
 	}
 
