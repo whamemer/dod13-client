@@ -10,7 +10,8 @@ with the original server library.
 
 > **Status.** The client is playable and considered ready for testing. It is developed and tested on **Windows x86** with the
 > latest developer build of Xash3D FWGS, and it is checked on an **Android** phone (the debug APK: touch controls, HUD, menus).
-> Windows x64 and Linux are built by the CI, but nobody has played them yet. Bug reports are welcome.
+> Windows x64 and Linux are built by the CI, but nobody has played them yet. The CI also has a macOS build (Apple Silicon and
+> Intel) that has not been run on a Mac yet. Bug reports are welcome.
 
 ## What is restored
 * **Weapons.** All the weapons of the game with client-side prediction (bipods, sandbags, the mortar, scopes), weapon events,
@@ -26,8 +27,8 @@ with the original server library.
 * **Bug fixes of the original client**, optional and switchable at build time (see [Building](#building)).
 
 ## Download
-Builds are published on the [Releases](https://github.com/whamemer/dod13-client/releases) page: `windows` (32-bit), `windows_x64`
-and `linux`, each archive holds the `dod` folder that goes next to the engine, with the client (`dod/cl_dlls/client.dll`, or
+Builds are published on the [Releases](https://github.com/whamemer/dod13-client/releases) page: `windows` (32-bit), `windows_x64`,
+`linux` and, if their build passed, `macos_arm64` and `macos_x64`, each archive holds the `dod` folder that goes next to the engine, with the client (`dod/cl_dlls/client.dll`, or
 `client.so`), the main menu (`dod/cl_dlls/menu.dll`, or `menu.so`) and the extras (`dod/extras.pk3`).
 
 ## Installation
@@ -94,7 +95,8 @@ cmake -A Win32 -S . -B build
 cmake --build build --config Release
 cmake --install build --config Release --prefix dist
 ```
-Windows x64 (`-A x64 -D64BIT=ON`) and Linux (`cmake -S . -B build`) use the same commands. For Linux the CI builds in the
+Windows x64 (`-A x64 -D64BIT=ON`), Linux and macOS (`cmake -S . -B build`) use the same commands; on Apple Silicon
+`-DCMAKE_OSX_ARCHITECTURES=x86_64` makes the Intel build. For Linux the CI builds in the
 [Steam Runtime](https://github.com/ValveSoftware/steam-runtime) i386 environment, see
 [.github/workflows/build.yml](.github/workflows/build.yml).
 
@@ -134,7 +136,8 @@ Day of Defeat из Steam-версии игры. Он заменяет `client.dl
 
 > **Состояние.** Клиент играбелен и готов к тестированию. Он разрабатывается и проверяется на **Windows x86** с последней
 > developer-сборкой Xash3D FWGS, а также проверен на телефоне с **Android** (debug APK: сенсорное управление, HUD, меню).
-> Windows x64 и Linux собирает CI, но в них пока никто не играл. Сообщения об ошибках приветствуются.
+> Windows x64 и Linux собирает CI, но в них пока никто не играл. В CI есть и сборка для macOS (Apple Silicon и Intel), её на
+> Mac пока ни разу не запускали. Сообщения об ошибках приветствуются.
 
 ## Что восстановлено
 * **Оружие.** Всё оружие игры с клиентским предсказанием (сошки, мешки с песком, миномёт, прицелы), события оружия,
@@ -150,8 +153,8 @@ Day of Defeat из Steam-версии игры. Он заменяет `client.dl
 * **Исправления багов оригинального клиента**, необязательные и включаемые при сборке (см. [Сборка](#сборка)).
 
 ## Загрузка
-Сборки публикуются на странице [Releases](https://github.com/whamemer/dod13-client/releases): `windows` (32 бита), `windows_x64`
-и `linux`. В каждом архиве лежит папка `dod`, которая кладётся рядом с движком, с клиентом (`dod/cl_dlls/client.dll` или
+Сборки публикуются на странице [Releases](https://github.com/whamemer/dod13-client/releases): `windows` (32 бита), `windows_x64`,
+`linux` и, если их сборка прошла, `macos_arm64` и `macos_x64`. В каждом архиве лежит папка `dod`, которая кладётся рядом с движком, с клиентом (`dod/cl_dlls/client.dll` или
 `client.so`), главным меню (`dod/cl_dlls/menu.dll` или `menu.so`) и extras (`dod/extras.pk3`).
 
 ## Установка
@@ -218,7 +221,8 @@ cmake -A Win32 -S . -B build
 cmake --build build --config Release
 cmake --install build --config Release --prefix dist
 ```
-Windows x64 (`-A x64 -D64BIT=ON`) и Linux (`cmake -S . -B build`) используют те же команды. Для Linux CI собирает в окружении
+Windows x64 (`-A x64 -D64BIT=ON`), Linux и macOS (`cmake -S . -B build`) используют те же команды; на Apple Silicon
+`-DCMAKE_OSX_ARCHITECTURES=x86_64` делает сборку для Intel. Для Linux CI собирает в окружении
 [Steam Runtime](https://github.com/ValveSoftware/steam-runtime) i386, см.
 [.github/workflows/build.yml](.github/workflows/build.yml).
 
