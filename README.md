@@ -1,3 +1,6 @@
+<a id="english"></a>
+**English** | [Русский](#russian)
+
 # DOD13-Client [![Build Status](https://github.com/whamemer/dod13-client/actions/workflows/build.yml/badge.svg)](https://github.com/whamemer/dod13-client/actions) <img align="right" width="128" height="128" src="android/app/src/main/ic_launcher-playstore.png" alt="DOD13-Client" />
 Reverse-engineered client library of **Day of Defeat 1.3** for [Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs).
 
@@ -6,8 +9,8 @@ function by function, from the Steam version of the game. It replaces `client.dl
 with the original server library.
 
 > **Status.** The client is playable and considered ready for testing. It is developed and tested on **Windows x86** with the
-> latest developer build of Xash3D FWGS. Windows x64, Linux and Android are set up in the build files, but nobody has tested them
-> yet. Bug reports are welcome.
+> latest developer build of Xash3D FWGS, and it is checked on an **Android** phone (the debug APK: touch controls, HUD, menus).
+> Windows x64 and Linux are built by the CI, but nobody has played them yet. Bug reports are welcome.
 
 ## What is restored
 * **Weapons.** All the weapons of the game with client-side prediction (bipods, sandbags, the mortar, scopes), weapon events,
@@ -24,8 +27,11 @@ with the original server library.
 
 ## Download
 Builds are published on the [Releases](https://github.com/whamemer/dod13-client/releases) page: `windows` (32-bit), `windows_x64`
-and `linux`, each archive holds the `dod` folder that goes next to the engine. Every push is also built by GitHub Actions: the
-artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of a run hold the contents of that folder.
+and `linux`, each archive holds the `dod` folder that goes next to the engine, with the client (`dod/cl_dlls/client.dll`, or
+`client.so`), the main menu (`dod/cl_dlls/menu.dll`, or `menu.so`) and the extras (`dod/extras.pk3`). The 64-bit builds carry the
+suffix of the Xash3D library naming, for example `client_amd64.dll`. The `android` file is the APK, it has the same three inside.
+Every push is also built by GitHub Actions: the artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of a
+run hold the contents of that folder, `...-android` is the APK.
 
 ## Installation
 1. Get the [latest developer build of Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs/releases/tag/continuous) and unpack it.
@@ -33,6 +39,9 @@ artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of 
    folders from your Steam installation into the Xash3D FWGS directory. The game files are not distributed with this project.
 3. Unpack the build into the same directory, so that `client.dll` and `menu.dll` land in `dod/cl_dlls/` and `extras.pk3` in `dod/`.
 4. Run `xash3d.exe -game dod`.
+
+On **Android** install the APK next to the Xash3D FWGS app: it declares itself as a mod of that app (`su.xash.engine.MOD`). The
+client, the menu and the extras are inside the APK, the game files of the original game (`valve`, `dod`) are not.
 
 ### What is in the archive
 * `client.dll` is the client, `menu.dll` is the main menu (the menu library of Xash3D FWGS with the DoD changes: it does not show
@@ -51,7 +60,7 @@ artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of 
   game, a dedicated server needs them in its own config.
 * **The weapon sways too much.** `cl_bob` is saved to `config.cfg`, and a value left by another client (Half-Life uses `0.01`)
   stays. The value of Day of Defeat is `0.005`.
-* The menus look slightly different from the original, see the description of VGUI1 in [cl_dll/readme.md](cl_dll/readme.md).
+* The menus look slightly different from the original, see the description of VGUI1 in [cl_dll/readme.md](cl_dll/readme.md#vgui1-instead-of-vgui2).
 
 ## Documentation
 Everything about the client is in [cl_dll/readme.md](cl_dll/readme.md):
@@ -63,7 +72,8 @@ Everything about the client is in [cl_dll/readme.md](cl_dll/readme.md):
   [user messages](cl_dll/readme.md#user-messages-and-console-commands);
 * [Mechanics that exist only in Day of Defeat](cl_dll/readme.md#mechanics-that-exist-only-in-day-of-defeat) and
   [weapon prediction](cl_dll/readme.md#weapon-prediction);
-* [VGUI1 instead of VGUI2](cl_dll/readme.md#vgui1-instead-of-vgui2) and the
+* [VGUI1 instead of VGUI2](cl_dll/readme.md#vgui1-instead-of-vgui2), the
+  [extras and the main menu](cl_dll/readme.md#extras-and-the-main-menu) and the
   [differences from hlsdk-portable](cl_dll/readme.md#differences-from-hlsdk-portable).
 
 ## Building
@@ -107,10 +117,12 @@ Windows x64 (`-A x64 -D64BIT=ON`) and Linux (`cmake -S . -B build`) use the same
 ### Android
 ```
 cd android
-./gradlew assembleRelease
+./gradlew assembleDebug
 ```
-The Android project is included but not tested. The extras are the assets of the APK (the engine mounts them as the files of the
-game).
+It needs JDK 17, Android SDK 34, NDK 26.1.10909125 and CMake 3.22.1 (see `android/app/build.gradle`). The APK is
+`android/app/build/outputs/apk/debug/app-debug.apk`. It holds the client and the menu for arm64-v8a and armeabi-v7a, and the
+extras as its assets (the engine mounts them as the files of the game). `assembleRelease` makes an APK that is not signed, so the
+debug one is what the CI publishes. The APK is checked on a phone.
 
 ## Credits
 * [FWGS](https://github.com/FWGS) for the engine, [Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs), and for the SDK this code
@@ -123,3 +135,140 @@ non-commercial modifications of Valve games. Third-party parts keep their own li
 
 Day of Defeat and Half-Life are products of Valve Corporation. This project is not affiliated with or endorsed by Valve. It
 contains no assets of the game, you need the original game to play.
+
+---
+
+<a id="russian"></a>
+[English](#english) | **Русский**
+
+# DOD13-Client [![Build Status](https://github.com/whamemer/dod13-client/actions/workflows/build.yml/badge.svg)](https://github.com/whamemer/dod13-client/actions) <img align="right" width="128" height="128" src="android/app/src/main/ic_launcher-playstore.png" alt="DOD13-Client" />
+Клиентская библиотека **Day of Defeat 1.3**, восстановленная реверс-инжинирингом, для [Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs).
+
+За основу взят [hlsdk-portable](https://github.com/FWGS/hlsdk-portable), поверх которого функция за функцией восстановлен клиент
+Day of Defeat из Steam-версии игры. Он заменяет `client.dll` / `client.so` оригинальной игры и работает с оригинальной серверной
+библиотекой.
+
+> **Состояние.** Клиент играбелен и готов к тестированию. Он разрабатывается и проверяется на **Windows x86** с последней
+> developer-сборкой Xash3D FWGS, а также проверен на телефоне с **Android** (debug APK: сенсорное управление, HUD, меню).
+> Windows x64 и Linux собирает CI, но в них пока никто не играл. Сообщения об ошибках приветствуются.
+
+## Что восстановлено
+* **Оружие.** Всё оружие игры с клиентским предсказанием (сошки, мешки с песком, миномёт, прицелы), события оружия,
+  вспышки выстрелов, гильзы, трассеры, попадания в поверхности, взрывы, кровь и трупы.
+* **HUD.** Здоровье и выносливость, патроны, значки объектов и прогресс захвата, карта (малая и большая) с метками и
+  гранатами, перекрестие, сообщения об убийствах, чат, подсказки, интерфейс наблюдателя.
+* **Эффекты.** Менеджер частиц оригинальной игры (встроен в клиент), дождь и снег, туман, дым выстрелов, обломки,
+  статические пропсы карты (`env_model`), генераторы частиц и кинематографическая камера, всё это читается из entity lump карты.
+* **Движение и рендер.** Движение игрока, общее с сервером (лёжа, лестницы, прыжок на выносливости), рендер моделей с позами
+  сошек и мешка с песком, покачивание вида и отдача.
+* **Меню.** Меню команд и классов, MOTD, таблица счёта, панель наблюдателя. Оригинал использует VGUI2, которого нет в Xash3D,
+  поэтому панели перестроены на [freevgui](https://github.com/FWGS/freevgui) (VGUI1) по раскладкам игры (`resource/UI/*.res`).
+* **Исправления багов оригинального клиента**, необязательные и включаемые при сборке (см. [Сборка](#сборка)).
+
+## Загрузка
+Сборки публикуются на странице [Releases](https://github.com/whamemer/dod13-client/releases): `windows` (32 бита), `windows_x64`
+и `linux`. В каждом архиве лежит папка `dod`, которая кладётся рядом с движком, с клиентом (`dod/cl_dlls/client.dll` или
+`client.so`), главным меню (`dod/cl_dlls/menu.dll` или `menu.so`) и extras (`dod/extras.pk3`). У 64-битных сборок есть суффикс
+по схеме именования библиотек Xash3D, например `client_amd64.dll`. Файл `android` это APK, внутри него те же три части.
+Каждый push тоже собирает GitHub Actions: артефакты `dod13-client-<ветка>-windows`, `...-windows_x64` и `...-linux` запуска
+содержат содержимое этой папки, `...-android` это APK.
+
+## Установка
+1. Скачайте [последнюю developer-сборку Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs/releases/tag/continuous) и распакуйте её.
+2. У вас должна быть [Day of Defeat в Steam](https://store.steampowered.com/app/30/Day_of_Defeat/). Скопируйте папки `valve` и
+   `dod` из установки Steam в каталог Xash3D FWGS. Файлы игры вместе с проектом не распространяются.
+3. Распакуйте сборку в тот же каталог так, чтобы `client.dll` и `menu.dll` оказались в `dod/cl_dlls/`, а `extras.pk3` в `dod/`.
+4. Запустите `xash3d.exe -game dod`.
+
+На **Android** установите APK рядом с приложением Xash3D FWGS: он объявляет себя модом этого приложения (`su.xash.engine.MOD`).
+Клиент, меню и extras находятся внутри APK, файлов оригинальной игры (`valve`, `dod`) в нём нет.
+
+### Что лежит в архиве
+* `client.dll` это клиент, `menu.dll` это главное меню (библиотека меню Xash3D FWGS с изменениями для DoD: в ней нет
+  New Game, Load Game и Hazard Course, в игре, рассчитанной только на мультиплеер, их нет).
+* В `extras.pk3` лежат картинки, которые нужны главному меню (`gfx/shell`: кнопки и баннеры меню WON оригинальной игры, а те,
+  что добавил Xash3D, нарисованы в том же стиле), сенсорное управление (`touch.cfg`, пресет `touch_whamer` и `touch/gfx`) и
+  `userconfig.d/userconfig.cfg`. Картинки меню WON это ресурсы Day of Defeat, они принадлежат Valve.
+* `userconfig.cfg` содержит настройки, от которых зависит клиент (`cl_lw 1`, `cl_lc 1`, `cl_nopred 0`, `sv_rollangle 2`,
+  `sv_rollspeed 200`). Движок выполняет его после `config.cfg` при каждом запуске, поэтому сохранённое значение их не сломает.
+  Файлы `userconfig.d` выполняются в алфавитном порядке: чтобы изменить значение, положите команду в свой файл в папке
+  `dod/userconfig.d` с более поздним именем, например `zz_my.cfg`.
+
+### Примечания
+* **Вид не наклоняется при стрейфе.** Наклон задаёт серверная переменная `sv_rollangle`. Умолчание GoldSrc равно `2`,
+  умолчание Xash3D равно `0`. `userconfig.cfg` ставит `sv_rollangle 2` и `sv_rollspeed 200` для сервера, который вы запускаете из
+  игры, выделенному серверу они нужны в его собственном конфиге.
+* **Оружие слишком сильно качается.** `cl_bob` сохраняется в `config.cfg`, и значение, оставленное другим клиентом (Half-Life
+  использует `0.01`), остаётся. У Day of Defeat значение `0.005`.
+* Меню выглядят немного иначе, чем в оригинале, см. описание VGUI1 в [cl_dll/readme.md](cl_dll/readme.md#vgui1-вместо-vgui2).
+
+## Документация
+Всё о клиенте описано в [cl_dll/readme.md](cl_dll/readme.md#russian):
+* [Структура](cl_dll/readme.md#структура) исходного кода;
+* [Консольные переменные](cl_dll/readme.md#консольные-переменные) и [консольные команды](cl_dll/readme.md#консольные-команды-клиента)
+  клиента, с умолчаниями;
+* [Параметры сборки](cl_dll/readme.md#параметры-сборки) и [исправления багов оригинальной игры](cl_dll/readme.md#исправления-багов-оригинальной-игры);
+* [Как движок общается с клиентом](cl_dll/readme.md#как-движок-общается-с-клиентом) и
+  [пользовательские сообщения](cl_dll/readme.md#пользовательские-сообщения-и-консольные-команды);
+* [Механики, которые есть только в Day of Defeat](cl_dll/readme.md#механики-которые-есть-только-в-day-of-defeat) и
+  [предсказание оружия](cl_dll/readme.md#предсказание-оружия);
+* [VGUI1 вместо VGUI2](cl_dll/readme.md#vgui1-вместо-vgui2),
+  [extras и главное меню](cl_dll/readme.md#extras-и-главное-меню) и
+  [отличия от hlsdk-portable](cl_dll/readme.md#отличия-от-hlsdk-portable).
+
+## Сборка
+Склонируйте исходный код вместе с подмодулями:
+```
+git clone https://github.com/whamemer/dod13-client --recursive
+```
+Сборка по умолчанию 32-битная. Результат устанавливается как `dod/cl_dlls/client.dll`. Нужен компилятор C99 и C++11 (MSVC, GCC
+или Clang) и либо Python 3 (waf), либо CMake 3.15 и новее.
+
+### Параметры
+`mod_options.txt` содержит параметры сборки, его читают обе системы сборки. `GAMEDIR` и `CLIENT_INSTALL_DIR` говорят, куда
+устанавливается клиент. У каждого исправления бага оригинальной игры есть свой макрос (`FOG_MINIMAP_FIX`, `SCOPE_WIDESCREEN_FIX`,
+`MINIMAP_SPECTATOR_FIX`), все они `ON`. Поставьте `OFF`, чтобы получить поведение оригинала. Они описаны в
+[cl_dll/readme.md](cl_dll/readme.md#исправления-багов-оригинальной-игры).
+
+CMake также собирает главное меню (`menu.dll`, параметр `BUILD_MAINUI`, `-DBUILD_MAINUI=OFF` отключает его) и упаковывает
+`3rdparty/dod13client-extras` в `extras.pk3`; то и другое попадает в каталог игры вместе с клиентом. waf собирает только клиент и
+`extras.pk3`.
+
+### waf
+```
+./waf configure
+./waf build
+./waf install --destdir=dist
+```
+В Windows используйте `waf.bat`. `-T debug` делает отладочную сборку, `-8` разрешает 64-битную сборку, `--disable-werror`
+отключает строгие предупреждения GCC и Clang.
+
+### CMake
+Windows x86:
+```
+cmake -A Win32 -S . -B build
+cmake --build build --config Release
+cmake --install build --config Release --prefix dist
+```
+Windows x64 (`-A x64 -D64BIT=ON`) и Linux (`cmake -S . -B build`) используют те же команды. Для Linux CI собирает в окружении
+[Steam Runtime](https://github.com/ValveSoftware/steam-runtime) i386, см.
+[.github/workflows/build.yml](.github/workflows/build.yml).
+
+### Android
+```
+cd android
+./gradlew assembleDebug
+```
+Нужны JDK 17, Android SDK 34, NDK 26.1.10909125 и CMake 3.22.1 (см. `android/app/build.gradle`). APK лежит в
+`android/app/build/outputs/apk/debug/app-debug.apk`. В нём клиент и меню для arm64-v8a и armeabi-v7a, а extras это его assets
+(движок монтирует их как файлы игры). `assembleRelease` делает неподписанный APK, поэтому CI публикует debug-вариант. APK
+проверен на телефоне.
+
+## Благодарности
+* [FWGS](https://github.com/FWGS) за движок, [Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs), и за SDK, на котором основан
+  этот код, [hlsdk-portable](https://github.com/FWGS/hlsdk-portable).
+* **Valve** за Day of Defeat.
+
+## Лицензия
+Код основан на Half-Life SDK и распространяется под его лицензией, см. [LICENSE](LICENSE): она разрешает свободные
+некоммерческие модификации игр Valve. Сторонние части сохраняют свои лицензии.

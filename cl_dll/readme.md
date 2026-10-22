@@ -1,3 +1,6 @@
+<a id="english"></a>
+**English** | [Русский](#russian)
+
 # Day of Defeat client DLL
 
 This document describes the structure of the Day of Defeat 1.3 client library (`client.dll` / `client.so`), how it
@@ -55,6 +58,18 @@ value becomes a variable of the build.
 
 The options of Half-Life (crowbar, gauss, satchel fixes and the like) are removed. The fixes for the bugs of the original
 game are added here, each under its own macro, so they can be turned off.
+
+The build systems have a few options of their own:
+
+| waf | CMake | Meaning |
+|-----|-------|---------|
+| `-T debug` | `-DCMAKE_BUILD_TYPE=Debug` | The type of the build; waf builds the optimized `humanrights` by default. |
+| `-8`, `--64bits` | `-D64BIT=ON` | Allow a 64-bit build; on a 64-bit Windows or Linux host the build is 32-bit otherwise, as GoldSrc is. |
+| `--disable-goldsrc-support` | `-DGOLDSOURCE_SUPPORT=OFF` | Drop the code for the GoldSrc engine (`GOLDSOURCE_SUPPORT`, x86 only). |
+| `--disable-werror` | | Turn off the strict warnings of GCC and Clang. |
+| `--enable-android-apk` | `-DANDROID_APK=ON` | The deploy for an APK: the game directory and the client directory are `.`. |
+| | `-DBUILD_CLIENT=OFF`, `-DBUILD_MAINUI=OFF` | Do not build the client or the main menu (the extras are packed in any case). |
+| | `-DLTO=ON`, `-DPOLLY=ON` | Interprocedural optimization, polyhedral optimization. |
 
 ## Fixes of the bugs of the original game
 
@@ -181,6 +196,8 @@ userinfo (`FCVAR_USERINFO`).
 | `hud_textmode` | 0 | A | 2 draws HUD strings with the console font. |
 | `hud_fastswitch` | 0 | A | Select a weapon with one keypress. |
 | `hud_draw` | 1 | A | Draw the HUD. |
+| `hud_allow_hd` | 0 | A | Use the HD sprites of the HUD (the sets of 1280 and 2560) on a screen from 1280 pixels wide; 0 keeps the sprites of 640. |
+| `hud_safearea` | -1 | A | Margin of the HUD from every edge of the screen as a part of the height of the screen: -1 is automatic (0.03 on a touch screen, nothing on a monitor), see [Differences from hlsdk-portable](#differences-from-hlsdk-portable). |
 | `hud_capturemouse` | 1 | A | The HUD may capture the mouse. |
 | `hud_takesshots` | 0 | A | Take a screenshot at the end of every round. |
 | `cl_autoreload` | 1 | A, U | Reload automatically when the clip is empty. |
@@ -210,7 +227,7 @@ userinfo (`FCVAR_USERINFO`).
 | Cvar | Default | Flags | Effect |
 |------|---------|-------|--------|
 | `cl_particlefx` | 2 | A | 0 no particles, 1 particles, 2 also rain, snow and particle shooters of the map. Needs a hardware renderer. |
-| `cl_weatherdis` | 1700 | A | Distance in units up to which rain and snow particles are created around you (at least 100). |
+| `cl_weatherdis` | 1700 | A | Distance in units (the height does not count) up to which the particles of the muzzle flashes, the weapon smoke, the particle shooters of the map and the like are created around you (at least 100). Rain and snow are made around the player and do not use it. |
 | `max_rubble` | 240 | | Maximum number of rubble pieces alive at the same time. |
 | `cl_numshotrubble` | 5 | A | Maximum number of rubble pieces a bullet hit throws (a random number from 0 to this). |
 | `cl_corpsestay` | 10 | A | Seconds a corpse stays after a death. |
@@ -237,6 +254,7 @@ the map is shown, see `FOG_MINIMAP_FIX` in [Fixes of the bugs of the original ga
 | `cl_dynamic_xhair` | 1 | A | The crosshair grows with movement and recoil. 0 keeps it fixed. |
 | `cl_xhair_style` | 0 | A | 0 draws `sprites/crosshairs.spr`, other values pick a crosshair from `sprites/customXHair.spr`. |
 | `cl_vsmoothing` | 0.05 | A | Seconds of view smoothing on trains and lifts. |
+| `cl_viewbob` | 1 | A | Registered as in the original; not read by the client. |
 | `cl_bob`, `cl_bobcycle`, `cl_bobup` | 0.005, 0.8, 0.5 | A (`cl_bob`) | Weapon and view bob. `cl_bob` is saved to `config.cfg`: a value left by another client (Half-Life uses 0.01) doubles the sway of the weapon, in the original it is 0.005. |
 | `cl_chasedist`, `cl_waterdist` | 112, 4 | | Distance of the chase camera, offset of the view under the water line. |
 | `zoom_sensitivity_ratio` | 1.2 | A | Mouse sensitivity multiplier while zoomed. |
@@ -267,7 +285,8 @@ The engine cvars `vgui_utf8` and `con_fontscale` / `hud_fontscale` affect the me
 | `prone` | Go prone (sends `sprone` to the server). |
 | `centerview` | Reset the view pitch. |
 | `credits` | Show the credits on the screen. |
-| `slot1` ... `slot10`, `invnext`, `invprev`, `cancelselect` | Weapon selection. |
+| `slot1` ... `slot10`, `slot0` (the same as `slot10`), `invnext`, `invprev`, `cancelselect` | Weapon selection. |
+| `togglescores` | Show the scoreboard if it is hidden and hide it if it is shown (the VGUI one, or the text one of the HUD with `cl_scoreboard_vgui 0`). |
 | `hud_saytext` | Turn the chat on or off. |
 | `spec_mode`, `spec_decal`, `spec_menu`, `spec_help`, `spec_autodirector`, `spec_drawnames`, `spec_drawcone`, `spec_drawstatus` | Spectator. |
 | `thirdperson`, `firstperson`, `+camin`, `+camout`, `+camdistance`, ... | Third person camera. |
@@ -336,8 +355,14 @@ and `m_iAction_On`.
 ### Environment
 
 * **Fog**: `dod_fog.cpp`, see the cvars above.
-* **Rain and snow**: `weather.cpp`. `CWeatherManager` creates particles around the player on a timer from
-  `HUD_DrawTransparentTriangles` (`g_iWeatherType` comes from `info_doddetect`).
+* **Rain and snow**: `HUD_DrawTransparentTriangles` calls `UpdateRain` (every 0.3 seconds, 350 tries within 650 units) or
+  `UpdateSnow` (every 0.7 seconds, 150 tries within 400 units) of `tri.cpp` when `cl_particlefx` is 2 and the renderer is a
+  hardware one (`g_iWeatherType` comes from `info_doddetect`). A try takes a random point 100 to 300 units over the player, traces
+  up to the height 8000 and makes a particle only where the surface that stops the trace is the sky (its texture starts with
+  `sky`). `CWeatherManager` of `weather.cpp` holds the sprites (rain, snowflake, splash, ripple) and makes the particles
+  (`CreateRainParticle`, `CreateSnowParticle`); a drop that hits the floor makes a splash. The texture is looked for along the whole
+  line of the trace, not from its end point: the end point of the trace of the player is 1/32 of a unit before the surface, and
+  whether the search of Xash3D finds the surface from there depends on how the floats were rounded.
 * **Particles**: `particleman/` is the original particle manager. It is built **into** the client (no separate library) and
   loaded through `CL_LoadParticleMan`. The DoD particle classes are in `tri.cpp` / `tri.h` (`CDoDParticle`, `CDoDRocketTrail`,
   `CDoDDirtExploDust`, `CDoDSnowFlake`, ...).
@@ -553,5 +578,615 @@ the assets of the APK in `android/app/build.gradle`. If the directory is missing
 * The input has the DoD button checks (`DoDHandleButtons`) and the speed from the stamina (`DoDGetSpeed`).
 * `input_xash3d.cpp` limits the view of a deployed weapon to +-45 degrees yaw and +-20 degrees pitch.
 * The safe area of the screen (`hud_safearea.cpp`): the cutout, the rounded corners and the bezels of a phone eat the parts of the HUD that sit in the corners. The engine reports the safe part of the window as `WindowInsets` (the parts of the window from the left, top, right and bottom, `gMobileEngfuncs->pfnGetNativeObject`; it is the cutout only, not the corners), and the client adds a margin for the corners: the cvar `hud_safearea` is the margin from every edge as a part of the height of the screen, `-1` (the default) is automatic, 0.03 on a touch screen (`touch_enable`) and nothing on a monitor; the bigger of the cutout and the margin is used for every edge. The drawing functions of `gEngfuncs` (`FillRGBA`, `FillRGBABlend`, `SPR_Draw*`, `SPR_EnableScissor`, `DrawCharacter`, `DrawConsoleString`) are replaced by ones that add the offset of the current anchor to the position, so the code of the elements does not change: `CHud::Redraw` sets the anchor of the element (`CHudBase::m_iSafeAnchor`, the edges `SAFE_LEFT`, `SAFE_RIGHT`, `SAFE_TOP`, `SAFE_BOTTOM`; the elements that sit at an edge are set in `CHud::Init`), and a part of the element that sits at another edge sets its own with `CSafeAnchor` (the markers at the right edge in the middle of the screen, the barrel of the machine gun, the list of the weapons, the timer of the reinforcements). Outside of the HUD the anchor is `SAFE_NONE`, and with no cutout and no margin every offset is 0. An element that sits at an edge and is added later needs its anchor. `_window_insets "left top right bottom"` of the engine (pixels) sets the cutout for a test on a monitor.
-* The minimap is a second view of the renderer, and its rectangle is in the pixels of the screen, not of the HUD: with `hud_scale` the HUD has a virtual screen, `ScreenWidth` is smaller than the window. `V_GetMapViewport` in `view.cpp` scales the rectangle of `CHud::GetMapViewBounds` (the minimap moved from the corner by the safe area, the overlays use `GetMapBounds` and are moved by their anchors) by the ratio of the width of the view to `ScreenWidth`. `hud_scale` takes effect at once in this engine (the latch of a client cvar only prints a message), without `VidInit`, so the bounds of the map are made again by `GetMapBounds` whenever the size of the screen of the HUD changes; the bounds made once in `VidInit` stayed in the pixels of the old size, and with the scale above they put the minimap out of the screen.
+* The minimap is a second view of the renderer, and its rectangle is in the pixels of the screen, not of the HUD: with `hud_scale` the HUD has a virtual screen, `ScreenWidth` is smaller than the window. `V_GetMapViewport` in `view.cpp` scales the rectangle of `CHud::GetMapViewBounds` (the minimap moved from the corner by the safe area, the overlays use `GetMapBounds` and are moved by their anchors) by the ratio of the width of the view to `ScreenWidth`. `hud_scale` is a latched cvar of the engine (`FCVAR_LATCH`), a new value is used when the map is loaded again (`retry`). The bounds of the map are not kept from `VidInit`: `GetMapBounds` makes them again whenever the size of the screen of the HUD is not the one they were made for; the bounds made once stayed in the pixels of the old size, and with the scale above they put the minimap out of the screen.
 * The stick of the touch screen and of the gamepad (`IN_ClientMoveEvent`) moves with the speed of the game, `DoDGetSpeed()`, as much as it is pushed, like the keys of `CL_CreateMove` (220 walking, 330 with `+speed`, `spd - 45` to the sides with `+speed`, less with the stamina, the prone and the deployed guns), and is clipped to it. It used `cl_forwardspeed` of Half-Life (400), which is more than the server lets walk, so the player always ran, and `V_DriftPitch` (that starts to center the view when `forwardmove` reaches `cl_forwardspeed`) pulled the view to the horizon while the stick was pushed to the end.
+
+---
+
+<a id="russian"></a>
+[English](#english) | **Русский**
+
+# Клиентская DLL Day of Defeat
+
+Этот документ описывает устройство клиентской библиотеки Day of Defeat 1.3 (`client.dll` / `client.so`), как она общается с
+движком и чем отличается от [hlsdk-portable](https://github.com/FWGS/hlsdk-portable), SDK, на котором построен этот код. Он
+написан для тех, кто хочет читать, собирать или изменять клиент.
+
+Клиент рассчитан на **Xash3D FWGS**. Поддержка GoldSrc сохранена за `GOLDSOURCE_SUPPORT` (только x86 Windows/Linux/macOS).
+
+* [Структура](#структура)
+* [Параметры сборки](#параметры-сборки)
+* [Исправления багов оригинальной игры](#исправления-багов-оригинальной-игры)
+* [Как движок общается с клиентом](#как-движок-общается-с-клиентом)
+* [Пользовательские сообщения и консольные команды](#пользовательские-сообщения-и-консольные-команды)
+* [Консольные переменные](#консольные-переменные)
+* [Консольные команды клиента](#консольные-команды-клиента)
+* [Механики, которые есть только в Day of Defeat](#механики-которые-есть-только-в-day-of-defeat)
+* [Предсказание оружия](#предсказание-оружия)
+* [VGUI1 вместо VGUI2](#vgui1-вместо-vgui2)
+* [Extras и главное меню](#extras-и-главное-меню)
+* [Отличия от hlsdk-portable](#отличия-от-hlsdk-portable)
+
+## Структура
+
+| Путь | Что там |
+|------|---------|
+| `cl_dll/cdll_int.cpp` | Экспортируемые функции, которые движок ищет по имени (`Initialize`, `HUD_*`). Владеет `gEngfuncs`, `gHUD` и `g_pParticleMan`. |
+| `cl_dll/hud.cpp`, `hud.h` | `CHud`, владелец всех элементов HUD, cvar и привязок пользовательских сообщений. |
+| `cl_dll/dod_*.cpp`, `mortarhud.cpp`, `scope.cpp`, `weather.cpp`, `ParticleShooter.cpp`, `CClientEnvModel.cpp` | Элементы HUD и системы Day of Defeat, см. ниже. |
+| `cl_dll/ev_dod.cpp`, `ev_common.cpp` | Клиентская часть событий: эффекты выстрелов, взрывы, попадания в поверхности, кровь, трупы, голоса. |
+| `cl_dll/dod/` | Связующий код, который позволяет серверному коду оружия работать внутри клиента (предсказание). |
+| `cl_dll/vgui/` | Viewport и все меню, написанные на freevgui (VGUI1). |
+| `cl_dll/StudioModelRenderer.cpp`, `GameStudioModelRenderer.cpp` | Рендер моделей: кэш костей, анимация игроков, позы сошек и мешка с песком, рисование env_model. |
+| `cl_dll/view.cpp`, `input.cpp`, `input_xash3d.cpp`, `in_camera.cpp` | Расчёт вида, ввод и камера от третьего лица. |
+| `dlls/` | Заголовки, общие с сервером (`cbase.h`, `player.h`, `weapons.h`, ...), `dod_shared.cpp` (таблицы данных) и `wpn_shared/` (один класс на оружие). Серверного кода нет. |
+| `pm_shared/` | Движение игрока, общее с сервером: `pm_shared.cpp` (само движение), `pm_math.cpp`, `pm_math.h` (векторная математика всего клиента, она принимает указатели на float, а `Vector` к ним приводится) и `pm_debug.cpp`. Это C++, `vec3_t` там, как и везде, класс `Vector`. |
+| `particleman/` | Менеджер частиц оригинальной игры, скомпилированный в клиент. |
+| `game_shared/` | Голос и несколько помощников, общих с сервером. |
+| `3rdparty/MiniUTL` | Подмодуль: строки, векторы и словари, которые код использует вместо STL (`CUtlString`, `CUtlVector`, `CUtlHashMap`); его исходники собираются в клиент. |
+| `3rdparty/mainui_cpp` | Подмодуль: главное меню (`menu.dll`) Xash3D FWGS; у игры только для мультиплеера нет кнопок однопользовательской игры. Собирается CMake рядом с клиентом. |
+| `3rdparty/dod13client-extras` | Extras игры, которые упаковываются в `extras.pk3`: картинки меню, сенсорное управление, `userconfig.d`. |
+
+## Параметры сборки
+
+`mod_options.txt` в корне репозитория содержит параметры сборки, по одному в строке: `ИМЯ=ЗНАЧЕНИЕ # описание`.
+Его читают и waf (`wscript`), и CMake. `ON` определяет макрос `ИМЯ` для всего клиента, `OFF` ничего не определяет, любое другое
+значение становится переменной сборки.
+
+| Параметр | Значение | Смысл |
+|----------|----------|-------|
+| `GAMEDIR` | `dod` | Каталог игры; цель install кладёт клиент в `<GAMEDIR>/<CLIENT_INSTALL_DIR>`. |
+| `CLIENT_INSTALL_DIR` | `cl_dlls` | Куда попадает клиентская библиотека (должен совпадать с `liblist.gam` / `gameinfo.txt`). |
+| `FOG_MINIMAP_FIX` | `ON` | Исправление бага оригинальной игры, см. [ниже](#исправления-багов-оригинальной-игры). |
+| `SCOPE_WIDESCREEN_FIX` | `ON` | Исправление бага оригинальной игры, см. [ниже](#исправления-багов-оригинальной-игры). |
+| `MINIMAP_SPECTATOR_FIX` | `ON` | Исправление бага оригинальной игры, см. [ниже](#исправления-багов-оригинальной-игры). |
+
+Параметры Half-Life (исправления монтировки, гаусс-пушки, подрывного заряда и подобные) удалены. Исправления багов оригинальной
+игры добавлены сюда, каждое под своим макросом, чтобы их можно было отключить.
+
+У самих систем сборки есть несколько своих параметров:
+
+| waf | CMake | Смысл |
+|-----|-------|-------|
+| `-T debug` | `-DCMAKE_BUILD_TYPE=Debug` | Тип сборки; waf по умолчанию собирает оптимизированную `humanrights`. |
+| `-8`, `--64bits` | `-D64BIT=ON` | Разрешить 64-битную сборку; на 64-битном хосте Windows или Linux иначе сборка 32-битная, как у GoldSrc. |
+| `--disable-goldsrc-support` | `-DGOLDSOURCE_SUPPORT=OFF` | Отказаться от кода для движка GoldSrc (`GOLDSOURCE_SUPPORT`, только x86). |
+| `--disable-werror` | | Отключить строгие предупреждения GCC и Clang. |
+| `--enable-android-apk` | `-DANDROID_APK=ON` | Развёртывание для APK: каталог игры и каталог клиента равны `.`. |
+| | `-DBUILD_CLIENT=OFF`, `-DBUILD_MAINUI=OFF` | Не собирать клиент или главное меню (extras упаковываются в любом случае). |
+| | `-DLTO=ON`, `-DPOLLY=ON` | Межпроцедурная оптимизация, полиэдральная оптимизация. |
+
+## Исправления багов оригинальной игры
+
+В оригинальном клиенте есть баги, которые эта кодовая база намеренно воспроизводит, потому что реверс следует бинарнику.
+Исправление такого бага **необязательно**: оно стоит за макросом, который переключается в `mod_options.txt` (см.
+[Параметры сборки](#параметры-сборки)), так же как исправления оружия Half-Life в hlsdk-portable. Если параметр `OFF`, клиент
+ведёт себя в точности как оригинал. Все исправления ниже по умолчанию `ON`.
+
+| Параметр | Баг оригинала | Исправление |
+|----------|---------------|-------------|
+| `FOG_MINIMAP_FIX` | Туман `cl_fog` выключается картой: `RenderDoDFog` принудительно ставит уровень 0, пока показана малая или большая карта (`_cl_minimap` 1 или 2), поэтому туман работает только при полностью скрытой карте (`_cl_minimap 0`). Карта это второй вид кадра, и оставшийся включённым туман её посерел бы; оригинал избегает этого, выключая туман на весь кадр. | Туман следует за `cl_fog` в любом режиме карты. `SuspendDoDFog` (`dod_fog.cpp`) выключает его только пока карта рисуется в `HUD_DrawTransparentTriangles`, а `RenderDoDFog` сразу после включает снова, так что следующий кадр рисуется с туманом. |
+| `SCOPE_WIDESCREEN_FIX` | На широкоэкранном разрешении рамка снайперского прицела (и бинокля) не закрывает экран: при 1920x1200 мир виден полосами по 80 пикселей слева и справа и по 50 пикселей сверху и снизу. Движок рендерит широкий экран с вертикальным FOV для 4:3 и расширяет горизонтальный, а оригинал размеряет рамку по FOV самого экрана, поэтому она примерно на 8% меньше. | `AdjustScopeFov` в `scope.cpp` повторяет расчёт движка (`V_AdjustFov` из `cl_view.c`), так что рамка рассчитывается под FOV, который действительно рендерится. При 4:3 и 5:4, а также в движке без cvar `r_adjust_fov` она ничего не делает. |
+| `MINIMAP_SPECTATOR_FIX` | Пока игрок наблюдает, карта показывает значок его собственной позиции союзников, какой бы ни была команда наблюдаемого игрока, и никого из его команды, потому что у наблюдателя нет команды. | `GetMapTeam` в `dod_map.cpp` берёт команду наблюдаемого игрока (`g_iUser2`), значок камеры становится значком Axis, British или Allies для этой команды, и рисуются игроки этой команды. Без наблюдаемого игрока (свободный полёт) карта ведёт себя как раньше. |
+
+### Как добавить исправление
+
+1. Добавьте строку в `mod_options.txt`: `ИМЯ=ON # что делает исправление`.
+2. Оберните изменённый код в `#if ИМЯ` ... `#else` (код оригинала) ... `#endif`. Используйте `#if`, а не `#ifdef`: выключенный
+   параметр ничего не определяет.
+3. Снова запустите `waf configure` (CMake тоже читает файл при конфигурации). Журнал сборки перечисляет параметр и его состояние.
+
+### Отличия от Steam-версии, которых нет в клиенте
+
+* **Наклон вида при стрейфе.** Код клиента (`V_CalcViewRoll`, `PM_CalcRoll`) такой же, как в оригинале, наклон приходит из
+  серверной cvar `sv_rollangle`. Умолчание GoldSrc равно `2.0` (`sv_rollspeed 200`), умолчание Xash3D равно `0`, поэтому без
+  `sv_rollangle 2` в конфиге сервера наклона нет. Настройка сохраняется в `config.cfg` (`FCVAR_ARCHIVE`).
+
+## Как движок общается с клиентом
+
+### Экспортируемые функции
+
+Движок находит их по имени в `cdll_int.cpp`, `entity.cpp`, `view.cpp`, `input.cpp`, `tri.cpp`, `hud_spectator.cpp`,
+`demo.cpp` и `StudioModelRenderer`: `Initialize`, `HUD_Init`, `HUD_VidInit`, `HUD_Redraw`, `HUD_UpdateClientData`,
+`HUD_Reset`, `HUD_PlayerMove`, `HUD_PlayerMoveInit`, `HUD_PlayerMoveTexture`, `HUD_PostRunCmd`, `HUD_Frame`, `HUD_Key_Event`,
+`HUD_AddEntity`, `HUD_CreateEntities`, `HUD_StudioEvent`, `HUD_TempEntUpdate`, `HUD_DrawNormalTriangles`,
+`HUD_DrawTransparentTriangles`, `HUD_GetStudioModelInterface`, `HUD_MobilityInterface`, `V_CalcRefdef`, `CL_CreateMove`, `CL_IsThirdPerson`,
+`IN_ActivateMouse`, `IN_Accumulate`, `IN_MouseEvent`, `Demo_ReadBuffer`, `HUD_ChatInputPosition`, `HUD_Shutdown` и другие.
+Xash3D никогда не вызывает устаревшую таблицу GoldSrc `F(void*)`, поэтому оригинальные хуки `cldll_func_t` не используются.
+
+### Отрисовка
+
+Вызовы идут через `gEngfuncs`; `cl_util.h` оборачивает их в макросы с теми же именами, что в оригинальном SDK.
+
+* `HSPRITE SPR_Load( char *picname )`: загрузить спрайт, возвращает дескриптор.
+* `int SPR_Frames( HSPRITE )`, `SPR_Height( HSPRITE, int frame )`, `SPR_Width( HSPRITE, int frame )`: размеры спрайта (0 для неверного дескриптора или кадра).
+* `SPR_Set( HSPRITE, int r, int g, int b )`: выбрать спрайт и его цвет; обязательно перед рисованием.
+* `SPR_Draw( frame, x, y )`, `SPR_DrawHoles( frame, x, y )` (индекс цвета 255 прозрачен), `SPR_DrawAdditive( frame, x, y )`.
+* `SPR_EnableScissor( x, y, width, height )` / `SPR_DisableScissor()`: прямоугольник отсечения.
+* `ScreenWidth` / `ScreenHeight`: макросы размера экрана в пикселях (`gHUD.m_scrinfo`). Используйте их, не лезьте в `gHUD`.
+* `XRES( x )` / `YRES( y )`: перевод координат, заданных в пространстве 640x480.
+
+### Звук и связь с сервером
+
+* `PlaySound( char *name, int volume )` проигрывает звук по имени; `PlaySound( int index, int volume )` проигрывает предзагруженный.
+* `SendClientCmd( char *cmd )` отправляет серверу команду, как будто её набрали в консоли.
+* `GetPlayerName( int entity_number )` возвращает имя клиента или NULL.
+
+## Пользовательские сообщения и консольные команды
+
+Сервер отправляет пользовательские сообщения, клиент привязывает их к членам `CHud`. Привязку делают четыре макроса из `cl_util.h`:
+
+```cpp
+// в CHud::Init(): подцепить сообщение "Health" в движок
+HOOK_MESSAGE( Health );
+
+// один раз на сообщение: свободная функция, которая передаёт сообщение элементу HUD m_Icons
+DECLARE_MESSAGE( m_Icons, Health );
+
+// то же для консольных команд
+HOOK_COMMAND( "+showscores", ShowScores );
+DECLARE_COMMAND( m_Scoreboard, ShowScores );
+```
+
+`DECLARE_MESSAGE( y, x )` ожидает член `y` класса `CHud` с методом `MsgFunc_x`, а `DECLARE_COMMAND( y, x )` метод
+`UserCmd_x`. Методы объявляются в заголовках макросами из `hud.h`, которые держат сигнатуры в одном месте:
+
+```cpp
+class CHudDodIcons : public CHudBase
+{
+public:
+	CHudMsgFunc( Health );		// int MsgFunc_Health( const char *pszName, int iSize, void *pbuf )
+	CHudMsgFuncV( InitHUD );	// void MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
+	CHudUserCmd( Slot1 );		// void UserCmd_Slot1()
+};
+```
+
+Читайте сообщение через `BEGIN_READ( pbuf, iSize )` и `READ_BYTE()`, `READ_SHORT()`, `READ_LONG()`, `READ_COORD()`,
+`READ_STRING()`. Возвращайте 1, если сообщение обработано.
+
+### Сообщения, которые перехватывает клиент
+
+`AllowSpec`, `AmmoPickup`, `AmmoShort`, `AmmoX`, `BloodPuff`, `CameraView`, `CancelProg`, `CapMsg`, `ClCorpse`, `ClanTimer`,
+`ClientAreas`, `CurMarker`, `CurWeapon`, `Damage`, `DeathMsg`, `Frags`, `GameRules`, `GameTitle`, `HLTV`, `HandSignal`, `Health`,
+`HideWeapon`, `HudText`, `InitHUD`, `InitObj`, `ItemPickup`, `Logo`, `MOTD`, `MapMarker`, `ObjScore`, `Object`, `PClass`, `PShoot`,
+`PStatus`, `PTeam`, `PlayersIn`, `ProgUpdate`, `RandomPC`, `ReloadDone`, `ReqState`, `ResetHUD`, `ResetSens`, `RoundState`,
+`SayText`, `Scope`, `ScoreInfo`, `ScoreInfoLong`, `ScoreShort`, `ServerName`, `SetFOV`, `SetObj`, `ShowMenu`, `Spectator`,
+`StartProg`, `StartProgF`, `StatusIcon`, `StatusValue`, `TeamNames`, `TeamScore`, `TextMsg`, `TimeLeft`, `TimerStatus`, `Train`,
+`UseSound`, `VGUIMenu`, `VoiceMask`, `WaveStatus`, `WaveTime`, `WeapPickup`, `WeaponList`, `WideScreen`, `YouDied`.
+
+Несколько из них (`ScoreInfo`, `ScoreInfoLong`, `ScoreShort`, `Frags`, `ObjScore`, `PStatus`, `PTeam`, `PClass`, `TeamScore`,
+`WaveTime`, `WaveStatus`, `CurMarker`, `MapMarker`, `WideScreen`, `ForceCam`, `VGUIMenu`) идут через `DoDViewport` в
+`cl_dll/vgui/`, см. [VGUI1 вместо VGUI2](#vgui1-вместо-vgui2).
+
+## Консольные переменные
+
+Все значения это умолчания при регистрации. `A` = сохраняется в `config.cfg` (`FCVAR_ARCHIVE`), `U` = отправляется серверу как
+userinfo (`FCVAR_USERINFO`).
+
+### Интерфейс (HUD)
+
+| Cvar | Умолчание | Флаги | Действие |
+|------|-----------|-------|----------|
+| `cl_hud_health` | 1 | A | Показывать значки здоровья и выносливости. |
+| `cl_hud_ammo` | 1 | A | Показывать счётчики патронов. |
+| `cl_hud_objectives` | 1 | A | Показывать значки объектов (точки захвата). |
+| `cl_hud_objtimer` | 1 | A | Показывать таймер объекта. |
+| `cl_hud_reinforcements` | 1 | A | Показывать счётчик подкреплений, когда жизни бесконечны. |
+| `cl_hud_msgs` | 2 | A | Серверные сообщения в стиле чата: 0 никаких, 1 только «зашёл/вышел из игры», 2 все. |
+| `cl_identiconmode` | 2 | A | Значок команды над игроками: 0 выключен, 1 над игроком, на которого вы смотрите, 2 над всей командой. |
+| `hud_centerid` | 1 | A | Центрировать имя цели в строке состояния. |
+| `hud_deathnotice_time` | 6 | A | Сколько секунд сообщение об убийстве остаётся на экране. |
+| `hud_saytext_time` | 5 | | Сколько секунд строка чата остаётся на экране. |
+| `hud_saytext_internal` | 1 | | Внутреннее состояние команды `hud_saytext`: чат включён/выключен. |
+| `hud_textmode` | 0 | A | 2 рисует строки HUD шрифтом консоли. |
+| `hud_fastswitch` | 0 | A | Выбирать оружие одним нажатием клавиши. |
+| `hud_draw` | 1 | A | Рисовать HUD. |
+| `hud_allow_hd` | 0 | A | Использовать HD-спрайты HUD (наборы 1280 и 2560) на экране шириной от 1280 пикселей; 0 оставляет спрайты 640. |
+| `hud_safearea` | -1 | A | Отступ HUD от каждого края экрана в долях высоты экрана: -1 автоматически (0.03 на сенсорном экране, ничего на мониторе), см. [Отличия от hlsdk-portable](#отличия-от-hlsdk-portable). |
+| `hud_capturemouse` | 1 | A | HUD может захватывать мышь. |
+| `hud_takesshots` | 0 | A | Делать скриншот в конце каждого раунда. |
+| `cl_autoreload` | 1 | A, U | Перезаряжать автоматически, когда обойма пуста. |
+| `cl_hudfont` | 1 | A | Зарегистрирована, как в оригинале; клиент её не читает. |
+| `cl_scoreboard_bg` | 1 | A | Фон простой текстовой таблицы счёта. |
+| `cl_showpacketloss` | 0 | A | Показывать столбец потери пакетов в таблице счёта. |
+| `dodcredits` | 0 | A | Зарегистрирована, как в оригинале; команда `credits` показывает титры на экране. |
+
+### Карта и наблюдатель
+
+| Cvar | Умолчание | Флаги | Действие |
+|------|-----------|-------|----------|
+| `_cl_minimap` | 2 | A, U | Состояние карты: 0 скрыта, 1 большая карта посередине экрана, 2 малая карта в углу. Меняется командой `+map`. Карта рисуется только аппаратным рендерером и при FOV 90. |
+| `_cl_minimapzoom` | 1 | A | Шаг масштаба малой карты (в 1, 3, 8 раз). Меняется командой `+mapzoom`. |
+| `cl_dmsmallmap` | 1 | A | Разрешить малую карту; 0 заставляет `+map` переключать только большую. |
+| `cl_dmshowmarkers` | 1 | A | Рисовать метки на карте (ставятся игроками). |
+| `cl_dmshowplayers` | 1 | A | Рисовать игроков на карте. |
+| `cl_dmshowflags` | 1 | A | Рисовать флаги на карте. |
+| `cl_dmshowobjects` | 1 | A | Рисовать объекты на карте. |
+| `cl_dmshowgrenades` | 1 | A | Рисовать гранаты, динамит и подобное на карте. |
+| `spec_pip` | 1 | | «Картинка в картинке» наблюдателя. `+use` сбрасывает её в 0, как в оригинале. |
+| `spec_scoreboard` | 0 | | Показывать таблицу счёта наблюдателю. |
+| `spec_drawnames_internal`, `spec_drawcone_internal`, `spec_drawstatus_internal`, `spec_autodirector_internal` | 1 | | Состояние команд `spec_drawnames`, `spec_drawcone`, `spec_drawstatus`, `spec_autodirector`. |
+
+### Эффекты и рендер
+
+| Cvar | Умолчание | Флаги | Действие |
+|------|-----------|-------|----------|
+| `cl_particlefx` | 2 | A | 0 без частиц, 1 частицы, 2 ещё и дождь, снег и генераторы частиц карты. Нужен аппаратный рендерер. |
+| `cl_weatherdis` | 1700 | A | Расстояние в юнитах (высота не считается), до которого вокруг вас создаются частицы вспышек выстрелов, дыма оружия, генераторов частиц карты и подобного (не меньше 100). Дождь и снег создаются вокруг игрока и её не используют. |
+| `max_rubble` | 240 | | Максимальное число кусков обломков, живущих одновременно. |
+| `cl_numshotrubble` | 5 | A | Максимальное число кусков обломков, которые выбивает попадание пули (случайное число от 0 до этого). |
+| `cl_corpsestay` | 10 | A | Сколько секунд труп остаётся после смерти. |
+| `cl_dynamiclights` | 1 | A | Динамический свет вспышек выстрелов и взрывов. |
+| `cl_bulletejects` | 1 | A | Выбрасывать гильзы из оружия. |
+| `cl_drawmodels`, `cl_drawplayermodels` | 1 | A | Рисовать модели / модели игроков. |
+| `cl_fog` | 1 | A | 0 выключен, 1 серый туман от `cl_fog_start` до `cl_fog_end`, 2 туман цвета `cl_fog_red/green/blue`. |
+| `cl_fog_start`, `cl_fog_end` | 10, 3500 | A | Расстояния тумана. |
+| `cl_fog_red`, `cl_fog_green`, `cl_fog_blue` | 192 | A | Цвет тумана для `cl_fog 2`. |
+| `cl_fog_density` | 0.0 | A | Зарегистрирована, как в оригинале; клиент её не использует, плотность задаёт только движок. |
+| `cl_cutscenes` | 1 | A | Зарегистрирована, как в оригинале; клиент её не читает. |
+
+Туман рисуется через `TriAPI->Fog`, а не прямыми вызовами OpenGL, как в оригинале, поэтому работает с любым рендерером Xash3D.
+Под водой он выключен. Серое небо и более светлые текстуры это и есть туман: линейный туман от `cl_fog_start` до `cl_fog_end`
+(по умолчанию 10 и 3500) смешивает дальние поверхности и небо с серым. В оригинале `cl_fog 1` это туман OpenGL (серый 0.5,
+линейный), и только он даёт видимый туман; здесь `cl_fog 1` это тот же серый туман через `TriAPI->Fog`, а `cl_fog 2` делает
+туман цвета `cl_fog_red/green/blue`, что работает в Xash3D. Оригинал выключает туман, пока показана карта, см. `FOG_MINIMAP_FIX`
+в разделе [Исправления багов оригинальной игры](#исправления-багов-оригинальной-игры).
+
+### Перекрестие, вид и ввод
+
+| Cvar | Умолчание | Флаги | Действие |
+|------|-----------|-------|----------|
+| `cl_dynamic_xhair` | 1 | A | Перекрестие растёт при движении и отдаче. 0 оставляет его неизменным. |
+| `cl_xhair_style` | 0 | A | 0 рисует `sprites/crosshairs.spr`, другие значения выбирают перекрестие из `sprites/customXHair.spr`. |
+| `cl_vsmoothing` | 0.05 | A | Секунды сглаживания вида на поездах и подъёмниках. |
+| `cl_viewbob` | 1 | A | Зарегистрирована, как в оригинале; клиент её не читает. |
+| `cl_bob`, `cl_bobcycle`, `cl_bobup` | 0.005, 0.8, 0.5 | A (`cl_bob`) | Покачивание оружия и вида. `cl_bob` сохраняется в `config.cfg`: значение, оставленное другим клиентом (Half-Life использует 0.01), удваивает качание оружия, в оригинале оно 0.005. |
+| `cl_chasedist`, `cl_waterdist` | 112, 4 | | Расстояние камеры погони, смещение вида под линией воды. |
+| `zoom_sensitivity_ratio` | 1.2 | A | Множитель чувствительности мыши при приближении. |
+| `cl_pitchup`, `cl_pitchdown` | 89 | | Пределы наклона вида. |
+| `cl_forwardspeed`, `cl_backspeed`, `cl_sidespeed` | 400 | A (первые две) | Скорости клавиш. Реальная скорость берётся из выносливости (`DoDGetSpeed`). |
+| `cl_laddermode` | 2 | A | Поведение лестниц Xash3D. |
+| `sensitivity`, `m_pitch`, `m_yaw`, `m_forward`, `m_side` | 3, 0.022, 0.022, 1, 0.8 | A | Мышь. |
+
+### Меню VGUI
+
+| Cvar | Умолчание | Флаги | Действие |
+|------|-----------|-------|----------|
+| `cl_motd_vgui` | 1 | A | 1 показывает MOTD окном VGUI, 0 простым текстом в HUD. |
+| `cl_scoreboard_vgui` | 1 | A | 1 показывает таблицу счёта VGUI, 0 текстовую таблицу HUD. |
+| `_ah` | 1 | A, U | Зарегистрирована, как в оригинале (userinfo); клиент её не читает. |
+
+Cvar движка `vgui_utf8` и `con_fontscale` / `hud_fontscale` влияют на меню; см. раздел про VGUI.
+
+## Консольные команды клиента
+
+| Команда | Что делает |
+|---------|------------|
+| `+map` / `-map` | Переключает состояние карты по кругу (`_cl_minimap`). |
+| `+mapzoom` / `-mapzoom` | Меняет масштаб малой карты. |
+| `+special` / `-special` | Зарегистрирована, как в оригинале; клиент только хранит состояние клавиши. |
+| `+score` `+showscores` / `-score` | Показывает таблицу счёта. |
+| `+commandmenu` / `-commandmenu` | Открывает командное меню (`commandmenu.txt`). |
+| `prone` | Лечь (отправляет серверу `sprone`). |
+| `centerview` | Сбросить наклон вида. |
+| `credits` | Показать титры на экране. |
+| `slot1` ... `slot10`, `slot0` (то же, что `slot10`), `invnext`, `invprev`, `cancelselect` | Выбор оружия. |
+| `togglescores` | Показывает таблицу счёта, если она скрыта, и скрывает, если показана (VGUI-таблицу или текстовую таблицу HUD при `cl_scoreboard_vgui 0`). |
+| `hud_saytext` | Включает или выключает чат. |
+| `spec_mode`, `spec_decal`, `spec_menu`, `spec_help`, `spec_autodirector`, `spec_drawnames`, `spec_drawcone`, `spec_drawstatus` | Наблюдатель. |
+| `thirdperson`, `firstperson`, `+camin`, `+camout`, `+camdistance`, ... | Камера от третьего лица. |
+| `voice_showbanned` | Состояние голоса игроков. |
+
+## Механики, которые есть только в Day of Defeat
+
+### Разбор entity lump (`dod_camera.cpp`)
+
+Игра отправляет не всё, что нужно карте, поэтому клиент **сам читает entity lump файла BSP**. `DoD_LoadClientEnts( map )`
+вызывается в конце `CHud::MsgFunc_InitHUD`. Она загружает lump, разбирает его в пары ключ/значение (`DoD_ProcessEnts`) и
+обрабатывает пять классов сущностей:
+
+| Сущность | Что делает клиент |
+|----------|-------------------|
+| `dod_camera`, `path_corner` | Сохраняются в список; по ним движется кинематографическая камера (`DoD_FindTarget`, `DoD_ReadCameraSettings`). |
+| `particle_shooter` | Регистрируется в `CParticleShooter` (до `MAX_SHOOTERS`); флаги описаны в `game_shared/fx_flags.h`. |
+| `info_doddetect` | `detect_wind_velocity_x/y` задают общий ветер частиц, `detect_weather_type` выбирает дождь (1) или снег (2), `detect_allies_country` говорит, британцы ли союзники. |
+| `env_model` | Статические пропсы без targetname рисует только клиент, см. [Статические пропсы](#статические-пропсы-cclientenvmodel). |
+
+### Кинематографическая камера
+
+Сообщение `CameraView` и событие `EV_DoDCamera` переключают вид на `dod_camera` (применяется FOV камеры, 90, если его нет) и
+проигрывают затемнения экрана (`DoD_ScreenFades`). Сообщение `WideScreen` включает и выключает широкоэкранное состояние
+(оригинал не рисует полос).
+
+### Карта (`dod_map.cpp`, `view.cpp`, `tri.cpp`)
+
+Карта это **не спрайт**. Движок рендерит мир второй раз сверху: `V_CalcNormalRefdef` запрашивает второй вид (`nextView`),
+ставит `g_iOnlyClientDraw` и viewport из `GetMapBounds()`; затем `HUD_DrawTransparentTriangles` рисует значки объектов и сущности
+(`CHudDoDMap::DrawOverview`) вместо тумана и частиц. Движок должен учитывать `nextView`, иначе карта не появится. Данные
+обзора (масштаб, начало координат, слои высот) берутся из `overviews/<карта>.txt`, того же файла, что использует карта
+наблюдателя.
+
+### Объекты (`dod_objectives.cpp`)
+
+`CObjectiveIcons` рисует точки захвата над миром и в HUD: владельца, прогресс захвата (`StartProg`, `ProgUpdate`, `CancelProg`),
+число игроков внутри (`PlayersIn`), таймеры (`TimerStatus`, `WaveTime`). Значки размещаются проекцией начала координат точки
+на экран (`CalcIconLocations`, `ScreenToWorld`).
+
+### Статические пропсы (`CClientEnvModel`)
+
+Карты расставляют пропсы (деревья, сено, машины, зенитки) сущностями `env_model`. В Day of Defeat **статические никогда не
+отправляются сервером**: `env_model` без `targetname`, не «изначально выключенный», существует только в entity lump файла BSP,
+и клиент рисует его сам (в `dod_merderet` их 46). `env_model` с `targetname` это обычная серверная сущность, её клиент не трогает.
+У моделей нет коллизии, мапперы ставят вокруг них clip-браши.
+
+1. **Разбор.** `Parse_env_model` (вызывается из `DoD_ProcessEnts`, см. выше) читает `model`, `body`, `origin`, `angles`,
+   `spawnflags`, `m_iAction_On` (больше 0 делает модель анимированной) и `m_iszSequence_On` (имя анимации).
+2. **Хранение.** `CClientEnvModel::AddEnvModel` хранит до `MAX_ENV_MODELS` (192) моделей: загружает модель, находит анимацию по
+   имени (`GetSequence`, анимация 0, если имя неизвестно). `SF_ENVMODEL_DROPTOFLOOR` (2) трассирует вниз от начала координат до
+   -8000 хуллом 2 и ставит модель на пол, `SF_ENVMODEL_ANIMATION` (0x10) зацикливает анимацию. Список очищается при загрузке карты.
+3. **Рисование.** Рендереру нужно рисовать сущности, а не список, поэтому `CClientEnvModel::Think` держит одну **временную
+   сущность-прокси** (`models/p_stick.mdl`, флаги `FTENT_PERSIST | FTENT_CLIENTCUSTOM | FTENT_SCALE`, `entityType = 4`). Её
+   callback `EV_EnvModelCallback` каждый кадр перемещает её к локальному игроку (или к камере наблюдателя), так что она никогда
+   не отсекается. Когда `CStudioModelRenderer::StudioDrawModel` получает сущность с `entityType & 4`, он рисует **вместо неё все
+   модели списка**: бокс анимации (`bbmin`/`bbmax`, сдвинутые в начало координат) проверяется через `BoxInPVS`, видимая модель
+   рисуется `StudioDrawCurrentEntity`, а в конце сущность восстанавливается.
+4. **Xash3D.** Движок освобождает каждую временную сущность, когда проходит её время `die` (через 0.75 секунды после
+   выделения), даже с `FTENT_PERSIST`, и отдаёт слот следующему эффекту. Поэтому callback каждый кадр ставит `die` на секунду
+   вперёд, а `Think` создаёт новый прокси, когда старый пропал или слот теперь принадлежит другому эффекту (это видно по указателю
+   callback). Без этого пропсы исчезают примерно через секунду.
+
+Чтобы добавить пропс, который рисует клиент: поставьте `env_model` без `targetname`, задайте `model` и, для анимированного,
+анимацию и `m_iAction_On`.
+
+### Окружение
+
+* **Туман**: `dod_fog.cpp`, см. cvar выше.
+* **Дождь и снег**: `HUD_DrawTransparentTriangles` вызывает `UpdateRain` (каждые 0.3 секунды, 350 попыток в пределах
+  650 юнитов) или `UpdateSnow` (каждые 0.7 секунды, 150 попыток в пределах 400 юнитов) из `tri.cpp`, когда `cl_particlefx` равна 2,
+  а рендерер аппаратный (`g_iWeatherType` приходит из `info_doddetect`). Попытка берёт случайную точку на 100–300 юнитов над
+  игроком, трассирует вверх до высоты 8000 и создаёт частицу только там, где поверхность, останавливающая трассу, это небо (её
+  текстура начинается с `sky`). `CWeatherManager` из `weather.cpp` хранит спрайты (дождь, снежинка, брызги, круги на воде) и
+  создаёт частицы (`CreateRainParticle`, `CreateSnowParticle`); капля, упавшая на пол, делает брызги. Текстура ищется вдоль
+  всей линии трассы, а не от её конечной точки: конечная точка трассы игрока лежит на 1/32 юнита перед поверхностью, и найдёт
+  ли поиск Xash3D поверхность из неё, зависит от округления float.
+* **Частицы**: `particleman/` это оригинальный менеджер частиц. Он собирается **внутрь** клиента (отдельной библиотеки нет) и
+  загружается через `CL_LoadParticleMan`. Классы частиц DoD находятся в `tri.cpp` / `tri.h` (`CDoDParticle`, `CDoDRocketTrail`,
+  `CDoDDirtExploDust`, `CDoDSnowFlake`, ...).
+* **Трупы**: `EV_RoundReset`, `CreateCorpse`, `HitBody`, `RemoveBody` в `ev_dod.cpp` хранят мёртвые тела
+  (`g_DeadPlayerModels[MAX_PLAYERS]`) как временные сущности с флагами `FTENT_CORPSE` и `FTENT_BODYSTATIC`.
+
+### События
+
+Клиент регистрирует 49 событий в `Game_HookEvents` (`cl_dll/dod/dod_events.cpp`) в порядке оригинала:
+`events/weapons/*.sc` для каждого оружия (colt, luger, garand, thompson, mp44, ..., mortar, melee) и
+`events/misc/*.sc` / `events/effects/*.sc` для поезда, боли, свиста пуль, голосов (`usvoice`, `gervoice`), перезапуска/сброса
+раунда, камеры, дыма, крови, струи крови, трассеров, пузырей, взрыва, дождя искр, bodydamage, каски, перегрева, следа ракеты и
+мины миномёта. Обработчики находятся в `ev_dod.cpp`. Эффекты попаданий в поверхности (земля, песок, трава, дерево, стекло,
+листва, снег, плитка, металл, вода) выбирают материал из `pm_shared/pm_materials.h`.
+
+### Стойка и состояние развёртывания
+
+Сервер отправляет состояние игрока в `entvars_t::iuser3` (`g_iUser3` на клиенте) и в первой компоненте `vuser1`
+(`g_iVuser1x`). У значений есть имена в `cl_dll/dod_shared.h`:
+
+| Имя | Значение | Смысл |
+|-----|----------|-------|
+| `STANCE_PRONE` | 1 | Лёжа. |
+| `STANCE_PRONE_DEPLOYED` | 2 | Лёжа с развёрнутыми сошками. |
+| `STANCE_MORTAR` | 3 | Миномёт развёрнут. |
+| `SANDBAG_DEPLOYED` | 2 | Оружие развёрнуто на мешке с песком (`vuser1.x`). |
+
+### Рендер моделей
+
+DoD не использует стандартный рендерер HL. `CStudioModelRenderer` держит **кэш костей** (хеш-таблицу по имени кости), чтобы
+оружие и модели `MOVETYPE_FOLLOW` можно было прикреплять к кости другой модели. `CGameStudioModelRenderer` анимирует игроков:
+походку (`gaitsequence`), поворот торса и ног, смешивание наклона по девяти направлениям и позы для сошек и мешка с песком
+(анимации `bipod_*`, `sandbag_*`). P-модель оружия в руках подменяется по событиям 7000 / 7002 (`leftreload`). Модель от
+первого лица не рисуется, пока игрок приближает (FOV 89 и меньше), вместо неё `CHudScope` рисует спрайт прицела.
+`StudioDrawModel` также рисует статические пропсы `env_model` карты, см. [Статические пропсы](#статические-пропсы-cclientenvmodel).
+
+### Прочие системы
+
+* **Оптический прицел** (`scope.cpp`): снайперский прицел рисуется через Tri API четырьмя четырёхугольниками.
+* **Миномёт** (`mortarhud.cpp`): HUD миномёта с кэшем баллистической траектории. Этот класс в игру не вошёл; код сохранён,
+  как в оригинале.
+* **Перекрестие** (`dod_crosshair.cpp`): перекрестие оружия с точностью из `P_WpnInfo` (`dlls/dod_shared.cpp`).
+* **Значки** (`dod_icons.cpp`): здоровье, выносливость, значки объектов и зон; `ShowHideWeapons`.
+* **`CHudDoDCommon`** (`dod_common.cpp`): `GameRules`, `CameraView`, `prone` и опускание оружия, когда вы падаете или уходите с экрана.
+* **Локализация** (`vgui/dod_localize.cpp`): читает `resource/dod_english.txt` и `valve_english.txt` и заменяет `#Токены`.
+* **Серверные таблицы** (`dlls/dod_shared.cpp`): названия оружия, информация о классах, файлы голосов, значки меток карты.
+
+## Предсказание оружия
+
+Серверный код оружия (`dlls/wpn_shared/*.cpp`) компилируется в клиент и выполняется для локального игрока. Связующий код
+находится в `cl_dll/dod/`:
+
+* `dod_baseentity.cpp`: пустые тела серверных методов, с которыми линкуются классы оружия.
+* `dod_weapons.cpp`: цикл предсказания (`HUD_InitClientWeapons`, `HUD_WeaponsPostThink`): статический пул объектов оружия и
+  один локальный `CBasePlayer`.
+* `dod_events.cpp`: `Game_HookEvents` и объявления обработчиков `EV_*`.
+* `dod_objects.cpp`: клиентские лучи и объекты (`Game_AddObjects`).
+
+Файлы в серверном стиле подключают `extdll.h`, который приносит `dlls/vector.h`, и **не должны** подключать `hud.h` (он
+приносит `cl_dll/util_vector.h`, второй класс `Vector`). К HUD они обращаются через функции, объявленные в `com_weapons.h` и
+определённые в `com_weapons.cpp`: `HUD_GetRoundState`, `HUD_SetRecoil`, `HUD_SetScope`, `HUD_SendWeaponAnim`, `HUD_PlaySound`
+и так далее. Добавьте туда функцию, если предсказанию нужен ещё один кусок HUD.
+
+Класс оружия возвращает свою группу из `Classify()`: `CLASS_MELEE`, `CLASS_GRENADE`, `CLASS_GRENADE_EX`, `CLASS_PISTOL`,
+`CLASS_RIFLE`, `CLASS_SCOPED_RIFLE`, `CLASS_SMG`, `CLASS_MACHINEGUN` (оружие с сошками), `CLASS_ROCKET` (`dod_shared.h`).
+
+## VGUI1 вместо VGUI2
+
+Day of Defeat 1.3 рисует меню на **VGUI2**: `vgui2::Panel`, раскладки в файлах KeyValues `.res`, `ILocalize`, `ISurface`,
+HTML-элемент и `IViewPort` из `game_controls`. В Xash3D FWGS нет VGUI2, а исходников оригинальных панелей нет. Поэтому всё в
+`cl_dll/vgui/` это **не реверс 1:1** оригинального кода. Это замена VGUI2, построенная на **freevgui**, VGUI1-совместимой
+библиотеке, которая идёт с hlsdk-portable (`vgui.dll` / `libvgui.so`).
+
+Что даёт оригинал и что этот код сохраняет: раскладки (игра поставляет файлы `.res`, и клиент их читает), логику переходов (какое
+сообщение открывает какую панель, какую команду отправляет кнопка), логику, увиденную в IDA (сортировка таблицы счёта,
+доступность классов, три состояния GUI наблюдателя), цвета и шрифты `ClientScheme.res` и внешний вид, снятый по скриншотам
+оригинала. Чего он не сохраняет: никакого кода VGUI2. Для каждой службы VGUI2, на которую опираются панели, здесь есть небольшая
+замена.
+
+### Что чем заменено
+
+| В оригинале (VGUI2) | Здесь | Файлы |
+|---------------------|-------|-------|
+| `IViewPort` / `IDoDViewPort` из game_controls: корень всех панелей и получатель пользовательских сообщений | `DoDViewport`, наследник `TeamFortressViewport` из VGUI1, плюс интерфейсы `IDoDViewPort` и `IDoDViewPortMsgs`. HUD вызывает его через `gDoDViewPortInterface`; порядок методов в `idodviewport.h` совпадает с порядком vtable оригинала. | `dodviewport.*`, `idodviewport.h`, `idodviewportmsgs.h`, `dodviewport_interface.cpp` |
+| `LoadControlSettings( "Resource/UI/X.res" )` | `CDoDKeyValues` разбирает файл, `CDoDResPage` создаёт элементы | `dodkeyvalues.*`, `dodrespage.*` |
+| `ImagePanel`, `ProgressBar`, `RichText`, `Label`, `MouseOverPanelButton` | `CDoDImagePanel`, `CDoDProgressBar`, текстовый элемент с полосой прокрутки, `vgui::Label`, `CDoDButton` | `dodrespage.*`, `dodbutton.*` |
+| `ScrollBar` и панель прокрутки | `CDoDScrollPanel` с кнопками-стрелками оригинала (без ползунка), колесо мыши | `dodscrollpanel.*` |
+| HTML-элемент (браузер за MOTD) | `dodhtml`, небольшой движок HTML и CSS | `dodhtml.*` |
+| `SectionedListPanel` таблицы счёта | `ScorePanel` сама рисует заголовок, строки команд и строки игроков | `dodclientscoreboard.*` |
+| `ClientScheme.res` (шрифты, цвета) | Константы и таблица шрифтов | `dodmenu.*` |
+| `vgui2::localize()` (`ILocalize`) | `DoD_FindLocalized`, `DoD_ConstructLocalized` | `dod_localize.*` |
+| Рисование текста `vgui2::surface()` в HUD | `CHudVGUI2Print`, рисует шрифтом консоли движка | `../hud_vgui2print.cpp` |
+
+### Панели
+
+| Панель | Раскладка игры | Примечания |
+|--------|----------------|------------|
+| Меню команд `CDoDTeamMenu` | `Teammenu.res` | Пять кнопок с командами `jointeam`, списки игроков при наведении мыши, описание карты с полосой прокрутки. |
+| Меню классов `CDoDClassMenu` | `Classmenu_Allies`, `_Allies_Brit`, `_Allies_Para`, `_Axis`, `_Axis_Para` и `Classes/*.res` | Кнопки следуют маске классов от сервера, заполненный класс затемнён. Страница класса (картинка, пять полос, описание) открывается при наведении мыши. |
+| MOTD `CDoDMOTD` | `MOTD.res` | Страница сервера проходит через `dodhtml`. |
+| Таблица счёта `ScorePanel` | `ScoreBoard.res` | Окно 444x360, команды и наблюдатели по секциям, цвета команд. |
+| GUI наблюдателя `CDoDSpectatorGUI` | `Spectator.res`, `BottomSpectator.res` | Три состояния (скрыт, имя игрока, нижняя панель со списками). Списки: параметры, камера, игроки. |
+| Текстовое окно `CDoDTextWindow` | `TextWindow.res` | Справка наблюдателя и описание карты. |
+| Панель подсказок `CHintPanel` | `HintPanel.res` | Сообщения `HudText` с флагом подсказки. |
+| Панель миномёта `CMortarPanel` | `MortarPanel.res` | Класса нет в игре, восстановлена из бинарника для полноты. |
+| Широкий экран | | Отложено: оригинал для него ничего не рисует. |
+
+Меню открывается так же, как в оригинале. Сервер отправляет `VGUIMenu` с идентификатором (2 команда, 4 брифинг, 5 вступление,
+10..14 меню классов, 15 миномёт), `DoDViewport::ShowVGUIMenu` создаёт панель по её раскладке, а кнопки отправляют команды,
+записанные в раскладке (`jointeam`, `cls_*`, `vguicancel`).
+
+### Загрузчик раскладок
+
+Файлы `.res` **читаются из каталога игры во время работы**, те же файлы, что читает VGUI2 (`dod/resource/UI/*.res`,
+`dod/resource/classes/*.res`). Измените позицию, цвет или команду в файле, и панель последует за ним; код только создаёт
+элементы. `CDoDResPage` знает `Label`, `ImagePanel`, `ProgressBar`, `RichText`, `Button`, `DoDButton` и
+`MouseOverPanelButton`; остальные элементы (`Frame`, `Panel`, `Menu`) лишь хранят свой прямоугольник.
+
+Раскладки заданы в 640x480. Они масштабируются по **высоте** экрана по обеим осям (`YRES`), как это делает оригинал, а панель
+центрируется, так что экран 16:9 получает боковые поля и не растягивается.
+
+### Шрифты, цвета и кодировка текста
+
+* Шрифты те же, что в `ClientScheme.res` (`ClassMenuDefault`, `ClassMenuTitleFont`, `ClassMenuBoldFont`,
+  `ClassMenuBodyFont`, `Default`, `DefaultVerySmall`), создаются через freevgui с размером, масштабированным по высоте экрана.
+  VGUI2 рисует текст примерно на 12% меньше, чем VGUI1 при той же высоте, поэтому размер умножается на `DODMENU_FONT_SCALE`
+  (0.88; 0.84 для `Default`), измеренный по скриншотам 1920x1200.
+* Системные шрифты у freevgui есть только в Windows (GDI). `platform/posix/font.cpp` их не делает, и каждый шрифт, созданный
+  по имени, превращается в его отладочный шрифт: квадраты с шестнадцатеричными кодами символов вместо букв (это было видно на
+  Android). `vgui/dod_fontplat.cpp` это бэкенд для остальных платформ на `stb_truetype` (заголовок из `3rdparty/mainui_cpp/font`) и
+  TrueType-файлах из extras движка: `gfx/fonts/tahoma.ttf` для каждой гарнитуры и `FiraSans-Regular.ttf` для «Trebuchet MS»,
+  который использует и главное меню. Размеры следуют `CreateFont`: положительная высота это ячейка, отрицательная это em
+  (`dodhtml.cpp` просит em); вес от 600 это размытие на один пиксель, а курсив это наклон, так как в файлах таких начертаний
+  нет; подчёркивание, зачёркивание и поворот не поддерживаются. Файл компилируется отдельно как объектная библиотека
+  `dodfont` (заголовки freevgui и оригинальные заголовки VGUI не могут встретиться в одном файле), а его объекты идут в клиент,
+  который линкер берёт раньше `libvgui.a`, так что заглушка freevgui никогда не подтягивается; загрузчик файлов движка клиент
+  передаёт ему в `VGui_Startup`. Шрифт этого бэкенда никогда не равен null и загружает свой файл при первом использовании (до
+  этого у него метрики его размера, и он ничего не рисует), а freevgui никогда его не переиспользует (`equals` всегда false).
+  Нужно и то и другое: при статической freevgui движок запускает её и freevgui создаёт шрифты по умолчанию своей схемы (Arial 20
+  и 12, FixedSys 18, Marlett 16) до того, как клиент запустится и сможет передать загрузчик; шрифт, не созданный там,
+  становится отладочным шрифтом freevgui (квадраты с шестнадцатеричными кодами), а его сравнивают только по высоте, поэтому
+  каждый последующий шрифт с такой высотой берёт именно его (при `hud_scale` 2 шрифт заголовков меню имеет высоту 20). Шрифт,
+  занявший старый, к тому же не получает номера (-1) и делит кэш глифов поверхности со всеми другими такими шрифтами, поэтому
+  после `retry` при уже виденном размере весь текст рисовался глифами того шрифта, который был нарисован первым. Это работает со
+  статической freevgui из CMake (Android и платформы ARM); freevgui как разделяемая библиотека сохраняет свою заглушку, а waf её
+  не собирает (символ `DOD_FONTPLAT` задаёт только CMake).
+* Цвета это константы `DODCOLOR_*` в `dodmenu.h`. Учтите, что альфа в VGUI1 это прозрачность: 0 означает непрозрачный.
+* VGUI1 рисует строку байт за байтом в однобайтовой кодировке. Локализация в UTF-8, поэтому для меню текст преобразуется в
+  Latin-1 (`DoD_CodePointToLatin1`), если cvar движка `vgui_utf8` не равна 1, а тогда он остаётся UTF-8.
+
+### Локализация
+
+`dod_localize.cpp` это замена `ILocalize`. Он читает файлы KeyValues в UTF-16LE `resource/valve_english.txt` (базовая игра), а
+затем `resource/dod_english.txt` (токен из позднего файла заменяет такой же токен раннего), использует `titles.txt` как запасной
+вариант и заменяет `%s1` .. `%s4` в формате аргументами сообщения. Им пользуются и панели, и HUD: `DoD_FindLocalized( "#Токен" )`,
+`DoD_ConstructLocalized( ... )`.
+
+### Текст HUD: `CHudVGUI2Print`
+
+`CHudVGUI2Print` **не является оригинальной реализацией**. В оригинале он рисует локализованный текст шрифтами VGUI2 через
+`vgui2::surface()` и `vgui2::localize()`. Код HUD игры вызывает его (центральные сообщения, чат, текстовые меню, таймеры), поэтому
+класс сохраняет **интерфейс оригинала**, и вызывающий код остаётся таким, каким его восстановили, но тело новое: текст рисуется
+**шрифтом консоли движка** (`pfnDrawConsoleString`).
+
+| Функция | Что делает здесь |
+|---------|------------------|
+| `DrawVGUI2String( token, x, y, r, g, b )` | Ищет токен (`DoD_FindLocalized`, сам токен, если он неизвестен), рисует строку, возвращает x, где она закончилась. `x == -1` центрирует по горизонтали, `y == -1` по вертикали. |
+| `DrawVGUI2StringReverse( token, x, y, ... )` | То же, но строка заканчивается в `x` (выравнивание по правому краю). Возвращает x, где она начинается. |
+| `DrawLocalizedString`, `DrawLocalizedStringReverse` | Рисуют уже локализованную строку (оригинал принимает строку `wchar_t`). |
+| `VGUI2HudPrint( token, x, y, r, g, b )` | Показывает токен 4 секунды из `Draw`. Неизвестные токены не показываются. |
+| `VGUI2HudPrintArgs( token, s1, s2, s3, s4, x, y, r, g, b )` | То же, с подставленными `%s1` .. `%s4`. Неизвестные токены показываются как есть. |
+| `GetHudFontHeight`, `GetStringSize` | Метрики шрифта консоли. |
+
+У текста есть чёрная тень в один пиксель. Его используют `TextMsg` (`print_center`), строки чата (`CHudSayText`), текстовые меню
+(`CHudMenu`), обратный отсчёт клановой игры (`#Clan_time_remaining`, `#Clan_match_live`), текущая метка карты, надпись разминки
+клана и подсказка «MG reload». Поскольку это шрифт консоли, размер и вид следуют настройкам шрифта движка (например
+`con_fontscale`), а не шрифтам `ClientScheme.res`, и ширины отличаются от оригинала. `hud_textmode 2` заставляет более старую
+`DrawHudString` использовать тот же шрифт.
+
+Чтобы вывести из HUD новое локализованное сообщение, добавьте токен в `dod_english.txt` и вызовите `VGUI2HudPrint` с ним.
+
+### Запасные варианты для сборки или пользователя без панелей VGUI
+
+`cl_motd_vgui 0` показывает MOTD простым текстом в HUD (`MOTD.cpp`), а `cl_scoreboard_vgui 0` использует текстовую таблицу счёта
+HUD (`scoreboard.cpp`). Оба это классы hlsdk-portable, оставленные для этого.
+
+### Что не восстановлено
+
+* Правый щелчок по строке таблицы счёта (наблюдать за этим игроком) и значок голоса рядом с именем.
+* Картинка баннера HLTV (она пуста, пока сервер HLTV не отправит `DRC_CMD_BANNER`) и окно `inset`.
+* Точная подсветка записи под мышью в списках наблюдателя (цвет взят из схемы, скриншота оригинала нет).
+* HTML в MOTD: картинки, ссылки и скрипты. В VGUI1 нет браузера, `dodhtml` раскладывает текст, заголовки, списки, таблицы и `<style>`.
+
+### Заметки для авторов модов
+
+* Чтобы изменить вид меню, сначала правьте его `.res`.
+* Новая панель: класс в `cl_dll/vgui/`, который строит `CDoDResPage` по своей раскладке, ветка в `DoDViewport::ShowVGUIMenu` и, если
+  её открывает сервер, новый идентификатор в перечислении `VGUIMenu` из `dodviewport.h`.
+* `vgui/vgui_*.cpp` это часть freevgui, которая должна оставаться внутри клиента (менеджер схем, пользовательские объекты,
+  `vgui_int.cpp`, создающий viewport).
+* Не используйте STL (`std::string`, `std::vector`, `std::map`) в клиенте: пользуйтесь `CUtlString`, `CUtlVector` и `CUtlHashMap`
+  из MiniUTL. Не `CUtlMap` и не `CUtlOrderedMap`: у функтора сравнения `CUtlMap` есть только `operator!`, поэтому `Assert( m_LessFunc )`
+  из MiniUTL не компилируется с `assert` из NDK и glibc при включённых assert (MSVC его принимает), что ломает Debug-сборки для
+  Android и Linux; MiniUTL это чужой подмодуль, и его не патчат. `utlhashmap.h` не подключает `miniutl.h`, подключайте
+  `utlstring.h` раньше него. У них нет подстроки или поиска с позиции, для этого в `dodhtml.cpp` есть небольшие помощники.
+  `CUtlString::Append` выделяет память при каждом вызове, текст, который строится посимвольно, сначала собирайте в
+  `CUtlVector<char>`.
+
+## Extras и главное меню
+
+Главное меню Xash3D это отдельная библиотека `menu.dll`, которую движок загружает из `<gamedir>/cl_dlls/` раньше собственной.
+`BUILD_MAINUI` (CMake, включён по умолчанию) собирает `3rdparty/mainui_cpp` и устанавливает его рядом с клиентом. Шрифты меню
+вне Windows рисуются через stb_truetype, FreeType не нужен. Отличие от меню движка: для игры с `type "multiplayer_only"` в
+`liblist.gam` (Day of Defeat) в главном меню нет New Game, Load Game и Hazard Course, а кнопки ниже закрывают разрыв, тогда как
+Half-Life показывает их серыми.
+
+Extras (`3rdparty/dod13client-extras`) это файлы, которые движок ищет в каталоге игры:
+
+| Путь | Что это |
+|------|---------|
+| `gfx/shell/*.bmp` | Картинки главного меню в стиле оригинальной игры: `btns_main.bmp` (атлас кнопок, 3 состояния по 156x26 на каждую кнопку), `btn_*.bmp` (кнопки, которые добавил Xash3D: сенсорное управление, геймпад, гироскоп, избранное), `head_*.bmp` (баннеры меню), мелкие элементы управления, `conback.bmp` (фон консоли: картинка меню Day of Defeat Beta, затемнённая и сжатая до той части изображения, которая видна на экране 16:9), `strings.lst` (тексты меню; он задаёт ссылку кнопки How to Play на страницу Day of Defeat в Steam). Индекс палитры 0 у `btns_main.bmp` должен быть чёрным: меню заполняет им свободное место атласа. |
+| `touch.cfg`, `touch_presets/touch_whamer.cfg`, `touch/gfx/*.png` | Сенсорное управление. `touch_presets/touch_whamer.cfg` это раскладка с командами Day of Defeat (`prone`, `+speed` для спринта, `+use`, `slot1..slot5`, `dropammo`, `dropobject`, `+map`, `+commandmenu`, ...); настройки сенсорного управления в меню перечисляют `touch_presets` и копируют применённый пресет в `touch_profiles`. `touch.cfg` это то, что движок читает по умолчанию: в нём раскладка движка по умолчанию в формате, который движок пишет сам, и в конце строка, выполняющая пресет, а затем возвращающая `touch_config_file` в `touch.cfg`. Пресет ставит его на свой профиль, которого нет, пока игрок ничего не изменил, поэтому без последней строки следующий запуск не нашёл бы профиль и взял бы раскладку движка. Изменения игрока сохраняются в `touch.cfg` каталога игры, который главнее упакованного. Текстуры кнопок лежат в `touch/gfx`. |
+| `userconfig.d/userconfig.cfg` | Настройки, от которых зависит клиент. Движок выполняет `userconfig.d/*.cfg` после `config.cfg` при каждом запуске. |
+
+CMake упаковывает весь каталог в `extras.pk3` (пользовательская цель `generate_extras`, zip-архив, сделанный через
+`cmake -E tar`) и устанавливает его в `<GAMEDIR>/`, waf делает то же, поэтому архивы CI содержат `dod/extras.pk3`. На Android
+каталог добавляется в assets APK в `android/app/build.gradle`. Если каталога нет, сборка идёт дальше без extras.
+
+## Отличия от hlsdk-portable
+
+* Оружие HL, монстры и меню VGUI1 TF удалены; серверного кода нет.
+* `CHudHealth` удалён; здоровье рисует `CHudDodIcons`, а сообщение `Damage` идёт в `CHud::MsgFunc_Damage`, как в оригинале.
+* `CHudBattery`, `CHudFlashlight`, `CHudGeiger`, `CHudAmmoSecondary` и `HistoryResource` удалены.
+* `pm_shared` это код Day of Defeat: положение лёжа, сошки, миномёт, прыжок на выносливости, материалы и звуки шагов DoD. Он собирается как C++ (в hlsdk-portable это C): `vec3_t` это класс `Vector`, параметры, которые изменяет функция, это `Vector &`, а `pm_math.cpp` это единственная реализация векторной математики (`Length`, `VectorMA`, `VectorNormalize`, `AngleVectors` и другие), копии из `util.cpp` удалены.
+* STL в клиенте нет, вместо него MiniUTL, а CMake собирает проект как C++11 (MiniUTL нужен `static_assert`).
+* Вид как в DoD: только боковое покачивание, второй вид для карты, камера смерти, наклон миномёта.
+* В вводе есть проверки кнопок DoD (`DoDHandleButtons`) и скорость от выносливости (`DoDGetSpeed`).
+* `input_xash3d.cpp` ограничивает вид развёрнутого оружия по рысканию до +-45 градусов и по тангажу до +-20 градусов.
+* Безопасная область экрана (`hud_safearea.cpp`): вырез, скруглённые углы и рамки телефона съедают части HUD, находящиеся в углах. Движок сообщает безопасную часть окна как `WindowInsets` (части окна слева, сверху, справа и снизу, `gMobileEngfuncs->pfnGetNativeObject`; это только вырез, не углы), а клиент добавляет отступ для углов: cvar `hud_safearea` это отступ от каждого края в долях высоты экрана, `-1` (умолчание) это автоматически, 0.03 на сенсорном экране (`touch_enable`) и ничего на мониторе; для каждого края берётся большее из выреза и отступа. Функции рисования `gEngfuncs` (`FillRGBA`, `FillRGBABlend`, `SPR_Draw*`, `SPR_EnableScissor`, `DrawCharacter`, `DrawConsoleString`) заменены такими, которые прибавляют к позиции смещение текущего якоря, так что код элементов не меняется: `CHud::Redraw` ставит якорь элемента (`CHudBase::m_iSafeAnchor`, края `SAFE_LEFT`, `SAFE_RIGHT`, `SAFE_TOP`, `SAFE_BOTTOM`; элементы, сидящие у края, задаются в `CHud::Init`), а часть элемента, сидящая у другого края, ставит свой якорь через `CSafeAnchor` (метки у правого края в середине экрана, ствол пулемёта, список оружия, таймер подкреплений). Вне HUD якорь равен `SAFE_NONE`, и без выреза и без отступа все смещения равны 0. Элементу, сидящему у края и добавленному позже, нужен свой якорь. `_window_insets "left top right bottom"` движка (в пикселях) задаёт вырез для проверки на мониторе.
+* Миникарта это второй вид рендерера, и её прямоугольник задан в пикселях экрана, а не HUD: при `hud_scale` у HUD виртуальный экран, `ScreenWidth` меньше окна. `V_GetMapViewport` в `view.cpp` масштабирует прямоугольник из `CHud::GetMapViewBounds` (миникарта, сдвинутая от угла безопасной областью; наложения используют `GetMapBounds` и сдвигаются своими якорями) в отношении ширины вида к `ScreenWidth`. `hud_scale` это cvar движка с защёлкой (`FCVAR_LATCH`), новое значение применяется при повторной загрузке карты (`retry`). Границы карты не хранятся с `VidInit`: `GetMapBounds` строит их заново всякий раз, когда размер экрана HUD не тот, для которого они были построены; построенные один раз границы оставались в пикселях старого размера, и при масштабе выше они уносили миникарту за экран.
+* Стик сенсорного экрана и геймпада (`IN_ClientMoveEvent`) двигает со скоростью игры, `DoDGetSpeed()`, пропорционально отклонению, как клавиши `CL_CreateMove` (220 шагом, 330 с `+speed`, `spd - 45` вбок с `+speed`, меньше при выносливости, лёжа и с развёрнутым оружием), и ограничен ею. Раньше он использовал `cl_forwardspeed` из Half-Life (400), что больше, чем разрешает идти сервер, поэтому игрок всегда бежал, а `V_DriftPitch` (начинает центрировать вид, когда `forwardmove` достигает `cl_forwardspeed`) притягивал вид к горизонту, пока стик был отклонён до упора.
