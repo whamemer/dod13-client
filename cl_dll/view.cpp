@@ -438,6 +438,24 @@ typedef struct
 	int CurrentAngle;
 } viewinterp_t;
 
+// The rectangle of the second view, the map, in the pixels of the screen. The HUD has pixels of its own: hud_scale makes the screen of
+// the HUD smaller, so the rectangle is scaled by the ratio of the width of the view (it is the whole screen) to the width of the HUD.
+// The minimap is also moved from the corner by the safe area of the screen.
+static void V_GetMapViewport( ref_params_s *pparams, int &x, int &y, int &w, int &h )
+{
+	gHUD.GetMapViewBounds( x, y, w, h );
+
+	if( ScreenWidth > 0 && pparams->viewport[2] > 0 )
+	{
+		float flScale = (float)pparams->viewport[2] / (float)ScreenWidth;
+
+		x = (int)( x * flScale + 0.5f );
+		y = (int)( y * flScale + 0.5f );
+		w = (int)( w * flScale + 0.5f );
+		h = (int)( h * flScale + 0.5f );
+	}
+}
+
 /*
 ==================
 V_CalcRefdef
@@ -481,7 +499,7 @@ void V_CalcNormalRefdef( struct ref_params_s *pparams )
 
 			VectorCopy( pparams->simorg, v_sim_org );
 
-			gHUD.GetMapBounds( x, y, w, h );
+			V_GetMapViewport( pparams, x, y, w, h );
 
 			pparams->nextView = 0;
 			pparams->onlyClientDraw = 1;
@@ -1594,7 +1612,7 @@ void V_CalcSpectatorRefdef( struct ref_params_s * pparams )
 		// second renderer cycle, the map
 		int x, y, w, h;
 
-		gHUD.GetMapBounds( x, y, w, h );
+		V_GetMapViewport( pparams, x, y, w, h );
 
 		pparams->viewport[0] = x;
 		pparams->viewport[1] = y;
