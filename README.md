@@ -39,8 +39,7 @@ artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of 
   New Game, Load Game and Hazard Course, a multiplayer-only game has none).
 * `extras.pk3` has the pictures that the main menu needs (`gfx/shell`: the buttons and banners of the WON menu of the original
   game, with the ones that Xash3D added drawn in the same style), the touch controls (`touch.cfg`, the preset `touch_whamer` and
-  `touch/gfx`) and `userconfig.d/userconfig.cfg`. The pictures of the WON menu are assets of Day of Defeat and belong to Valve, see
-  [License](#license).
+  `touch/gfx`) and `userconfig.d/userconfig.cfg`. The pictures of the WON menu are assets of Day of Defeat and belong to Valve.
 * `userconfig.cfg` holds the settings that the client depends on (`cl_lw 1`, `cl_lc 1`, `cl_nopred 0`, `sv_rollangle 2`,
   `sv_rollspeed 200`). The engine runs it after `config.cfg` on every start, so a saved value cannot break them. The files of
   `userconfig.d` run in the alphabetical order: to change a value, put the command into your own file in the `dod/userconfig.d`
@@ -122,8 +121,5 @@ game).
 The code is based on the Half-Life SDK and is distributed under its license, see [LICENSE](LICENSE): it allows free,
 non-commercial modifications of Valve games. Third-party parts keep their own licenses.
 
-Day of Defeat and Half-Life are products of Valve Corporation. This project is not affiliated with or endorsed by Valve. The game
-files are not distributed, you need the original game to play. The only assets of the game that `extras.pk3` contains are the
-pictures of the WON menu (the buttons and banners of the main menu in `gfx/shell`) and the background of the console, which is
-made from the menu background of the Day of Defeat beta; they belong to Valve. Everything else in `extras.pk3` (the pictures of
-the buttons that Xash3D added, the touch icons and the configs) is not from the game.
+Day of Defeat and Half-Life are products of Valve Corporation. This project is not affiliated with or endorsed by Valve. It
+contains no assets of the game, you need the original game to play.
