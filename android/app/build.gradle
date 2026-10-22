@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId 'io.github.whamemer.dod13client'
-        versionName '1.0.0'
+        versionName '1.0.1'
         versionCode getBuildNum()
         minSdkVersion 3
         targetSdk 34
