@@ -152,9 +152,62 @@ jobs:
         name: dod13-client-${{ steps.extract_branch.outputs.branch }}-android
         path: android/app/build/outputs/apk/debug/*.apk
 
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    # Nobody has run this build on a Mac: the first runs of the CI are its test. A failure of it does not fail the whole run and does
+    # not stop the release, the release takes the archives that were built.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-latest is a machine with Apple Silicon: arm64 is the native build, x86_64 is made for the engine that runs on Intel
+          - name: macos_arm64
+            flags: ''
+          - name: macos_x64
+            flags: -DCMAKE_OSX_ARCHITECTURES=x86_64
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Build
+      run: |
+        cmake -DCMAKE_BUILD_TYPE=Release -B build -S . -DCMAKE_INSTALL_PREFIX="$PWD/dist" ${{ matrix.flags }}
+        cmake --build build --target all --parallel 4
+        cmake --build build --target install
+
+    - name: Extract branch name
+      shell: bash
+      run: echo "branch=$(echo ${GITHUB_REF_NAME} | tr '/' '_')" >> $GITHUB_OUTPUT
+      id: extract_branch
+    - name: Extract gamedir
+      shell: bash
+      run: echo "gamedir=$(grep build/CMakeCache.txt -Ee 'GAMEDIR:STRING=[a-z]+' | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+      id: extract_gamedir
+    # strip changes the libraries after the linker has signed them, and Apple Silicon does not load a library with a broken signature
+    - name: Sign the libraries and list the result
+      shell: bash
+      run: |
+        cd "dist/${{ steps.extract_gamedir.outputs.gamedir }}"
+        codesign --force --sign - cl_dlls/*.dylib
+        find . -type f | sort
+        file cl_dlls/*.dylib
+        test -f extras.pk3
+        ls cl_dlls/client_*.dylib cl_dlls/menu_*.dylib
+    - name: Upload macos artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dod13-client-${{ steps.extract_branch.outputs.branch }}-${{ matrix.name }}
+        path: dist/${{ steps.extract_gamedir.outputs.gamedir }}
+        if-no-files-found: error
+
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, android]
+    # the Android and the macOS builds may fail without stopping the release, it takes what was built
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') && needs.build.result == 'success' }}
+    needs: [build, android, macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -192,6 +245,8 @@ jobs:
 
         * `windows` is the 32-bit build, the one that is developed and tested.
         * `windows_x64` and `linux` are built by the CI and not tested yet.
+        * `macos_arm64` and `macos_x64` (Apple Silicon and Intel) are built by the CI and not tested yet; a macOS archive is here only
+          if its build passed.
         * `android` is a debug APK (arm64-v8a and armeabi-v7a) with the client, the menu and the extras inside. It starts the game
           in the installed Xash3D FWGS app and is checked on a phone.
         NOTES
