@@ -31,12 +31,23 @@ artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of 
 1. Get the [latest developer build of Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs/releases/tag/continuous) and unpack it.
 2. You have to own [Day of Defeat on Steam](https://store.steampowered.com/app/30/Day_of_Defeat/). Copy the `valve` and `dod`
    folders from your Steam installation into the Xash3D FWGS directory. The game files are not distributed with this project.
-3. Unpack the build into the same directory, so that `client.dll` lands in `dod/cl_dlls/`.
+3. Unpack the build into the same directory, so that `client.dll` and `menu.dll` land in `dod/cl_dlls/` and `extras.pk3` in `dod/`.
 4. Run `xash3d.exe -game dod`.
+
+### What is in the archive
+* `client.dll` is the client, `menu.dll` is the main menu (the menu library of Xash3D FWGS with the DoD changes: it does not show
+  New Game, Load Game and Hazard Course, a multiplayer-only game has none).
+* `extras.pk3` has the pictures that the main menu needs (`gfx/shell`: the buttons and banners in the style of the original menu,
+  with the ones that Xash3D added), the touch controls (`touch.cfg` and `touch/gfx`) and `userconfig.d/userconfig.cfg`.
+* `userconfig.cfg` holds the settings that the client depends on (`cl_lw 1`, `cl_lc 1`, `cl_nopred 0`, `sv_rollangle 2`,
+  `sv_rollspeed 200`). The engine runs it after `config.cfg` on every start, so a saved value cannot break them. The files of
+  `userconfig.d` run in the alphabetical order: to change a value, put the command into your own file in the `dod/userconfig.d`
+  folder with a later name, for example `zz_my.cfg`.
 
 ### Notes
 * **The view does not tilt when strafing.** The tilt comes from the server cvar `sv_rollangle`. The default of GoldSrc is `2`, the
-  default of Xash3D is `0`: put `sv_rollangle 2` and `sv_rollspeed 200` into the config of the server.
+  default of Xash3D is `0`. `userconfig.cfg` sets `sv_rollangle 2` and `sv_rollspeed 200` for a server that you start from the
+  game, a dedicated server needs them in its own config.
 * **The weapon sways too much.** `cl_bob` is saved to `config.cfg`, and a value left by another client (Half-Life uses `0.01`)
   stays. The value of Day of Defeat is `0.005`.
 * The menus look slightly different from the original, see the description of VGUI1 in [cl_dll/readme.md](cl_dll/readme.md).
@@ -68,6 +79,10 @@ client is installed. Every fix of a bug of the original game has its own macro (
 `MINIMAP_SPECTATOR_FIX`), all are `ON`. Set one to `OFF` to get the behavior of the original. They are described in
 [cl_dll/readme.md](cl_dll/readme.md#fixes-of-the-bugs-of-the-original-game).
 
+CMake also builds the main menu (`menu.dll`, option `BUILD_MAINUI`, `-DBUILD_MAINUI=OFF` turns it off) and packs
+`3rdparty/dod13client-extras` into `extras.pk3`; both end up in the game directory with the client. waf builds the client and
+`extras.pk3` only.
+
 ### waf
 ```
 ./waf configure
@@ -93,7 +108,8 @@ Windows x64 (`-A x64 -D64BIT=ON`) and Linux (`cmake -S . -B build`) use the same
 cd android
 ./gradlew assembleRelease
 ```
-The Android project is included but not tested.
+The Android project is included but not tested. The extras are the assets of the APK (the engine mounts them as the files of the
+game).
 
 ## Credits
 * [FWGS](https://github.com/FWGS) for the engine, [Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs), and for the SDK this code

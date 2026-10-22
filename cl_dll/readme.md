@@ -16,6 +16,7 @@ The client targets **Xash3D FWGS**. GoldSrc support is kept behind `GOLDSOURCE_S
 * [Mechanics that exist only in Day of Defeat](#mechanics-that-exist-only-in-day-of-defeat)
 * [Weapon prediction](#weapon-prediction)
 * [VGUI1 instead of VGUI2](#vgui1-instead-of-vgui2)
+* [Extras and the main menu](#extras-and-the-main-menu)
 * [Differences from hlsdk-portable](#differences-from-hlsdk-portable)
 
 ## Layout
@@ -35,7 +36,9 @@ The client targets **Xash3D FWGS**. GoldSrc support is kept behind `GOLDSOURCE_S
 | `particleman/` | The particle manager of the original game, compiled into the client. |
 | `game_shared/` | Voice and a few helpers shared with the server. |
 | `3rdparty/MiniUTL` | Submodule, strings, vectors and maps that the code uses instead of the STL (`CUtlString`, `CUtlVector`, `CUtlMap`); its sources are built into the client. |
-| `3rdparty/mainui_cpp` | Submodule, the main menu of the engine (it is not part of the client library). |
+| `3rdparty/mainui_cpp` | Submodule, the main menu (`menu.dll`) of Xash3D FWGS; a multiplayer-only game does not get the buttons of a singleplayer game. Built by CMake next to the client. |
+| `3rdparty/dod13client-extras` | The extras of the game that are packed into `extras.pk3`: the pictures of the menu, the touch controls, `userconfig.d`. |
+| `scripts/extras/` | The tools that made the pictures and `touch.cfg` of the extras, see `scripts/extras/README.txt`. |
 
 ## Build options
 
@@ -518,6 +521,26 @@ HUD (`scoreboard.cpp`). Both are the hlsdk-portable classes, kept for this.
 * A new panel: a class in `cl_dll/vgui/` that builds a `CDoDResPage` from its layout, a case in `DoDViewport::ShowVGUIMenu`, and, if the server opens it, a new id in the `VGUIMenu` enum of `dodviewport.h`.
 * `vgui/vgui_*.cpp` is the part of freevgui that has to stay inside the client (scheme manager, custom objects, `vgui_int.cpp` that creates the viewport).
 * Do not use the STL (`std::string`, `std::vector`, `std::map`) in the client: use `CUtlString`, `CUtlVector` and `CUtlMap` of MiniUTL. They have no substring or search with a position, `dodhtml.cpp` has small helpers for that. `CUtlString::Append` allocates on every call, a text that is built character by character goes to a `CUtlVector<char>` first.
+
+## Extras and the main menu
+
+The main menu of Xash3D is a separate library, `menu.dll`, that the engine loads from `<gamedir>/cl_dlls/` before its own one.
+`BUILD_MAINUI` (CMake, on by default) builds `3rdparty/mainui_cpp` and installs it next to the client. The fonts of the menu are
+drawn with stb_truetype outside of Windows, no FreeType is needed. The change against the menu of the engine: for a game with
+`type "multiplayer_only"` in `liblist.gam` (Day of Defeat) the main menu does not have New Game, Load Game and Hazard Course, and
+the buttons below close the gap, like Half-Life shows them grayed.
+
+The extras (`3rdparty/dod13client-extras`) are the files that the engine looks for in the game directory:
+
+| Path | What it is |
+|------|------------|
+| `gfx/shell/*.bmp` | The pictures of the main menu in the style of the original game: `btns_main.bmp` (the atlas of the buttons, 3 states of 156x26 for every button), `btn_*.bmp` (the buttons that Xash3D added: touch, gamepad, gyro, favorites), `head_*.bmp` (the banners of the menus), the small controls. Palette index 0 of `btns_main.bmp` has to be black: the menu fills the free space of the atlas with it. |
+| `touch.cfg`, `touch/gfx/*.png` | The touch controls: the layout with the commands of Day of Defeat (`prone`, `+use`, `slot1..slot5`, `+map`, `+commandmenu`, ...) and the textures of the buttons. The engine saves the changes of the player to `touch.cfg` of the game directory. |
+| `userconfig.d/userconfig.cfg` | The settings that the client depends on. The engine runs `userconfig.d/*.cfg` after `config.cfg` on every start. |
+
+CMake packs the whole directory into `extras.pk3` (the custom target `generate_extras`, a zip archive made with `cmake -E tar`) and
+installs it to `<GAMEDIR>/`, waf does the same, so the archives of the CI hold `dod/extras.pk3`. On Android the directory is added to
+the assets of the APK in `android/app/build.gradle`. If the directory is missing, the build goes on without the extras.
 
 ## Differences from hlsdk-portable
 
