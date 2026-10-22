@@ -34,30 +34,29 @@ const int DEFAULT_TALL = 12;
 struct FontFile_t
 {
 	const char *pszPath;
-	bool bTried;
 	stbtt_fontinfo info;
 };
 
 // the first one is for everything, the second is for the face that the main menu draws with it
 FontFile_t s_FontFiles[] =
 {
-	{ "gfx/fonts/tahoma.ttf", false },
-	{ "gfx/fonts/FiraSans-Regular.ttf", false }
+	{ "gfx/fonts/tahoma.ttf" },
+	{ "gfx/fonts/FiraSans-Regular.ttf" }
 };
 
 DoDLoadFontFileFn s_pfnLoad = NULL;
 DoDFreeFontFileFn s_pfnFree = NULL;
 
-// the file stays in memory as long as the game runs, every font of it uses the same data
+// the file stays in memory as long as the game runs, every font of it uses the same data. A file that is not there is asked for
+// again with the next font: a font that was made without it stays the debugging font of freevgui for good, so it is better to find
+// the file late than never
 FontFile_t *LoadFontFile( FontFile_t &file )
 {
 	if( file.info.data )
 		return &file;
 
-	if( file.bTried || !s_pfnLoad )
+	if( !s_pfnLoad )
 		return NULL;
-
-	file.bTried = true;
 
 	int iLength = 0;
 	unsigned char *pData = s_pfnLoad( file.pszPath, &iLength );
