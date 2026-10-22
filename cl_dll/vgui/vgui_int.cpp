@@ -23,6 +23,10 @@
 #include "vgui/vgui_TeamFortressViewport.h"
 #include "vgui/dodviewport.h"
 
+#ifdef DOD_FONTPLAT
+#include "vgui/dod_fontplat.h"
+#endif
+
 using namespace vgui;
 
 void VGui_ViewportPaintBackground( int extents[4] )
@@ -35,8 +39,25 @@ void* VGui_GetPanel()
 	return (Panel*)gEngfuncs.VGui_GetPanel();
 }
 
+#ifdef DOD_FONTPLAT
+static unsigned char *VGui_LoadFontFile( const char *pszPath, int *pLength )
+{
+	return gEngfuncs.COM_LoadFile( (char *)pszPath, 5, pLength );
+}
+
+static void VGui_FreeFontFile( void *pData )
+{
+	gEngfuncs.COM_FreeFile( pData );
+}
+#endif
+
 void VGui_Startup()
 {
+#ifdef DOD_FONTPLAT
+	// the fonts of the panels are TrueType files of the virtual file system, freevgui has no system fonts here
+	DoD_SetFontFileFuncs( VGui_LoadFontFile, VGui_FreeFontFile );
+#endif
+
 	Panel *root = (Panel*)VGui_GetPanel();
 	root->setBgColor( 128, 128, 0, 0 );
 	// root->setNonPainted( false );

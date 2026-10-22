@@ -752,9 +752,10 @@ vgui::Font *GetFont( const CUtlString &family, int iTall, int iWeight, bool bIta
 
 	// font-size of CSS is the size of the em; a positive height of GDI is the height of the cell (the em with the
 	// internal leading, 1.2 em for Verdana), the negative one is the em: the text of the page has the size that it asks for
-#ifdef _WIN32
+#if defined( _WIN32 ) || defined( DOD_FONTPLAT )
 	font.pFont = new vgui::Font( family.Get(), NULL, 0, -iTall, 0, 0, iWeight, bItalic, false, false, false );
 #else
+	// the debugging font of freevgui takes the height as it is
 	font.pFont = new vgui::Font( family.Get(), NULL, 0, iTall, 0, 0, iWeight, bItalic, false, false, false );
 #endif
 

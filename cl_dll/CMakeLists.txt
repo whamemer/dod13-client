@@ -225,6 +225,21 @@ endif()
 
 target_link_libraries(${CLDLL_LIBRARY} vgui)
 
+# freevgui draws system fonts only on Windows: platform/posix/font.cpp makes none and every font becomes the debugging font with boxes
+# and hex codes. vgui/dod_fontplat.cpp is a backend on stb_truetype and the TrueType files of the extras of the engine. Its objects
+# go to the client, which is linked before libvgui.a, so the linker never takes the stub of freevgui. It is compiled apart from the
+# client: the headers of freevgui and the original ones of VGUI cannot be included together. A freevgui that is a shared library
+# keeps its own stub.
+if (USE_STATIC_FREEVGUI AND NOT WIN32)
+	add_library(dodfont OBJECT vgui/dod_fontplat.cpp)
+	target_compile_definitions(dodfont PRIVATE DOD_FONTPLAT)
+	set_target_properties(dodfont PROPERTIES
+		POSITION_INDEPENDENT_CODE 1
+		INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../freevgui;${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/mainui_cpp/font")
+	target_sources(${CLDLL_LIBRARY} PRIVATE $<TARGET_OBJECTS:dodfont>)
+	target_compile_definitions(${CLDLL_LIBRARY} PRIVATE DOD_FONTPLAT)
+endif()
+
 if(WIN32)
 	target_link_libraries( ${CLDLL_LIBRARY} user32.lib )
 	if (GOLDSOURCE_SUPPORT)
