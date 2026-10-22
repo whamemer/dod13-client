@@ -19,6 +19,7 @@
 //
 
 #include "hud.h"
+#include "hud_safearea.h"
 #include "cl_util.h"
 #include "parsemsg.h"
 #include "demo_api.h"
@@ -1244,6 +1245,9 @@ int CHudAmmo::Draw( float flTime )
 		newArea.top = newArea.bottom - barrelHeight;
 		barrel_area.bottom -= barrelHeight;
 
+		// the overheat of the barrel is at the right edge, in the middle of the screen
+		CSafeAnchor barrelAnchor( SAFE_RIGHT );
+
 		SPR_Set( MGBarrelHUD, 255, 255, 255 );
 		SPR_DrawHoles( 0, ScreenWidth + MGBarrelHUDArea->left - MGBarrelHUDArea->right, barrely, &barrel_area );
 
@@ -1264,6 +1268,9 @@ int CHudAmmo::DrawWeaponList( float flTime )
 {
 	if( !gpActiveSel )
 		return 0;
+
+	// the list is at the right edge, in the middle of the screen
+	CSafeAnchor anchor( SAFE_RIGHT );
 
 	int y = ScreenHeight / 2 - 150;
 

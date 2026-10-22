@@ -121,6 +121,7 @@ set (CLDLL_SOURCES
 	hud_redraw.cpp
 	hud_spectator.cpp
 	hud_update.cpp
+	hud_safearea.cpp
 	hud_vgui2print.cpp
 	in_camera.cpp
 	input.cpp

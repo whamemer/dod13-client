@@ -21,6 +21,7 @@
 #include <math.h>
 
 #include "hud.h"
+#include "hud_safearea.h"
 #include "cl_util.h"
 #include "parsemsg.h"
 #include "triangleapi.h"
@@ -545,7 +546,12 @@ int CObjectiveIcons::Draw( float flTime )
 	x = 10;
 
 	if( m_bWarmupMode )
+	{
+		// at the left edge, in the middle of the screen
+		CSafeAnchor anchor( SAFE_LEFT );
+
 		gHUD.m_VGUI2Print.DrawVGUI2String( "clan_warmup_mode", XRES( 10 ), ScreenHeight / 2 - YRES( 32 ), 1.0f, 1.0f, 1.0f );
+	}
 
 	// the round timer
 	if( ShowHudElement( 4 ) && m_nTimerStatus >= 0 )
@@ -596,6 +602,9 @@ int CObjectiveIcons::Draw( float flTime )
 
 		iconW = m_iconarea.right - m_iconarea.left + 2;
 		mapState = gHUD.GetMinimapState();
+
+		// the row is at the top left corner, over the big map the icons sit on its control points in the middle of the screen
+		CSafeAnchor iconsAnchor( mapState == 1 ? SAFE_NONE : SAFE_LEFT | SAFE_TOP );
 
 		for( int i = 0; i < 12; i++ )
 		{
@@ -709,6 +718,9 @@ int CObjectiveIcons::Draw( float flTime )
 		float wavetime;
 		int y;
 		int minutes, seconds;
+
+		// at the bottom left corner
+		CSafeAnchor anchor( SAFE_LEFT | SAFE_BOTTOM );
 
 		wavetime = GetWaveTime() + 1.0f - gHUD.m_flTime;
 

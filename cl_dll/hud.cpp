@@ -19,6 +19,7 @@
 //
 
 #include "hud.h"
+#include "hud_safearea.h"
 #include "cl_util.h"
 #include <string.h>
 #include <stdio.h>
@@ -532,6 +533,18 @@ void CHud::Init( void )
 
 	m_MOTD.Init();
 	m_Scoreboard.Init();
+
+	// the safe area of the screen: the elements at an edge are moved from it
+	HUD_SafeAreaInit();
+
+	m_Icons.m_iSafeAnchor = SAFE_LEFT | SAFE_BOTTOM;
+	m_ObjectiveIcons.m_iSafeAnchor = SAFE_LEFT | SAFE_TOP;
+	m_Ammo.m_iSafeAnchor = SAFE_RIGHT | SAFE_BOTTOM;
+	m_SayText.m_iSafeAnchor = SAFE_LEFT | SAFE_BOTTOM;
+	m_StatusBar.m_iSafeAnchor = SAFE_BOTTOM;
+	m_DeathNotice.m_iSafeAnchor = SAFE_RIGHT | SAFE_TOP;
+	m_StatusIcons.m_iSafeAnchor = SAFE_LEFT;
+	m_Train.m_iSafeAnchor = SAFE_BOTTOM;
 
 	MsgFunc_ResetHUD( 0, 0, NULL );
 
@@ -1297,6 +1310,22 @@ void CHud::GetMapBounds( int &x, int &y, int &w, int &h )
 		w = 0;
 		h = 0;
 	}
+}
+
+// The rectangle of the map in the pixels of the HUD, the minimap moved from the corner by the safe area. The overlays of the map
+// (icons, the kills under it) use GetMapBounds and are moved with it by their anchor.
+void CHud::GetMapViewBounds( int &x, int &y, int &w, int &h )
+{
+	int dx = 0, dy = 0;
+
+	GetMapBounds( x, y, w, h );
+
+	// the big map is in the middle of the screen
+	if( GetMinimapState() == 2 )
+		HUD_SafeAreaOffset( SAFE_RIGHT | SAFE_TOP, dx, dy );
+
+	x += dx;
+	y += dy;
 }
 
 void CHud::VGUI2HudPrint( char *charMsg, int x, int y, float r, float g, float b )

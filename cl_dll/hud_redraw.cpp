@@ -18,6 +18,7 @@
 
 #include "hud.h"
 #include "cl_util.h"
+#include "hud_safearea.h"
 #include "event_api.h"
 #include "pm_shared.h"
 //#include "triangleapi.h"
@@ -48,6 +49,8 @@ void CHud::Think( void )
 {
 	m_scrinfo.iSize = sizeof(m_scrinfo);
 	GetScreenInfo(&m_scrinfo);
+
+	HUD_SafeAreaThink();
 
 	if( flBoltHideXHair > 0.0f )
 		flBoltHideXHair -= m_flTimeDelta;
@@ -194,13 +197,21 @@ int CHud::Redraw( float flTime, int intermission )
 			if( !intermission )
 			{
 				if ( ( pList->p->m_iFlags & HUD_ACTIVE ) && !( m_iHideHUDDisplay & HIDEHUD_ALL ) )
+				{
+					CSafeAnchor anchor( pList->p->m_iSafeAnchor );
+
 					pList->p->Draw( flTime );
+				}
 			}
 			else
 			{
 				// it's an intermission,  so only draw hud elements that are set to draw during intermissions
 				if( pList->p->m_iFlags & HUD_INTERMISSION )
+				{
+					CSafeAnchor anchor( pList->p->m_iSafeAnchor );
+
 					pList->p->Draw( flTime );
+				}
 			}
 
 			pList = pList->pNext;

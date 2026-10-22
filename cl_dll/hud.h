@@ -85,6 +85,7 @@ public:
 	POSITION  m_pos;
 	int   m_type;
 	int	  m_iFlags; // active, moving, 
+	int	  m_iSafeAnchor; // the edges of the screen that the element is attached to (SAFE_*, hud_safearea.h)
 	virtual		~CHudBase() {}
 	virtual int Init( void ) { return 0; }
 	virtual int VidInit( void ) { return 0; }
@@ -1214,6 +1215,7 @@ public:
 
 	void InitMapBounds( void );
 	void GetMapBounds( int &x, int &y, int &w, int &h );
+	void GetMapViewBounds( int &x, int &y, int &w, int &h );
 
 	bool IsInMGDeploy( void );
 	bool IsProneDeployed( void );

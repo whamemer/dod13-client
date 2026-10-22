@@ -19,6 +19,7 @@
 //
 
 #include "hud.h"
+#include "hud_safearea.h"
 #include "cl_util.h"
 #include "parsemsg.h"
 #include "in_defs.h"
@@ -279,6 +280,9 @@ int CHudDodIcons::Draw( float flTime )
 
 	if( m_hObjectSpr )
 	{
+		// at the left edge, in the middle of the screen
+		CSafeAnchor anchor( SAFE_LEFT );
+
 		IconArea.left = 0;
 		IconArea.right = 64;
 		IconArea.top = 0;
@@ -392,6 +396,9 @@ int CHudDodIcons::Draw( float flTime )
 			a = (int)( fade * 255.0f );
 			ScaleColors( r, g, b, a );
 
+			// at the right edge, in the middle of the screen
+			CSafeAnchor anchor( SAFE_RIGHT );
+
 			int x = MapMarkerArea->left + ScreenWidth - XRES( 2 ) - MapMarkerArea->right;
 			int y = ScreenHeight / 2 + 2 * ( MapMarkerArea->top - MapMarkerArea->bottom );
 
@@ -402,6 +409,9 @@ int CHudDodIcons::Draw( float flTime )
 
 	if( m_flDrawSelectedMarkerTime > gEngfuncs.GetClientTime() && m_hsprSelectedMarker )
 	{
+		// at the right edge, in the middle of the screen
+		CSafeAnchor anchor( SAFE_RIGHT );
+
 		int x = ScreenWidth;
 		int y = ScreenHeight / 2;
 		wrect_t rect;
