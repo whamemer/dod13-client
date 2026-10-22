@@ -38,7 +38,7 @@ The client targets **Xash3D FWGS**. GoldSrc support is kept behind `GOLDSOURCE_S
 | `3rdparty/MiniUTL` | Submodule, strings, vectors and maps that the code uses instead of the STL (`CUtlString`, `CUtlVector`, `CUtlMap`); its sources are built into the client. |
 | `3rdparty/mainui_cpp` | Submodule, the main menu (`menu.dll`) of Xash3D FWGS; a multiplayer-only game does not get the buttons of a singleplayer game. Built by CMake next to the client. |
 | `3rdparty/dod13client-extras` | The extras of the game that are packed into `extras.pk3`: the pictures of the menu, the touch controls, `userconfig.d`. |
-| `scripts/extras/` | The tools that made the pictures and `touch.cfg` of the extras, see `scripts/extras/README.txt`. |
+| `scripts/extras/` | The tools that made the pictures and the touch preset of the extras, see `scripts/extras/README.txt`. |
 
 ## Build options
 
@@ -534,8 +534,8 @@ The extras (`3rdparty/dod13client-extras`) are the files that the engine looks f
 
 | Path | What it is |
 |------|------------|
-| `gfx/shell/*.bmp` | The pictures of the main menu in the style of the original game: `btns_main.bmp` (the atlas of the buttons, 3 states of 156x26 for every button), `btn_*.bmp` (the buttons that Xash3D added: touch, gamepad, gyro, favorites), `head_*.bmp` (the banners of the menus), the small controls, `conback.bmp` (the background of the console, the menu picture of Day of Defeat Beta darkened). Palette index 0 of `btns_main.bmp` has to be black: the menu fills the free space of the atlas with it. |
-| `touch.cfg`, `touch/gfx/*.png` | The touch controls: the layout with the commands of Day of Defeat (`prone`, `+use`, `slot1..slot5`, `+map`, `+commandmenu`, ...) and the textures of the buttons. The engine saves the changes of the player to `touch.cfg` of the game directory. |
+| `gfx/shell/*.bmp` | The pictures of the main menu in the style of the original game: `btns_main.bmp` (the atlas of the buttons, 3 states of 156x26 for every button), `btn_*.bmp` (the buttons that Xash3D added: touch, gamepad, gyro, favorites), `head_*.bmp` (the banners of the menus), the small controls, `conback.bmp` (the background of the console: the menu picture of Day of Defeat Beta, darkened and squeezed to the part of the image that is visible on a 16:9 screen), `strings.lst` (the texts of the menu; it sets the link of the How to Play button to the Day of Defeat page in Steam). Palette index 0 of `btns_main.bmp` has to be black: the menu fills the free space of the atlas with it. |
+| `touch_presets/touch_whamer.cfg`, `touch/gfx/*.png` | The touch controls: a preset with the commands of Day of Defeat (`prone`, `+use`, `slot1..slot5`, `+map`, `+commandmenu`, ...) and the textures of the buttons. The touch options of the menu list the presets of `touch_presets`; the one that is applied is copied to `touch_profiles/touch_whamer.cfg` of the game directory, the changes of the player are saved there. The engine has its own default layout, `touch.cfg` is not in the extras. |
 | `userconfig.d/userconfig.cfg` | The settings that the client depends on. The engine runs `userconfig.d/*.cfg` after `config.cfg` on every start. |
 
 CMake packs the whole directory into `extras.pk3` (the custom target `generate_extras`, a zip archive made with `cmake -E tar`) and
