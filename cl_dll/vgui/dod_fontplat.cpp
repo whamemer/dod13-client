@@ -6,6 +6,12 @@
 // The weight from 600 is drawn by smearing the glyph by a pixel, the italic is a shear of its rows, as neither file has such a
 // style. The underline, the strikeout, the rotation, the width and the symbol charset are not supported, nothing asks for them.
 //
+// A font never fails to be made and does not load its file when it is made. freevgui makes its own fonts (the default ones of its
+// scheme) when the engine starts it, before the client runs and can give the loader; a font that could not be made there became the
+// debugging font of freevgui with boxes and hex codes, and that one is taken by every later font of the same height, because it is
+// compared by the height only. So the file is loaded with the first use of the font, and until it is there the font has the metrics
+// of its size and draws nothing.
+//
 
 // waf builds every file of cl_dll, but Windows has GDI and the include directories of freevgui are set by CMake only, which
 // defines DOD_FONTPLAT for this file, so for anything else it is empty
@@ -48,8 +54,7 @@ DoDLoadFontFileFn s_pfnLoad = NULL;
 DoDFreeFontFileFn s_pfnFree = NULL;
 
 // the file stays in memory as long as the game runs, every font of it uses the same data. A file that is not there is asked for
-// again with the next font: a font that was made without it stays the debugging font of freevgui for good, so it is better to find
-// the file late than never
+// again with the next use of a font
 FontFile_t *LoadFontFile( FontFile_t &file )
 {
 	if( file.info.data )
@@ -101,8 +106,8 @@ struct GlyphBox_t
 class FontPlat_Stb : public BaseFontPlat
 {
 public:
-	FontPlat_Stb( FontFile_t *pFile, const char *pszName, int newTall, int newWide, float newRotation, int newWeight, bool newItalic,
-		bool newUnderline, bool newStrikeout, bool newSymbol );
+	FontPlat_Stb( const char *pszName, int newTall, int newWide, float newRotation, int newWeight, bool newItalic, bool newUnderline,
+		bool newStrikeout, bool newSymbol );
 
 	virtual ~FontPlat_Stb() override
 	{
@@ -116,11 +121,15 @@ public:
 
 	virtual int getTall() override
 	{
+		Prepare();
+
 		return height;
 	}
 
 	virtual int getWide() override
 	{
+		Prepare();
+
 		return maxWide;
 	}
 
@@ -129,6 +138,7 @@ public:
 	}
 
 private:
+	bool Prepare();
 	void getBox( int ch, GlyphBox_t &box );
 	int shearFor( int y ) const;
 
@@ -143,17 +153,35 @@ private:
 	int ascent, height, maxWide;
 };
 
-FontPlat_Stb::FontPlat_Stb( FontFile_t *pFile, const char *pszName, int newTall, int newWide, float newRotation, int newWeight, bool newItalic,
+FontPlat_Stb::FontPlat_Stb( const char *pszName, int newTall, int newWide, float newRotation, int newWeight, bool newItalic,
 	bool newUnderline, bool newStrikeout, bool newSymbol ) :
-	file( pFile ),
+	file( NULL ),
 	tall( newTall ), wide( newWide ), weight( newWeight ),
 	rotation( newRotation ),
-	italic( newItalic ), underline( newUnderline ), strikeout( newStrikeout ), symbol( newSymbol )
+	italic( newItalic ), underline( newUnderline ), strikeout( newStrikeout ), symbol( newSymbol ),
+	scale( 0.0f )
 {
 	name = new char[strlen( pszName ) + 1];
 	strcpy( name, pszName );
 
 	bold = weight >= BOLD_WEIGHT;
+
+	// until the file is there: the cell is what the size says (the em is a bit smaller than the cell), the glyphs are half of it
+	height = tall < 0 ? (int)( -tall * 1.2f + 0.5f ) : ( tall ? tall : DEFAULT_TALL );
+	ascent = height * 4 / 5;
+	maxWide = height;
+}
+
+// loads the file with the first use and makes the real metrics of the font, false while there is no file
+bool FontPlat_Stb::Prepare()
+{
+	if( file )
+		return true;
+
+	file = FindFontFile( name );
+
+	if( !file )
+		return false;
 
 	int iAscent, iDescent, iLineGap;
 
@@ -179,14 +207,17 @@ FontPlat_Stb::FontPlat_Stb( FontFile_t *pFile, const char *pszName, int newTall,
 	stbtt_GetFontBoundingBox( &file->info, &x0, &y0, &x1, &y1 );
 
 	maxWide = (int)ceilf( ( x1 - x0 ) * scale ) + ( bold ? 1 : 0 ) + ( italic ? (int)ceilf( height * ITALIC_SLANT ) : 0 );
+
+	return true;
 }
 
+// freevgui does not tell the fonts that it reuses from the fonts that it has made: a font that takes an old one gets no number of
+// its own (-1) and shares the cache of the glyphs of the surface with every other font that did, so their text is drawn with the
+// glyphs of whichever of them was drawn first. A font that is never taken always has a number of its own.
 bool FontPlat_Stb::equals( const char *newName, int newTall, int newWide, float newRotation, int newWeight, bool newItalic, bool newUnderline,
 	bool newStrikeout, bool newSymbol )
 {
-	return newName && !strcmp( name, newName )
-		&& tall == newTall && wide == newWide && rotation == newRotation && weight == newWeight
-		&& italic == newItalic && underline == newUnderline && strikeout == newStrikeout && symbol == newSymbol;
+	return false;
 }
 
 // how far to the right the row y (from the baseline down, the pixel row that starts there) goes with the italic
@@ -229,6 +260,14 @@ void FontPlat_Stb::getBox( int ch, GlyphBox_t &box )
 
 void FontPlat_Stb::getCharABCwide( int ch, int &a, int &b, int &c )
 {
+	// no file yet: the glyphs are not drawn, they only have a width
+	if( !Prepare() )
+	{
+		a = c = 0;
+		b = height / 2 ? height / 2 : 1;
+		return;
+	}
+
 	GlyphBox_t box;
 
 	getBox( ch, box );
@@ -250,7 +289,7 @@ void FontPlat_Stb::getCharABCwide( int ch, int &a, int &b, int &c )
 // white, the coverage is the alpha: the surface paints it with the color of the text
 void FontPlat_Stb::getCharRGBA( int ch, int rgbaX, int rgbaY, int rgbaWide, int rgbaTall, unsigned char *rgba )
 {
-	if( !rgba )
+	if( !rgba || !Prepare() )
 		return;
 
 	GlyphBox_t box;
@@ -326,16 +365,8 @@ void DoD_SetFontFileFuncs( DoDLoadFontFileFn pfnLoad, DoDFreeFontFileFn pfnFree 
 BaseFontPlat *vgui::FontPlat_CreateSystem( const char *name, int tall, int wide, float rotation, int weight, bool italic, bool underline,
 	bool strikeout, bool symbol )
 {
-	if( !name )
-		return nullptr;
-
-	FontFile_t *pFile = FindFontFile( name );
-
-	// without the files the caller makes the debugging font
-	if( !pFile )
-		return nullptr;
-
-	return new FontPlat_Stb( pFile, name, tall, wide, rotation, weight, italic, underline, strikeout, symbol );
+	// never null, see the top of the file: the debugging font of freevgui is what a null becomes
+	return new FontPlat_Stb( name ? name : "", tall, wide, rotation, weight, italic, underline, strikeout, symbol );
 }
 
 #endif // DOD_FONTPLAT
