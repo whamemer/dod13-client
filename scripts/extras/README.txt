@@ -25,8 +25,8 @@ gen_touch_icons.py <extras> [sheet.png]
     drawn from discs, rings, strokes and polygons, nothing is taken from another project.
 
 gen_touch_cfg.py <extras>
-    touch_presets/touch_whamer.cfg: the layout of the buttons (a table in the script, the commands of Day of Defeat). It checks that the
-    textures exist, that nothing leaves the screen and that the buttons do not overlap.
+    touch.cfg (the default profile) and touch_presets/touch_whamer.cfg (the same layout as a preset): the layout of the buttons
+    (a table in the script, the commands of Day of Defeat). It checks that the textures exist, that nothing leaves the screen and that the buttons do not overlap.
 
 To add a label: put the text into FILES or ATLAS_CELLS of gen_buttons.py (or into FILES of gen_heads.py) and run it.
 The texts of the existing labels are listed in glyphs.py (TEXTS, by atlas cell) and in headlib.py (HEAD_TEXTS).

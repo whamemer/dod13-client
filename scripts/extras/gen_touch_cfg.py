@@ -1,6 +1,10 @@
-"""Writes touch_presets/touch_whamer.cfg, a layout of the touch buttons of Day of Defeat for Xash3D. The touch options of the menu
-list the files of touch_presets; the preset that is applied is copied to touch_profiles/touch_whamer.cfg, the changes of the player
-are saved there.
+"""Writes the layout of the touch buttons of Day of Defeat for Xash3D twice:
+touch.cfg is the profile that the engine reads by default (touch_config_file is touch.cfg until the player picks another one), so
+the layout is shown from the first start, the changes of the player are saved to touch.cfg of the game directory;
+touch_presets/touch_whamer.cfg is the same layout as a preset, the touch options of the menu list the files of touch_presets, the
+preset that is applied is copied to touch_profiles/touch_whamer.cfg and the changes are saved there.
+touch.cfg has no touch_config_file line on purpose: the engine would remember touch_profiles/touch_whamer.cfg, which does not exist
+until the player changes something, and fall back to its own layout at the next start.
 The buttons are squares for a 16:9 screen (the engine keeps them square with the aspect value of touch_addbutton).
 usage: gen_touch_cfg.py <extras dir>"""
 import sys, os
@@ -48,9 +52,7 @@ HEADER = '''//==================================================================
 //	made by scripts/extras/gen_touch_cfg.py, the textures are in touch/gfx
 //=======================================================================
 
-touch_config_file "touch_profiles/touch_whamer.cfg"
-
-// touch cvars
+%s// touch cvars
 
 // sensitivity settings
 touch_pitch "90.000000"
@@ -97,7 +99,7 @@ touch_addbutton "look" "" "_look" 0.500000 0.106667 1.000000 0.995556 255 255 25
 
 def main():
     root = sys.argv[1]
-    lines = [HEADER.rstrip('\n')]
+    lines = []
     rects = []
     for name, tex, cmd, x, y, w, flags in BUTTONS:
         h = w * H
@@ -108,8 +110,12 @@ def main():
             assert x2 <= a[0] + 1e-6 or x >= a[2] - 1e-6 or y2 <= a[1] + 1e-6 or y >= a[3] - 1e-6, 'overlap %s %s' % (name, n2)
         rects.append((name, (x, y, x2, y2)))
         lines.append('touch_addbutton "%s" "touch/gfx/%s" "%s" %.6f %.6f %.6f %.6f 255 255 255 150 %d 1' % (name, tex, cmd, x, y, x2, y2, flags))
+    body = '\n'.join(lines) + '\n'
+    profile = HEADER % ''
+    preset = HEADER % 'touch_config_file "touch_profiles/touch_whamer.cfg"\n\n'
     os.makedirs(os.path.join(root, 'touch_presets'), exist_ok=True)
-    open(os.path.join(root, 'touch_presets', 'touch_whamer.cfg'), 'w', newline='\n').write('\n'.join(lines) + '\n')
+    open(os.path.join(root, 'touch.cfg'), 'w', newline='\n').write(profile.rstrip('\n') + '\n' + body)
+    open(os.path.join(root, 'touch_presets', 'touch_whamer.cfg'), 'w', newline='\n').write(preset.rstrip('\n') + '\n' + body)
     print('buttons:', len(BUTTONS))
 
 
