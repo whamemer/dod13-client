@@ -38,7 +38,7 @@ artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of 
 * `client.dll` is the client, `menu.dll` is the main menu (the menu library of Xash3D FWGS with the DoD changes: it does not show
   New Game, Load Game and Hazard Course, a multiplayer-only game has none).
 * `extras.pk3` has the pictures that the main menu needs (`gfx/shell`: the buttons and banners in the style of the original menu,
-  with the ones that Xash3D added), the touch controls (the layout `touch.cfg`, the preset `touch_presets/touch_whamer.cfg` and `touch/gfx`) and `userconfig.d/userconfig.cfg`.
+  with the ones that Xash3D added), the touch controls (`touch.cfg`, the preset and the profile `touch_whamer`, and `touch/gfx`) and `userconfig.d/userconfig.cfg`.
 * `userconfig.cfg` holds the settings that the client depends on (`cl_lw 1`, `cl_lc 1`, `cl_nopred 0`, `sv_rollangle 2`,
   `sv_rollspeed 200`). The engine runs it after `config.cfg` on every start, so a saved value cannot break them. The files of
   `userconfig.d` run in the alphabetical order: to change a value, put the command into your own file in the `dod/userconfig.d`
