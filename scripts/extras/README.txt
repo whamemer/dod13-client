@@ -30,3 +30,9 @@ gen_touch_cfg.py <extras>
 
 To add a label: put the text into FILES or ATLAS_CELLS of gen_buttons.py (or into FILES of gen_heads.py) and run it.
 The texts of the existing labels are listed in glyphs.py (TEXTS, by atlas cell) and in headlib.py (HEAD_TEXTS).
+
+gen_conback.py <dod_addon/resource of Day of Defeat Beta 1.0 - 1.3b> <extras>/gfx/shell/conback.bmp [brightness]
+    The background of the console. The engine looks for gfx/shell/conback.(dds|bmp|tga) and, if there is none, shows the picture of
+    Half-Life from the valve folder. The menu background of the beta is cut into tiles (resource/background/640_*_loading.tga,
+    BackgroundLayout.txt says where every tile goes); the script puts them together to 640x480 and darkens it (0.5 by default)
+    so that the orange text of the console is readable. The engine draws it opaque and stretches it to 4:3.

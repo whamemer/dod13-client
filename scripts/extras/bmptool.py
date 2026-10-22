@@ -80,3 +80,12 @@ def write_png_rgba(path, w, h, rgba_rows):
 
     png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w, h, 8, 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b'')
     open(path, 'wb').write(png)
+
+
+def write_bmp24(path, w, h, rgb_rows):
+    """24 bpp BMP; rgb_rows: top-down, every row is a list of (r, g, b)."""
+    stride = (w * 3 + 3) & ~3
+    data = b''.join(bytes(v for p in rgb_rows[y] for v in (p[2], p[1], p[0])) + b'\0' * (stride - w * 3) for y in range(h - 1, -1, -1))
+    hdr = b'BM' + struct.pack('<IHHI', 54 + len(data), 0, 0, 54)
+    info = struct.pack('<IiiHHIIiiII', 40, w, h, 1, 24, 0, len(data), 3780, 3780, 0, 0)
+    open(path, 'wb').write(hdr + info + data)
