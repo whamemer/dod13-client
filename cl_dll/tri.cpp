@@ -786,6 +786,10 @@ CDoDDirtExploDust *CDoDDirtExploDust::Create( Vector org, Vector normal, model_s
 	return pEffect;
 }
 
+// The texture above is looked for along the whole line of the trace, not from its end point: the end point of the trace of the player
+// is DIST_EPSILON (1/32) before the surface that it hit, and the search of Xash3D (PM_RecursiveSurfCheck) compares the distance to
+// the plane with the same 1/32, so whether it finds the surface depends on how the floats were rounded. On dod_kalt it found the sky
+// never, on dod_zalec for one trace of four.
 // the snowflakes are created over the player, where the sky is above
 void UpdateSnow( void )
 {
@@ -817,7 +821,7 @@ void UpdateSnow( void )
 			gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
 			gEngfuncs.pEventAPI->EV_PlayerTrace( origin, vEndPos, PM_WORLD_ONLY, -1, &pmtrace );
 
-			pTextureName = gEngfuncs.pEventAPI->EV_TraceTexture( pmtrace.ent, pmtrace.endpos, vEndPos );
+			pTextureName = gEngfuncs.pEventAPI->EV_TraceTexture( pmtrace.ent, origin, vEndPos );
 
 			// only where the roof is the sky
 			if( pTextureName && !strncmp( pTextureName, "sky", 3 ) )
@@ -859,7 +863,7 @@ void UpdateRain( void )
 			gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
 			gEngfuncs.pEventAPI->EV_PlayerTrace( origin, vEndPos, PM_WORLD_ONLY, -1, &pmtrace );
 
-			pTextureName = gEngfuncs.pEventAPI->EV_TraceTexture( pmtrace.ent, pmtrace.endpos, vEndPos );
+			pTextureName = gEngfuncs.pEventAPI->EV_TraceTexture( pmtrace.ent, origin, vEndPos );
 
 			if( pTextureName && !strncmp( pTextureName, "sky", 3 ) )
 				gHUD.m_Weather.CreateRainParticle( origin );
