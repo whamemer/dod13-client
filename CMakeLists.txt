@@ -52,6 +52,7 @@ project (DOD13-CLIENT)
 # USER DEFINES \
 ################\
 option(BUILD_CLIENT "Build client dll" ON)
+option(BUILD_MAINUI "Build the main menu library (menu), it is loaded instead of the menu of the engine" ON)
 option(LTO "Enable interprocedural optimization" OFF)
 option(POLLY "Enable pollyhedral optimization" OFF)
 option(ANDROID_APK "Enable APK styled deploy" OFF)
@@ -226,7 +227,18 @@ if(BUILD_CLIENT)
 	add_subdirectory(cl_dll)
 endif()
 
-if(NOT BUILD_CLIENT)
+if(BUILD_MAINUI)
+	message(STATUS "Building main menu enabled")
+
+	# the fonts of the menu are drawn with stb_truetype outside of Windows (GDI there), so FreeType is not needed
+	if(NOT WIN32)
+		set(MAINUI_USE_STB ON CACHE BOOL "Use stb_truetype.h for rendering(*nix-only)" FORCE)
+	endif()
+
+	add_subdirectory(3rdparty/mainui_cpp)
+endif()
+
+if(NOT BUILD_CLIENT AND NOT BUILD_MAINUI)
 	message(FATAL_ERROR "Nothing to build")
 endif()
 
@@ -236,4 +248,43 @@ if(POLLY)
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		add_compile_options(-fgraphite-identity -floop-interchange -floop-block)
 	endif()
+endif()
+
+# The extras of the game: the pictures of the menu (gfx/shell), the touch controls, userconfig.d. They are packed into extras.pk3
+# that is installed into the game directory next to the client library. On Android they are packed into the APK by gradle
+# (assets of android/app/build.gradle), the engine reads them from there.
+set(EXTRAS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/dod13client-extras")
+
+if(EXISTS "${EXTRAS_DIR}" AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+	# the build looks for new files of the extras by itself when CMake can do it
+	if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12.0")
+		set(EXTRAS_GLOB_ARGS CONFIGURE_DEPENDS)
+	endif()
+
+	file(GLOB_RECURSE EXTRAS_FILES RELATIVE "${EXTRAS_DIR}" ${EXTRAS_GLOB_ARGS} "${EXTRAS_DIR}/*")
+	file(GLOB_RECURSE EXTRAS_PATHS ${EXTRAS_GLOB_ARGS} "${EXTRAS_DIR}/*")
+
+	if(EXTRAS_FILES)
+		set(EXTRAS_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/extras.pk3")
+		set(EXTRAS_LIST "${CMAKE_CURRENT_BINARY_DIR}/extras.txt")
+
+		# one file per line, no directories: the engine does not need their entries in the archive
+		string(REPLACE ";" "\n" EXTRAS_LIST_TEXT "${EXTRAS_FILES}")
+		file(WRITE "${EXTRAS_LIST}" "${EXTRAS_LIST_TEXT}\n")
+
+		add_custom_command(
+			OUTPUT "${EXTRAS_OUTPUT}"
+			COMMAND ${CMAKE_COMMAND} -E tar cf "${EXTRAS_OUTPUT}" --format=zip "--files-from=${EXTRAS_LIST}"
+			WORKING_DIRECTORY "${EXTRAS_DIR}"
+			DEPENDS ${EXTRAS_PATHS} "${EXTRAS_LIST}"
+			COMMENT "Packing extras.pk3"
+			VERBATIM
+		)
+
+		add_custom_target(generate_extras ALL DEPENDS "${EXTRAS_OUTPUT}")
+
+		install(FILES "${EXTRAS_OUTPUT}" DESTINATION "${GAMEDIR}")
+	endif()
+else()
+	message(STATUS "No extras (3rdparty/dod13client-extras), the game directory gets no extras.pk3")
 endif()

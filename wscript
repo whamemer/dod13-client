@@ -316,3 +316,22 @@ def build(bld):
 		quiet=True, generator=True)
 
 	bld.add_subproject('game_shared freevgui cl_dll')
+
+	# the extras of the game (the pictures of the menu, the touch controls, userconfig.d) are packed to extras.pk3 in the game directory,
+	# on Android they are packed into the APK by gradle
+	extras = bld.path.find_dir('3rdparty/dod13client-extras')
+
+	if extras and not bld.env.ANDROID_APK:
+		def pack_extras(task):
+			import zipfile
+
+			with zipfile.ZipFile(task.outputs[0].abspath(), 'w', zipfile.ZIP_DEFLATED) as pack:
+				for node in task.inputs:
+					pack.write(node.abspath(), node.path_from(extras).replace(os.sep, '/'))
+
+			return 0
+
+		bld(rule = pack_extras,
+			source = extras.ant_glob('**/*'),
+			target = 'extras.pk3',
+			install_path = bld.env.GAMEDIR)

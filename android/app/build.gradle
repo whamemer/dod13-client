@@ -35,6 +35,14 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    sourceSets {
+        main {
+            // the extras of the game (the pictures of the menu, touch controls, userconfig.d) are the assets of the APK,
+            // the engine mounts them as the files of the game
+            assets.srcDirs += ['../../3rdparty/dod13client-extras']
+        }
+    }
+
     buildTypes {
         debug {
             minifyEnabled false
