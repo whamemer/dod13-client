@@ -59,18 +59,6 @@ value becomes a variable of the build.
 The options of Half-Life (crowbar, gauss, satchel fixes and the like) are removed. The fixes for the bugs of the original
 game are added here, each under its own macro, so they can be turned off.
 
-The build systems have a few options of their own:
-
-| waf | CMake | Meaning |
-|-----|-------|---------|
-| `-T debug` | `-DCMAKE_BUILD_TYPE=Debug` | The type of the build; waf builds the optimized `humanrights` by default. |
-| `-8`, `--64bits` | `-D64BIT=ON` | Allow a 64-bit build; on a 64-bit Windows or Linux host the build is 32-bit otherwise, as GoldSrc is. |
-| `--disable-goldsrc-support` | `-DGOLDSOURCE_SUPPORT=OFF` | Drop the code for the GoldSrc engine (`GOLDSOURCE_SUPPORT`, x86 only). |
-| `--disable-werror` | | Turn off the strict warnings of GCC and Clang. |
-| `--enable-android-apk` | `-DANDROID_APK=ON` | The deploy for an APK: the game directory and the client directory are `.`. |
-| | `-DBUILD_CLIENT=OFF`, `-DBUILD_MAINUI=OFF` | Do not build the client or the main menu (the extras are packed in any case). |
-| | `-DLTO=ON`, `-DPOLLY=ON` | Interprocedural optimization, polyhedral optimization. |
-
 ## Fixes of the bugs of the original game
 
 The original client has bugs that this code base reproduces on purpose, because the reverse follows the binary. A fix of such a
@@ -90,12 +78,6 @@ All the fixes below are `ON` by default.
 2. Wrap the changed code in `#if NAME` ... `#else` (the original code) ... `#endif`. Use `#if`, not `#ifdef`: a switched off option
    defines nothing.
 3. Run `waf configure` again (CMake reads the file at configure time too). The build log lists the option and its state.
-
-### Differences from the Steam version that are not in the client
-
-* **Tilting the view when strafing.** The client code (`V_CalcViewRoll`, `PM_CalcRoll`) is the same as in the original, the tilt
-  comes from the server cvar `sv_rollangle`. The default of GoldSrc is `2.0` (`sv_rollspeed 200`), the default of Xash3D is `0`,
-  so without `sv_rollangle 2` in the config of the server there is no tilt. The setting is saved to `config.cfg` (`FCVAR_ARCHIVE`).
 
 ## How the engine talks to the client
 
@@ -255,7 +237,7 @@ the map is shown, see `FOG_MINIMAP_FIX` in [Fixes of the bugs of the original ga
 | `cl_xhair_style` | 0 | A | 0 draws `sprites/crosshairs.spr`, other values pick a crosshair from `sprites/customXHair.spr`. |
 | `cl_vsmoothing` | 0.05 | A | Seconds of view smoothing on trains and lifts. |
 | `cl_viewbob` | 1 | A | Registered as in the original; not read by the client. |
-| `cl_bob`, `cl_bobcycle`, `cl_bobup` | 0.005, 0.8, 0.5 | A (`cl_bob`) | Weapon and view bob. `cl_bob` is saved to `config.cfg`: a value left by another client (Half-Life uses 0.01) doubles the sway of the weapon, in the original it is 0.005. |
+| `cl_bob`, `cl_bobcycle`, `cl_bobup` | 0.005, 0.8, 0.5 | A (`cl_bob`) | Weapon and view bob. |
 | `cl_chasedist`, `cl_waterdist` | 112, 4 | | Distance of the chase camera, offset of the view under the water line. |
 | `zoom_sensitivity_ratio` | 1.2 | A | Mouse sensitivity multiplier while zoomed. |
 | `cl_pitchup`, `cl_pitchdown` | 89 | | Limits of the view pitch. |
@@ -644,18 +626,6 @@ the assets of the APK in `android/app/build.gradle`. If the directory is missing
 Параметры Half-Life (исправления монтировки, гаусс-пушки, подрывного заряда и подобные) удалены. Исправления багов оригинальной
 игры добавлены сюда, каждое под своим макросом, чтобы их можно было отключить.
 
-У самих систем сборки есть несколько своих параметров:
-
-| waf | CMake | Смысл |
-|-----|-------|-------|
-| `-T debug` | `-DCMAKE_BUILD_TYPE=Debug` | Тип сборки; waf по умолчанию собирает оптимизированную `humanrights`. |
-| `-8`, `--64bits` | `-D64BIT=ON` | Разрешить 64-битную сборку; на 64-битном хосте Windows или Linux иначе сборка 32-битная, как у GoldSrc. |
-| `--disable-goldsrc-support` | `-DGOLDSOURCE_SUPPORT=OFF` | Отказаться от кода для движка GoldSrc (`GOLDSOURCE_SUPPORT`, только x86). |
-| `--disable-werror` | | Отключить строгие предупреждения GCC и Clang. |
-| `--enable-android-apk` | `-DANDROID_APK=ON` | Развёртывание для APK: каталог игры и каталог клиента равны `.`. |
-| | `-DBUILD_CLIENT=OFF`, `-DBUILD_MAINUI=OFF` | Не собирать клиент или главное меню (extras упаковываются в любом случае). |
-| | `-DLTO=ON`, `-DPOLLY=ON` | Межпроцедурная оптимизация, полиэдральная оптимизация. |
-
 ## Исправления багов оригинальной игры
 
 В оригинальном клиенте есть баги, которые эта кодовая база намеренно воспроизводит, потому что реверс следует бинарнику.
@@ -675,12 +645,6 @@ the assets of the APK in `android/app/build.gradle`. If the directory is missing
 2. Оберните изменённый код в `#if ИМЯ` ... `#else` (код оригинала) ... `#endif`. Используйте `#if`, а не `#ifdef`: выключенный
    параметр ничего не определяет.
 3. Снова запустите `waf configure` (CMake тоже читает файл при конфигурации). Журнал сборки перечисляет параметр и его состояние.
-
-### Отличия от Steam-версии, которых нет в клиенте
-
-* **Наклон вида при стрейфе.** Код клиента (`V_CalcViewRoll`, `PM_CalcRoll`) такой же, как в оригинале, наклон приходит из
-  серверной cvar `sv_rollangle`. Умолчание GoldSrc равно `2.0` (`sv_rollspeed 200`), умолчание Xash3D равно `0`, поэтому без
-  `sv_rollangle 2` в конфиге сервера наклона нет. Настройка сохраняется в `config.cfg` (`FCVAR_ARCHIVE`).
 
 ## Как движок общается с клиентом
 
@@ -840,7 +804,7 @@ userinfo (`FCVAR_USERINFO`).
 | `cl_xhair_style` | 0 | A | 0 рисует `sprites/crosshairs.spr`, другие значения выбирают перекрестие из `sprites/customXHair.spr`. |
 | `cl_vsmoothing` | 0.05 | A | Секунды сглаживания вида на поездах и подъёмниках. |
 | `cl_viewbob` | 1 | A | Зарегистрирована, как в оригинале; клиент её не читает. |
-| `cl_bob`, `cl_bobcycle`, `cl_bobup` | 0.005, 0.8, 0.5 | A (`cl_bob`) | Покачивание оружия и вида. `cl_bob` сохраняется в `config.cfg`: значение, оставленное другим клиентом (Half-Life использует 0.01), удваивает качание оружия, в оригинале оно 0.005. |
+| `cl_bob`, `cl_bobcycle`, `cl_bobup` | 0.005, 0.8, 0.5 | A (`cl_bob`) | Покачивание оружия и вида. |
 | `cl_chasedist`, `cl_waterdist` | 112, 4 | | Расстояние камеры погони, смещение вида под линией воды. |
 | `zoom_sensitivity_ratio` | 1.2 | A | Множитель чувствительности мыши при приближении. |
 | `cl_pitchup`, `cl_pitchdown` | 89 | | Пределы наклона вида. |

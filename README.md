@@ -28,10 +28,7 @@ with the original server library.
 ## Download
 Builds are published on the [Releases](https://github.com/whamemer/dod13-client/releases) page: `windows` (32-bit), `windows_x64`
 and `linux`, each archive holds the `dod` folder that goes next to the engine, with the client (`dod/cl_dlls/client.dll`, or
-`client.so`), the main menu (`dod/cl_dlls/menu.dll`, or `menu.so`) and the extras (`dod/extras.pk3`). The 64-bit builds carry the
-suffix of the Xash3D library naming, for example `client_amd64.dll`. The `android` file is the APK, it has the same three inside.
-Every push is also built by GitHub Actions: the artifacts `dod13-client-<branch>-windows`, `...-windows_x64` and `...-linux` of a
-run hold the contents of that folder, `...-android` is the APK.
+`client.so`), the main menu (`dod/cl_dlls/menu.dll`, or `menu.so`) and the extras (`dod/extras.pk3`).
 
 ## Installation
 1. Get the [latest developer build of Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs/releases/tag/continuous) and unpack it.
@@ -43,23 +40,10 @@ run hold the contents of that folder, `...-android` is the APK.
 On **Android** install the APK next to the Xash3D FWGS app: it declares itself as a mod of that app (`su.xash.engine.MOD`). The
 client, the menu and the extras are inside the APK, the game files of the original game (`valve`, `dod`) are not.
 
-### What is in the archive
-* `client.dll` is the client, `menu.dll` is the main menu (the menu library of Xash3D FWGS with the DoD changes: it does not show
-  New Game, Load Game and Hazard Course, a multiplayer-only game has none).
-* `extras.pk3` has the pictures that the main menu needs (`gfx/shell`: the buttons and banners of the WON menu of the original
-  game, with the ones that Xash3D added drawn in the same style), the touch controls (`touch.cfg`, the preset `touch_whamer` and
-  `touch/gfx`) and `userconfig.d/userconfig.cfg`. The pictures of the WON menu are assets of Day of Defeat and belong to Valve.
-* `userconfig.cfg` holds the settings that the client depends on (`cl_lw 1`, `cl_lc 1`, `cl_nopred 0`, `sv_rollangle 2`,
-  `sv_rollspeed 200`). The engine runs it after `config.cfg` on every start, so a saved value cannot break them. The files of
-  `userconfig.d` run in the alphabetical order: to change a value, put the command into your own file in the `dod/userconfig.d`
-  folder with a later name, for example `zz_my.cfg`.
-
 ### Notes
 * **The view does not tilt when strafing.** The tilt comes from the server cvar `sv_rollangle`. The default of GoldSrc is `2`, the
   default of Xash3D is `0`. `userconfig.cfg` sets `sv_rollangle 2` and `sv_rollspeed 200` for a server that you start from the
   game, a dedicated server needs them in its own config.
-* **The weapon sways too much.** `cl_bob` is saved to `config.cfg`, and a value left by another client (Half-Life uses `0.01`)
-  stays. The value of Day of Defeat is `0.005`.
 * The menus look slightly different from the original, see the description of VGUI1 in [cl_dll/readme.md](cl_dll/readme.md#vgui1-instead-of-vgui2).
 
 ## Documentation
@@ -168,10 +152,7 @@ Day of Defeat из Steam-версии игры. Он заменяет `client.dl
 ## Загрузка
 Сборки публикуются на странице [Releases](https://github.com/whamemer/dod13-client/releases): `windows` (32 бита), `windows_x64`
 и `linux`. В каждом архиве лежит папка `dod`, которая кладётся рядом с движком, с клиентом (`dod/cl_dlls/client.dll` или
-`client.so`), главным меню (`dod/cl_dlls/menu.dll` или `menu.so`) и extras (`dod/extras.pk3`). У 64-битных сборок есть суффикс
-по схеме именования библиотек Xash3D, например `client_amd64.dll`. Файл `android` это APK, внутри него те же три части.
-Каждый push тоже собирает GitHub Actions: артефакты `dod13-client-<ветка>-windows`, `...-windows_x64` и `...-linux` запуска
-содержат содержимое этой папки, `...-android` это APK.
+`client.so`), главным меню (`dod/cl_dlls/menu.dll` или `menu.so`) и extras (`dod/extras.pk3`).
 
 ## Установка
 1. Скачайте [последнюю developer-сборку Xash3D FWGS](https://github.com/FWGS/xash3d-fwgs/releases/tag/continuous) и распакуйте её.
@@ -183,23 +164,10 @@ Day of Defeat из Steam-версии игры. Он заменяет `client.dl
 На **Android** установите APK рядом с приложением Xash3D FWGS: он объявляет себя модом этого приложения (`su.xash.engine.MOD`).
 Клиент, меню и extras находятся внутри APK, файлов оригинальной игры (`valve`, `dod`) в нём нет.
 
-### Что лежит в архиве
-* `client.dll` это клиент, `menu.dll` это главное меню (библиотека меню Xash3D FWGS с изменениями для DoD: в ней нет
-  New Game, Load Game и Hazard Course, в игре, рассчитанной только на мультиплеер, их нет).
-* В `extras.pk3` лежат картинки, которые нужны главному меню (`gfx/shell`: кнопки и баннеры меню WON оригинальной игры, а те,
-  что добавил Xash3D, нарисованы в том же стиле), сенсорное управление (`touch.cfg`, пресет `touch_whamer` и `touch/gfx`) и
-  `userconfig.d/userconfig.cfg`. Картинки меню WON это ресурсы Day of Defeat, они принадлежат Valve.
-* `userconfig.cfg` содержит настройки, от которых зависит клиент (`cl_lw 1`, `cl_lc 1`, `cl_nopred 0`, `sv_rollangle 2`,
-  `sv_rollspeed 200`). Движок выполняет его после `config.cfg` при каждом запуске, поэтому сохранённое значение их не сломает.
-  Файлы `userconfig.d` выполняются в алфавитном порядке: чтобы изменить значение, положите команду в свой файл в папке
-  `dod/userconfig.d` с более поздним именем, например `zz_my.cfg`.
-
 ### Примечания
 * **Вид не наклоняется при стрейфе.** Наклон задаёт серверная переменная `sv_rollangle`. Умолчание GoldSrc равно `2`,
   умолчание Xash3D равно `0`. `userconfig.cfg` ставит `sv_rollangle 2` и `sv_rollspeed 200` для сервера, который вы запускаете из
   игры, выделенному серверу они нужны в его собственном конфиге.
-* **Оружие слишком сильно качается.** `cl_bob` сохраняется в `config.cfg`, и значение, оставленное другим клиентом (Half-Life
-  использует `0.01`), остаётся. У Day of Defeat значение `0.005`.
 * Меню выглядят немного иначе, чем в оригинале, см. описание VGUI1 в [cl_dll/readme.md](cl_dll/readme.md#vgui1-вместо-vgui2).
 
 ## Документация
