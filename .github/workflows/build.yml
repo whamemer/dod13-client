@@ -212,6 +212,8 @@ jobs:
     permissions:
       contents: write
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
@@ -236,9 +238,16 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        cat > notes.md <<'NOTES'
-        Client library of Day of Defeat 1.3 for Xash3D FWGS.
-
+        # the list of the changes of a release is in .github/release-notes/<tag>.md
+        {
+          echo "Client library of Day of Defeat 1.3 for Xash3D FWGS."
+          echo
+          if [ -f ".github/release-notes/$GITHUB_REF_NAME.md" ]; then
+            cat ".github/release-notes/$GITHUB_REF_NAME.md"
+            echo
+          fi
+        } > notes.md
+        cat >> notes.md <<'NOTES'
         Unpack the archive into the directory of the engine, next to the `valve` and `dod` folders of the original game, so that
         `client.dll` (or `client.so`) and `menu.dll` land in `dod/cl_dlls/` and `extras.pk3` in `dod/`. See the
         [README](https://github.com/${{ github.repository }}#installation) for the details.
